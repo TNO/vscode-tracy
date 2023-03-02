@@ -1,0 +1,9 @@
+.vscode/
+src/
+.gitignore
+tsconfig.json
+webpack.config.ts
+workspace/
+*.vsix
+.github/
+examples/

@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"lib": [
+			"es2020",
+			"dom"
+		],
+		"jsx": "react",
+		"esModuleInterop": true,
+		"module": "commonjs",
+		"target": "es2020",
+		"outDir": "out",
+		"sourceMap": true,
+		"strict": true,
+		"rootDir": "src",
+	},
+	"include": ["src/extension/extension.ts"],
+}
