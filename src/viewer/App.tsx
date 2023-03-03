@@ -4,6 +4,10 @@ import MinimapView from './minimap/MinimapView';
 import { LogFile, LogViewState } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER } from './constants';
 import MinimapColors from './minimap/MinimapColors';
+import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
+import RulesDialog from './rules/RulesDialog';
+import Rule from './rules/Rule';
+import StateBasedRule from './rules/StateBasedRule';
 
 interface Props {
 }
@@ -12,6 +16,7 @@ interface State {
     minimapColors: MinimapColors | undefined;
     logViewState: LogViewState | undefined;
     showRulesDialog: boolean;
+    rules: Rule[];
 }
 
 const COLUMN_2_HEADER_STYLE = {
@@ -21,7 +26,7 @@ const COLUMN_2_HEADER_STYLE = {
 export default class App extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
-        this.state = {logFile: undefined, logViewState: undefined, minimapColors: undefined, showRulesDialog: false};
+        this.state = {logFile: undefined, logViewState: undefined, minimapColors: undefined, showRulesDialog: true, rules: [new StateBasedRule("FirstRule", '', '', [])]}; // TODO, make rules []
 
         window.addEventListener('message', event => {
             const message = event.data;
@@ -50,7 +55,9 @@ export default class App extends React.Component<Props, State> {
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth}}>
                     <div className='header-background' style={COLUMN_2_HEADER_STYLE}>
-                        {/* <VSCodeButton onClick={() => this.setState({showRulesDialog: true})}>Manage rules</VSCodeButton> */}
+                        <VSCodeButton appearance='icon' onClick={() => this.setState({showRulesDialog: true})}>
+                            <i className="codicon codicon-settings-gear"/>
+                        </VSCodeButton>
                     </div>
                     {this.state.logViewState && 
                         <MinimapView 
@@ -59,7 +66,13 @@ export default class App extends React.Component<Props, State> {
                             logViewState={this.state.logViewState}/>
                     }
                 </div>
-                {/* { this.state.showRulesDialog && <RulesDialog onClose={() => this.setState({showRulesDialog: false})}/> } */}
+                { this.state.showRulesDialog && 
+                    <RulesDialog 
+                        rules={this.state.rules} 
+                        onClose={() => this.setState({showRulesDialog: false})}
+                        setRules={(rules) => this.setState({rules})}
+                    /> 
+                }
             </div>
         );
     }
