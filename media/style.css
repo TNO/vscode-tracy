@@ -2,6 +2,29 @@
     background-color: var(--vscode-editorGroupHeader-tabsBackground);
 }
 
+.list-hover-background {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.dialog {
+    outline: 1px solid var(--vscode-menu-border);
+    border-radius: 5px;
+    color: var(--vscode-menu-foreground);
+    background-color: var(--vscode-menu-background);
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow);
+}
+
+.title-big {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--vscode-settings-headerForeground);
+}
+
+.title-small {
+    color: var(--vscode-settings-headerForeground);
+    font-weight: 600;
+}
+
 body {
     padding: 0px; 
     width: 100%; 

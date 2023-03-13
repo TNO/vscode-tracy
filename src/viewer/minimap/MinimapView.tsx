@@ -1,11 +1,10 @@
 import React from 'react';
-import MinimapColors from './MinimapColors';
-import { LogFile, LogViewState } from '../types';
-import { LOG_COLUMNS, MINIMAP_COLUMN_WIDTH } from '../constants';
+import { LogViewState } from '../types';
+import { MINIMAP_COLUMN_WIDTH } from '../constants';
+import LogFile from '../LogFile';
 
 interface Props {
     logFile: LogFile;
-    logColors: MinimapColors;
     logViewState: LogViewState;
 }
 interface State {
@@ -14,16 +13,12 @@ interface State {
 
 export default class MinimapView extends React.Component<Props, State> {
     canvas: React.RefObject<HTMLCanvasElement>;
-    logColors: MinimapColors | undefined;
 
     constructor(props: Props) {
         super(props);
         this.canvas = React.createRef();
         this.handleWheel = this.handleWheel.bind(this);
         this.state = {scale: 1};
-        if (props.logFile) {
-            this.logColors = new MinimapColors(props.logFile);
-        }
     }
 
     componentDidMount(): void {
@@ -32,7 +27,8 @@ export default class MinimapView extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: State): void {
-        if (prevProps.logViewState !== this.props.logViewState || prevState.scale !== this.state.scale) {
+        if (prevProps.logViewState !== this.props.logViewState || prevState.scale !== this.state.scale || 
+            prevProps.logFile !== this.props.logFile) {
             this.draw();
         }
     }
@@ -48,9 +44,10 @@ export default class MinimapView extends React.Component<Props, State> {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Compute start and end.
-        const {rowHeight: logRowHeight, height, visibleItems: logVisibleItems, start: logStart, scrollTop: logScrollTop} = this.props.logViewState;
+        const {logViewState, logFile} = this.props;
+        const {rowHeight: logRowHeight, height, visibleItems: logVisibleItems, start: logStart, scrollTop: logScrollTop} = logViewState;
         const minVisibleItems = logVisibleItems;
-        const maxVisibleItems = this.props.logFile.length;
+        const maxVisibleItems = logFile.amountOfRows();
         // If scale is 0.0 all log file entries are visible, if scale is 1.0 the minimap 1:1 matches the log view
         const visibleItems = ((maxVisibleItems - minVisibleItems) * Math.abs(this.state.scale - 1)) + minVisibleItems;
         const scale = logVisibleItems / visibleItems;
@@ -69,13 +66,12 @@ export default class MinimapView extends React.Component<Props, State> {
         // This code also makes sure that when scrolled to the end of the log file and zoomed out, the minimap stops at the bottom of the screen.
         const logMinimapCenterDiff = minimapCenter - logCenter;
         const scrollTop = Math.min(logMinimapCenterDiff, logScrollTop);
-        const scrollBottom = minVisibleItems === maxVisibleItems ? 0 : Math.min((this.props.logFile.length * logRowHeight) + scrollTop - minimapEnd, 0);
+        const scrollBottom = minVisibleItems === maxVisibleItems ? 0 : Math.min((logFile.amountOfRows() * logRowHeight) + scrollTop - minimapEnd, 0);
         ctx.translate(0, scrollTop - scrollBottom);
 
         // Draw blocks
-        for (let columnIndex = 0; columnIndex < LOG_COLUMNS.length; columnIndex++) {
-            const column = LOG_COLUMNS[columnIndex].name;
-            const colors = this.props.logColors.columnColors[column];
+        for (let columnIndex = 0; columnIndex < logFile.columnsColors.length; columnIndex++) {
+            const colors = logFile.columnsColors[columnIndex];
             for (let i = 0; i < colors.length; i++) {
                 ctx.beginPath();
                 ctx.fillStyle = colors[i];
