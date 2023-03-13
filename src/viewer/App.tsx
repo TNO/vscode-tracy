@@ -1,9 +1,9 @@
 import React from 'react';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
-import { LogFile, LogViewState } from './types';
+import LogFile from './LogFile';
+import { LogViewState } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER } from './constants';
-import MinimapColors from './minimap/MinimapColors';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import RulesDialog from './rules/RulesDialog';
 import Rule from './rules/Rule';
@@ -12,43 +12,51 @@ import StateBasedRule from './rules/StateBasedRule';
 interface Props {
 }
 interface State {
-    logFile: LogFile | undefined;
-    minimapColors: MinimapColors | undefined;
+    logFile: LogFile;
     logViewState: LogViewState | undefined;
     showRulesDialog: boolean;
     rules: Rule[];
 }
 
 const COLUMN_2_HEADER_STYLE = {
-    height: LOG_HEADER_HEIGHT, display: 'flex', justifyContent: 'center', alignItems: 'center', borderLeft: BORDER, borderBottom: BORDER
+    height: LOG_HEADER_HEIGHT, display: 'flex', justifyContent: 'center', alignItems: 'center', 
+    borderLeft: BORDER, borderBottom: BORDER
 };
 
 export default class App extends React.Component<Props, State> {
+    // @ts-ignore
+    vscode = acquireVsCodeApi();
+
     constructor(props: Props) {
         super(props);
-        this.state = {logFile: undefined, logViewState: undefined, minimapColors: undefined, showRulesDialog: true, rules: [new StateBasedRule("FirstRule", '', '', [])]}; // TODO, make rules []
+        this.state = {logFile: LogFile.create([], []), logViewState: undefined, showRulesDialog: false, rules: []};
 
-        window.addEventListener('message', event => {
-            const message = event.data;
-            if (message.type === 'update') {
-                const logFile = JSON.parse(message.text);
-                const minimapColors = new MinimapColors(logFile);
-                this.setState({logFile, minimapColors});
-            }
-        });
+        this.onMessage = this.onMessage.bind(this);
+        window.addEventListener('message', this.onMessage);
 
-        // @ts-ignore
-	    const vscode = acquireVsCodeApi();
-        vscode.postMessage({type: 'update'});
+        this.vscode.postMessage({type: 'update'});
+    }
+
+    onMessage(event: MessageEvent) {
+        const message = event.data;
+        if (message.type === 'update') {
+            const rules = message.rules.map((r) => Rule.fromJSON(r));
+            const logFile = LogFile.create(JSON.parse(message.text), rules);
+            this.setState({logFile, rules});
+        }
+    }
+
+    handleRulesDialogClose(newRules: Rule[]) {
+        this.vscode.postMessage({type: 'save_rules', rules: newRules.map((r) => r.toJSON())});
+        this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showRulesDialog: false});
     }
 
     render() {
-        if (!this.state.logFile || !this.state.minimapColors) return;
-        const minimapWidth = Object.keys(this.state.minimapColors.columnColors).length * MINIMAP_COLUMN_WIDTH;
+        const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         return (
             <div style={{display: 'flex', flexDirection: 'row', height: '100%'}}>
                 <div style={{flex: 1, display: 'flex'}}>
-                    <LogView 
+                    <LogView
                         logFile={this.state.logFile} 
                         onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
                     />
@@ -62,15 +70,13 @@ export default class App extends React.Component<Props, State> {
                     {this.state.logViewState && 
                         <MinimapView 
                             logFile={this.state.logFile} 
-                            logColors={this.state.minimapColors} 
                             logViewState={this.state.logViewState}/>
                     }
                 </div>
                 { this.state.showRulesDialog && 
                     <RulesDialog 
-                        rules={this.state.rules} 
-                        onClose={() => this.setState({showRulesDialog: false})}
-                        setRules={(rules) => this.setState({rules})}
+                        initialRules={this.state.rules} 
+                        onClose={(newRules) => this.handleRulesDialogClose(newRules)}
                     /> 
                 }
             </div>

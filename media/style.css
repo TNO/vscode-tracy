@@ -2,6 +2,10 @@
     background-color: var(--vscode-editorGroupHeader-tabsBackground);
 }
 
+.list-hover-background {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
 .dialog {
     outline: 1px solid var(--vscode-menu-border);
     border-radius: 5px;

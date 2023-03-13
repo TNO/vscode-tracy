@@ -1,3 +1,5 @@
+import LogFile from '../LogFile';
+
 export default abstract class Rule {
     readonly column: string;
     readonly description: string;
@@ -12,4 +14,10 @@ export default abstract class Rule {
     abstract setColumn(string): Rule;
     abstract setDescription(string): Rule;
     abstract renderEdit(onEdit: (newRule: Rule) => void, keyWidth: string, textFieldWidth: string): JSX.Element;
+    abstract computeValues(logFile: LogFile): string[];
+    abstract toJSON(): {[s: string]: any};
+    static fromJSON(json: {[s: string]: any}) {
+        const rule = require(`./${json.type}`).default;
+        return rule.fromJSON(json);
+    }
 }

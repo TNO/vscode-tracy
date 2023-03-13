@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(EditorProvider.register(context));
@@ -21,6 +22,8 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 		webviewPanel: vscode.WebviewPanel,
 		_token: vscode.CancellationToken
 	): Promise<void> {
+		const rulesFile = `${document.fileName}.rules`;
+
 		// Setup initial content for the webview
 		webviewPanel.webview.options = {
 			enableScripts: true,
@@ -31,6 +34,7 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 			webviewPanel.webview.postMessage({
 				type: 'update',
 				text: document.getText(),
+				rules: fs.existsSync(rulesFile) ? JSON.parse(fs.readFileSync(rulesFile, {encoding: 'utf8'})) : [],
 			});
 		}
 
@@ -57,6 +61,8 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 		webviewPanel.webview.onDidReceiveMessage(e => {
 			if (e.type === 'update') {
 				updateWebview();
+			} else if (e.type === 'save_rules') {
+				fs.writeFileSync(rulesFile, JSON.stringify(e.rules));
 			}
 		});
 	}

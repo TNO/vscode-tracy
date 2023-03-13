@@ -5,13 +5,13 @@ import StateBasedRule from './StateBasedRule';
 import Table from './Table';
 
 interface Props {
-    onClose: () => void;
-    rules: Rule[];
-    setRules: (rules: Rule[]) => void;
+    onClose: (rules: Rule[]) => void;
+    initialRules: Rule[];
 }
 
 interface State {
     selectedRule: undefined | number;
+    rules: Rule[];
 }
 
 const BACKDROP_STYLE: React.CSSProperties = {
@@ -24,22 +24,18 @@ const DIALOG_STYLE: React.CSSProperties = {height: '95%', width: '95%', padding:
 export default class RulesDialog extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
-        this.state = {selectedRule: 0} // TODO make undefined
-    }
-
-    deleteRule(rule: Rule) {
-        this.props.setRules(this.props.rules.filter(r => r !== rule));
+        this.state = {selectedRule: undefined, rules: props.initialRules}
     }
 
     renderManage() {
         const onAddAction = () => {
-            const newRule = new StateBasedRule(`Rule${this.props.rules.length + 1}`, '', '', []);
-            this.props.setRules([...this.props.rules, newRule])
+            const newRule = new StateBasedRule(`Rule${this.state.rules.length + 1}`, '', '', []);
+            this.setState({rules: [...this.state.rules, newRule], selectedRule: this.state.rules.length});
         }
 
         const onDeleteAction = (index: number) => {
             if (this.state.selectedRule === index) this.setState({selectedRule: undefined});
-            this.props.setRules(this.props.rules.filter((r, i) => index !== i));
+            this.setState({rules: this.state.rules.filter((r, i) => index !== i)});
         }
 
         return (
@@ -47,26 +43,26 @@ export default class RulesDialog extends React.Component<Props, State> {
                 <Table
                     title='Manage rules'
                     columns={[{name: 'Column', width: '15%'}, {name: 'Type', width: '15%'}, {name: 'Description', width: ''}]}
-                    rows={this.props.rules.map((rule) => [rule.column, rule.friendlyType, rule.description])} 
+                    rows={this.state.rules.map((rule) => [rule.column, rule.friendlyType, rule.description])} 
                     noRowsText={'No rules defined yet (press + to add)'}
-                    enableActions={true}
                     onAddAction={onAddAction}
                     onEditAction={(selectedRule) => this.setState({selectedRule})}
                     onDeleteAction={onDeleteAction}
+                    highlightRow={this.state.selectedRule}
                 />
             </div>
         )
     }
 
     updateRule(rule: Rule, index: number) {
-        const rules = [...this.props.rules];
+        const rules = [...this.state.rules];
         rules[index] = rule;
-        this.props.setRules(rules);
+        this.setState({rules});
     }
 
     renderEdit() {
         if (this.state.selectedRule === undefined) return;
-        const rule = this.props.rules[this.state.selectedRule];
+        const rule = this.state.rules[this.state.selectedRule];
         const ruleIndex = this.state.selectedRule;
         const defaultRuleColumn = `Rule${ruleIndex + 1}`;
         const typeOptions = [StateBasedRule];
@@ -82,7 +78,7 @@ export default class RulesDialog extends React.Component<Props, State> {
             ],
             [
                 ('Type'),
-                <VSCodeDropdown style={{width: textFieldWidth, marginBottom: '2px'}} value={typeOptions.findIndex(o => rule instanceof o).toString()}>
+                <VSCodeDropdown style={{width: textFieldWidth, marginBottom: '2px'}} value={typeOptions.findIndex(o => rule instanceof o).toString()} onChange={() => 'TODO'}>
                     {typeOptions.map((o, i) => <VSCodeOption key={i} value={i.toString()}>{o.friendlyType}</VSCodeOption>)}
                 </VSCodeDropdown>
             ],
@@ -114,7 +110,7 @@ export default class RulesDialog extends React.Component<Props, State> {
                 <div className='dialog' style={DIALOG_STYLE}>
                     <div style={{display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'top'}}>
                         <div className='title-big'>Rules</div>
-                        <VSCodeButton appearance='icon' onClick={() => this.props.onClose()}>
+                        <VSCodeButton appearance='icon' onClick={() => this.props.onClose(this.state.rules)}>
                             <i className='codicon codicon-close'/>
                         </VSCodeButton>
                     </div>
