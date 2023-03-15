@@ -23,7 +23,7 @@ To develop Tracy:
     ```bash
     # Clone the repository
     git clone https://github.com/TNO/vscode-tracy.git
-    cd IGTS-IC-Log-Analyzer
+    cd vscode-tracy
     # Install dependencies
     npm ci 
     # Open the repository in Visual Studio Code
