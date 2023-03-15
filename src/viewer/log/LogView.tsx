@@ -26,7 +26,6 @@ const COLUMN_WIDTH_LOOKUP = {
     threadID: 80, 
     location: 200,
     message: 400,
-    listening: 100,
 };
 
 export default class LogView extends React.Component<Props, State> {

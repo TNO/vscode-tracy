@@ -5,46 +5,55 @@ import { interpolateTurbo } from "d3-scale-chromatic"
 
 interface Header {name: string, type: 'string' | 'number'}
 
+// TODO: determine column type automatically, not hardcoded
+const DEFAULT_HEADER_TYPE = 'string';
+const HEADER_TYPE_LOOKUP = {
+    threadID: 'number',
+};
+
 export default class LogFile {
     private readonly headerIndexLookup: {[k: string]: number};
 
+    readonly contentHeaders: string[];
     readonly headers: Header[];
     readonly rows: string[][];
     readonly columnsColors: string[][] = [];
 
-    private constructor(headers: Header[], rows: string[][]) {
+    private constructor(contentHeaders: string[], headers: Header[], rows: string[][]) {
+        this.contentHeaders = contentHeaders;
         this.headerIndexLookup = Object.fromEntries(headers.map((h, i) => [h.name, i]));
         this.headers = headers;
         this.rows = rows;
     }
 
     static create(content: {[s: string]: string}[], rules: Rule[]) {
-        const headers = this.getHeaders(rules);
+        const contentHeaders = this.getContentHeaders(content);
+        const headers = this.getHeaders(contentHeaders, rules);
         const rows = content.map((l) => headers.map((h) => l[h.name]));
-        const logFile = new LogFile(headers, rows);
+        const logFile = new LogFile(contentHeaders, headers, rows);
         logFile.computeRulesValuesAndColors(rules);
         return logFile;
     }
 
     setRules(rules: Rule[]): LogFile {
-        const headers = LogFile.getHeaders(rules);
-        const logFile = new LogFile(headers, this.rows);
+        const headers = LogFile.getHeaders(this.contentHeaders, rules);
+        const logFile = new LogFile(this.contentHeaders, headers, this.rows);
         logFile.computeRulesValuesAndColors(rules);
         return logFile;
     }
 
-    private static getHeaders(rules: Rule[]) {
-        // TODO: determine headers based on content
-        const headers: Header[] = [
-            {name: 'timestamp', type: 'string'},
-            {name: 'level', type: 'string'},
-            {name: 'threadID', type: 'number'},
-            {name: 'location', type: 'string'},
-            {name: 'message', type: 'string'},
-            {name: 'listening', type: 'string'},
-            ...rules.map((r): Header => {return {name: r.column, type: 'string'}}),
-        ];
-        return headers;
+    private static getContentHeaders(content: {[s: string]: string}[]) {
+        // Headers are all keys that are present in the first object (row)
+        const first = content[0] ?? {};
+        return Object.keys(first);
+    }
+
+    private static getHeaders(contentHeaders: string[], rules: Rule[]) {
+        const allHeaders = [...contentHeaders, ...rules.map((r) => r.column)];
+        return allHeaders.map((name) => {
+            const type = HEADER_TYPE_LOOKUP[name] ?? DEFAULT_HEADER_TYPE;
+            return {name, type};
+        });
     }
 
     private computeRulesValuesAndColors(rules: Rule[]) {
