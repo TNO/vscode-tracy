@@ -40,7 +40,7 @@ export default class App extends React.Component<Props, State> {
     onMessage(event: MessageEvent) {
         const message = event.data;
         if (message.type === 'update') {
-            const rules = message.rules.map((r) => Rule.fromJSON(r));
+            const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
             const logFile = LogFile.create(JSON.parse(message.text), rules);
             this.setState({logFile, rules});
         }

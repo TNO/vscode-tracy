@@ -27,7 +27,7 @@ export default class StateBasedRule extends Rule {
 
     public toJSON() {
         const {column, description, initialState, subRules} = this;
-        const type = StateBasedRule.name;
+        const type = 'StateBasedRule';
         return {column, description, initialState, subRules, type};
     }
 

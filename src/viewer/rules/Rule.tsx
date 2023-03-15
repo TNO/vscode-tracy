@@ -17,7 +17,9 @@ export default abstract class Rule {
     abstract computeValues(logFile: LogFile): string[];
     abstract toJSON(): {[s: string]: any};
     static fromJSON(json: {[s: string]: any}) {
-        const rule = require(`./${json.type}`).default;
-        return rule.fromJSON(json);
+        const lookup = {
+            StateBasedRule: require('./StateBasedRule').default,
+        }
+        return lookup[json.type]?.fromJSON(json);
     }
 }
