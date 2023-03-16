@@ -3,10 +3,12 @@ import Rule from './Rule';
 import { VSCodeButton, VSCodeDivider, VSCodeDropdown, VSCodeOption, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
 import StateBasedRule from './StateBasedRule';
 import Table from './Table';
+import LogFile from '../LogFile';
 
 interface Props {
     onClose: (rules: Rule[]) => void;
     initialRules: Rule[];
+    logFile: LogFile;
 }
 
 interface State {
@@ -99,7 +101,7 @@ export default class RulesDialog extends React.Component<Props, State> {
                     rows={rows}
                     columns={[{width: '100px'}, {width: ''}]}
                 />
-                {rule.renderEdit((newRule) => this.updateRule(newRule, ruleIndex), keyWidth, textFieldWidth)}
+                {rule.renderEdit((newRule) => this.updateRule(newRule, ruleIndex), keyWidth, textFieldWidth, this.props.logFile)}
             </div>
         )
     }

@@ -1,7 +1,7 @@
+// When adding new rules, don't forget to update the lookup in Rule.fromJSON
 import React from 'react';
 import Rule from './Rule';
 import Table from './Table';
-import { LOG_COLUMNS } from '../constants';
 import { VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import LogFile from '../LogFile';
 
@@ -35,7 +35,7 @@ export default class StateBasedRule extends Rule {
         return new StateBasedRule(json.column, json.description, json.initialState, json.subRules);
     }
 
-    public renderEdit(onEdit: (newRule: Rule) => void, keyWidth: string, textFieldWidth: string) {
+    public renderEdit(onEdit: (newRule: Rule) => void, keyWidth: string, textFieldWidth: string, logFile: LogFile) {
         const initialStateEdit = (
             <VSCodeTextField 
                 style={{width: textFieldWidth}}
@@ -49,7 +49,7 @@ export default class StateBasedRule extends Rule {
             onEdit(this.setSubRules(rules));
         };
 
-        const columns = ['', ...LOG_COLUMNS.map((r) => r.name)];
+        const columns = ['', ...logFile.contentHeaders];
 
         const subRulesRows = this.subRules.map((r, i) => {
             return [

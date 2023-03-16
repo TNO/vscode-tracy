@@ -75,6 +75,7 @@ export default class App extends React.Component<Props, State> {
                 </div>
                 { this.state.showRulesDialog && 
                     <RulesDialog 
+                        logFile={this.state.logFile}
                         initialRules={this.state.rules} 
                         onClose={(newRules) => this.handleRulesDialogClose(newRules)}
                     /> 
