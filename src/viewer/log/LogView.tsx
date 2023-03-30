@@ -2,6 +2,7 @@ import React from 'react';
 import { LOG_HEADER_HEIGHT, BORDER, BORDER_SIZE } from '../constants';
 import { LogViewState } from '../types';
 import LogFile from '../LogFile';
+import ReactResizeDetector from 'react-resize-detector';
 
 interface Props {
     logFile: LogFile;
@@ -9,6 +10,7 @@ interface Props {
 }
 interface State {
     state: LogViewState | undefined;
+    columnWidth: { [id: string]: number };
 }
 
 const ROW_HEIGHT = 28;
@@ -35,7 +37,7 @@ export default class LogView extends React.Component<Props, State> {
         super(props);
         this.viewport = React.createRef();
         this.updateState = this.updateState.bind(this);
-        this.state = {state: undefined};
+        this.state = {state: undefined, columnWidth: COLUMN_WIDTH_LOOKUP};
     }
 
     componentDidMount(): void {
@@ -47,13 +49,17 @@ export default class LogView extends React.Component<Props, State> {
         if (prevProps.logFile !== this.props.logFile) {
             this.updateState();
         }
+        if (prevState.columnWidth !== this.state.columnWidth) {
+            this.render();
+        }
     }
 
     renderColumn(value: string, index: number, isHeader: boolean, width: number) {
         const height = isHeader ? LOG_HEADER_HEIGHT : ROW_HEIGHT;
+        const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
         const style: React.CSSProperties = {
             overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
-            width, borderLeft: index !== 0 ? BORDER : '',
+            width: widthNew, borderLeft: index !== 0 ? BORDER : '',
         };
         const innerStyle: React.CSSProperties = {
             display: 'flex', height, alignItems: 'center', justifyContent: isHeader ? 'center' : 'left', 
@@ -102,6 +108,17 @@ export default class LogView extends React.Component<Props, State> {
         this.props.onLogViewStateChanged(state);
     }
 
+    setColumnWidth(name: string, width: number) {
+        //update the state for triggering the render
+        this.setState(prevState => {
+            let columnWidth = {...prevState.columnWidth};
+            columnWidth[name] = width;
+            return {columnWidth};
+        });
+        //update the width values 
+        COLUMN_WIDTH_LOOKUP[name] = width;
+    }
+
     columnWidth(name: string) {
         return COLUMN_WIDTH_LOOKUP[name] ?? DEFAULT_COLUMN_WIDTH;
     }
@@ -114,9 +131,31 @@ export default class LogView extends React.Component<Props, State> {
         return (
             <div style={HEADER_STYLE} className="header-background">
                 <div style={style}>
-                    {this.props.logFile.headers.map((h, i) => this.renderColumn(h.name, i, true, this.columnWidth(h.name)))}
+                    {this.props.logFile.headers.map((h, i) => this.renderHeaderColumn(h.name, i, true, this.columnWidth(h.name)))}
                 </div>
             </div>
+        );
+    }
+
+    renderHeaderColumn(value: string, index: number, isHeader: boolean, width: number) {
+        const height = isHeader ? LOG_HEADER_HEIGHT : ROW_HEIGHT;
+        var widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const style: React.CSSProperties = {
+            overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
+            width: widthNew, borderLeft: index !== 0 ? BORDER : '',
+        };
+        const innerStyle: React.CSSProperties = {
+            display: 'flex', height, alignItems: 'center', justifyContent: isHeader ? 'center' : 'left', 
+            paddingLeft: '2px'
+        };
+        return (
+            <ReactResizeDetector handleWidth key={index} onResize={(width)=>this.setColumnWidth(value, width!)}>
+            <div className="resizable-content" style={style} key={index}>
+                <div style={innerStyle}>
+                    {value}
+                </div>
+            </div>
+            </ReactResizeDetector>
         );
     }
 

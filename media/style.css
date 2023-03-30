@@ -42,3 +42,10 @@ html {
     height: 100%;
     margin: 0;
 }
+
+div.resizable-content {
+    min-height: 30px;
+    min-width: 50px;
+    resize: horizontal;
+    overflow: auto;
+}
