@@ -49,3 +49,9 @@ div.resizable-content {
     resize: horizontal;
     overflow: auto;
 }
+
+.rotate {
+    font-size: 12px;
+    transform-origin: bottom left;
+    transform: rotate(-90deg) translateY(100%);
+}

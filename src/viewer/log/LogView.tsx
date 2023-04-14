@@ -152,11 +152,20 @@ export default class LogView extends React.Component<Props, State> {
             <ReactResizeDetector handleWidth key={index} onResize={(width)=>this.setColumnWidth(value, width!)}>
             <div className="resizable-content" style={style} key={index}>
                 <div style={innerStyle}>
+                <input type="checkbox" id="showMini" key={index} checked onChange={(e) => this.handleCheckbox(e, index)}></input>
                     {value}
                 </div>
             </div>
             </ReactResizeDetector>
         );
+    }
+
+    handleCheckbox(e: React.ChangeEvent<HTMLInputElement>, index: number) {
+        if (e.target.checked) {
+            this.props.logFile.showColumn(index);
+        } else {
+            this.props.logFile.hideColumn(index);
+        }
     }
 
     render() {
