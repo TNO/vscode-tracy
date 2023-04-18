@@ -19,7 +19,7 @@ export default class MinimapHeader extends React.Component<Props> {
             display: 'flex', height: '100%', paddingLeft: '2px'
         };
         return (
-            <div style={style} >
+            <div key={index} style={style} >
                 <div style={innerStyle} className='rotate'>
                     {name}
                 </div>
