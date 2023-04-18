@@ -42,3 +42,16 @@ html {
     height: 100%;
     margin: 0;
 }
+
+div.resizable-content {
+    min-height: 30px;
+    min-width: 50px;
+    resize: horizontal;
+    overflow: auto;
+}
+
+.rotate {
+    font-size: 12px;
+    transform-origin: bottom left;
+    transform: rotate(-90deg) translateY(100%);
+}
