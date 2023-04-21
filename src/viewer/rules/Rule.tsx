@@ -11,9 +11,10 @@ export default abstract class Rule {
         this.description = description;
     }
 
+    abstract reset(): Rule;
     abstract setColumn(string): Rule;
     abstract setDescription(string): Rule;
-    abstract renderEdit(onEdit: (newRule: Rule) => void, keyWidth: string, textFieldWidth: string, logFile: LogFile): JSX.Element;
+    abstract renderEdit(onEdit: (newRule: Rule) => void, keyWidth: string, textFieldWidth: string, user_columns:string[], logFile: LogFile): JSX.Element;
     abstract computeValues(logFile: LogFile): string[];
     abstract toJSON(): {[s: string]: any};
     static fromJSON(json: {[s: string]: any}) {
