@@ -6,8 +6,8 @@ import { LogViewState } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER } from './constants';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import RulesDialog from './rules/RulesDialog';
+import FlagsDialog from './rules/FlagsDialog';
 import Rule from './rules/Rule';
-import StateBasedRule from './rules/StateBasedRule';
 
 interface Props {
 }
@@ -15,6 +15,7 @@ interface State {
     logFile: LogFile;
     logViewState: LogViewState | undefined;
     showRulesDialog: boolean;
+    showFlagsDialog: boolean;
     rules: Rule[];
 }
 
@@ -29,11 +30,10 @@ export default class App extends React.Component<Props, State> {
 
     constructor(props: Props) {
         super(props);
-        this.state = {logFile: LogFile.create([], []), logViewState: undefined, showRulesDialog: false, rules: []};
+        this.state = {logFile: LogFile.create([], []), logViewState: undefined, showRulesDialog: false, showFlagsDialog: false, rules: []};
 
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
-
         this.vscode.postMessage({type: 'update'});
     }
 
@@ -51,6 +51,11 @@ export default class App extends React.Component<Props, State> {
         this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showRulesDialog: false});
     }
 
+    handleFlagsDialogClose(newRules: Rule[]) {
+        this.vscode.postMessage({type: 'save_rules', rules: newRules.map((r) => r.toJSON())});
+        this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showFlagsDialog: false});
+    }
+
     render() {
         const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         return (
@@ -63,6 +68,9 @@ export default class App extends React.Component<Props, State> {
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth}}>
                     <div className='header-background' style={COLUMN_2_HEADER_STYLE}>
+                        <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
+                            <i className="codicon codicon-tag"/>
+                        </VSCodeButton>
                         <VSCodeButton appearance='icon' onClick={() => this.setState({showRulesDialog: true})}>
                             <i className="codicon codicon-settings-gear"/>
                         </VSCodeButton>
@@ -73,11 +81,18 @@ export default class App extends React.Component<Props, State> {
                             logViewState={this.state.logViewState}/>
                     }
                 </div>
-                { this.state.showRulesDialog && 
-                    <RulesDialog 
+                { this.state.showRulesDialog &&
+                    <RulesDialog
                         logFile={this.state.logFile}
-                        initialRules={this.state.rules} 
+                        initialRules={this.state.rules}
                         onClose={(newRules) => this.handleRulesDialogClose(newRules)}
+                    /> 
+                }
+                { this.state.showFlagsDialog &&
+                    <FlagsDialog
+                        logFile={this.state.logFile}
+                        initialRules={this.state.rules}
+                        onClose={(newRules) => this.handleFlagsDialogClose(newRules)}
                     /> 
                 }
             </div>
