@@ -1,11 +1,11 @@
 // When adding new rules, don't forget to update the lookup in Rule.fromJSON
 import React from 'react';
 import Rule from './Rule';
-import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodeDivider, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
 import LogFile from '../LogFile';
 import Table from './Tables/Table';
 import StateTable from './Tables/StateTable';
 import TransitionTable from './Tables/TransitionTable';
+import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodeDivider, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
 
 
 interface State {name: string, transitions: Transition[]};
@@ -104,20 +104,20 @@ export default class StateBasedRule extends Rule {
             for (let t_i = 0; t_i < this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions.length; t_i++) {
                 const condition_set = this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions[t_i];
                 transitionRows.push(condition_set.map((r, c_i) => {
-                        return [
-                            <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={r.Column} onChange={(e) => editTransition(t_i, c_i, 'Column', e.target.value)}>
-                                {all_columns.map((o, c_i) => <VSCodeOption key={c_i} value={o}>{o}</VSCodeOption>)}
-                            </VSCodeDropdown>,
-                            <VSCodeDropdown  style={{width: '100%'}} initialValue={r.Operation}  onChange={(e) => editTransition(t_i, c_i, 'Operation', e.target.value)}>
-                                <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
-                                <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
-                                <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
-                                <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
-                            </VSCodeDropdown>,
-                            <VSCodeTextField  style={{width: '100%'}} initialValue={r.Text}  onInput={(e) => editTransition(t_i, c_i, 'Text', e.target.value)}/>,
-                        ];
-                    }));
-                }
+                    return [
+                        <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={r.Column} onChange={(e) => editTransition(t_i, c_i, 'Column', e.target.value)}>
+                            {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                        </VSCodeDropdown>,
+                        <VSCodeDropdown  style={{width: '100%'}} initialValue={r.Operation}  onChange={(e) => editTransition(t_i, c_i, 'Operation', e.target.value)}>
+                            <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
+                            <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
+                            <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
+                            <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
+                        </VSCodeDropdown>,
+                        <VSCodeTextField  style={{width: '100%'}} initialValue={r.Text}  onInput={(e) => editTransition(t_i, c_i, 'Text', e.target.value)}/>,
+                    ];
+                }));
+            }
         }
 
         const onAddCondition = (transitionIndex: number) => {
@@ -239,53 +239,58 @@ export default class StateBasedRule extends Rule {
 
     public computeValues(logFile: LogFile): string[] {
         let current_state;
-        if (this.ruleStates.length === 0) current_state = '';
-        else current_state = this.ruleStates[this.initialStateIndex].name;
         const values: string[] = [];
-        values[0] = current_state;
-        for (let r = 1; r < logFile.amountOfRows(); r++) {
-            let state_transitions = this.ruleStates.filter(st => st.name === current_state)[0].transitions
-            state_transitions = state_transitions.filter(tr => tr.conditions.length > 0)
-            for (const transition of state_transitions) {
-                let transition_found: boolean = false;
-                for (const condition_set of transition.conditions) {
-                    let all_conditions_satisfied: boolean = true;
-                    for (const condition of condition_set) {
-                        const logValue = logFile.value(condition.Column, r) ?? '';
-                        if (condition.Operation === 'contains') {
-                            if (!logValue.includes(condition.Text)) {
-                                all_conditions_satisfied = false;
-                                break;
+        if (this.ruleStates.length === 0) {
+            for (let r = 1; r < logFile.amountOfRows(); r++) 
+                values[r] = '';
+        }
+        else {
+            current_state = this.ruleStates[this.initialStateIndex].name;
+            values[0] = current_state;
+            for (let r = 1; r < logFile.amountOfRows(); r++) {
+                let state_transitions = this.ruleStates.filter(st => st.name === current_state)[0].transitions
+                state_transitions = state_transitions.filter(tr => tr.conditions.length > 0)
+                for (const transition of state_transitions) {
+                    let transition_found: boolean = false;
+                    for (const condition_set of transition.conditions) {
+                        let all_conditions_satisfied: boolean = true;
+                        for (const condition of condition_set) {
+                            const logValue = logFile.value(condition.Column, r) ?? '';
+                            if (condition.Operation === 'contains') {
+                                if (!logValue.includes(condition.Text)) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
+                            }
+                            else if (condition.Operation === 'equals') {
+                                if (logValue !== condition.Text) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
+                            }
+                            else if (condition.Operation === 'startsWith') {
+                                if (!logValue.startsWith(condition.Text)) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
+                            }
+                            else if (condition.Operation === 'endsWith') {
+                                if (!logValue.endsWith(condition.Text)) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
                             }
                         }
-                        else if (condition.Operation === 'equals') {
-                            if (logValue !== condition.Text) {
-                                all_conditions_satisfied = false;
-                                break;
-                            }
-                        }
-                        else if (condition.Operation === 'startsWith') {
-                            if (!logValue.startsWith(condition.Text)) {
-                                all_conditions_satisfied = false;
-                                break;
-                            }
-                        }
-                        else if (condition.Operation === 'endsWith') {
-                            if (!logValue.endsWith(condition.Text)) {
-                                all_conditions_satisfied = false;
-                                break;
-                            }
+                        if (all_conditions_satisfied === true) {
+                            current_state = transition.destination;
+                            transition_found = true;
+                            break;
                         }
                     }
-                    if (all_conditions_satisfied === true) {
-                        current_state = transition.destination;
-                        transition_found = true;
-                        break;
-                    }
+                    if (transition_found === true) break;
                 }
-                if (transition_found === true) break;
+                values[r] = current_state;
             }
-            values[r] = current_state;
         }
         return values;
     }

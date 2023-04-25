@@ -20,6 +20,7 @@ export default abstract class Rule {
     static fromJSON(json: {[s: string]: any}) {
         const lookup = {
             StateBasedRule: require('./StateBasedRule').default,
+            FlagRule: require('./FlagRule').default,
         }
         return lookup[json.type]?.fromJSON(json);
     }
