@@ -23,7 +23,7 @@ const BACKDROP_STYLE: React.CSSProperties = {
     justifyContent: 'center', alignItems: 'center',
 }
 
-const DIALOG_STYLE: React.CSSProperties = {height: '95%', width: '95%', padding: '10px', display: 'flex', flexDirection: 'column'};
+const DIALOG_STYLE: React.CSSProperties = {height: '95%', width: '95%', padding: '10px', display: 'flex', flexDirection: 'column', overflow: 'auto'};
 
 export default class RulesDialog extends React.Component<Props, State> {
     constructor(props: Props) {

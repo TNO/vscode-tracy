@@ -117,28 +117,21 @@ export default class App extends React.Component<Props, State> {
                                 logViewState={this.state.logViewState}/>
                         }
                     </div>
-                    { this.state.showRulesDialog && 
-                        <RulesDialog 
-                            logFile={this.state.logFile}
-                            initialRules={this.state.rules} 
-                            onClose={(newRules) => this.handleRulesDialogClose(newRules)}
-                        /> 
-                    }
-                </div>
-                { this.state.showRulesDialog &&
+                    { this.state.showRulesDialog &&
                     <RulesDialog
                         logFile={this.state.logFile}
                         initialRules={this.state.rules}
                         onClose={(newRules) => this.handleRulesDialogClose(newRules)}
                     /> 
-                }
-                { this.state.showFlagsDialog &&
-                    <FlagsDialog
-                        logFile={this.state.logFile}
-                        initialRules={this.state.rules}
-                        onClose={(newRules) => this.handleFlagsDialogClose(newRules)}
-                    /> 
-                }
+                    }
+                    { this.state.showFlagsDialog &&
+                        <FlagsDialog
+                            logFile={this.state.logFile}
+                            initialRules={this.state.rules}
+                            onClose={(newRules) => this.handleFlagsDialogClose(newRules)}
+                        /> 
+                    }
+                </div>
             </div>
         );
     }
