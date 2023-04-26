@@ -1,7 +1,7 @@
 {
 	"name": "vscode-tracy",
 	"displayName": "Tracy",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"publisher": "TNO",
 	"license": "MIT",
 	"repository": {
