@@ -1,8 +1,8 @@
 import React from 'react';
-import Rule from './Rule';
-import LogFile from '../LogFile';
-import StateBasedRule from './StateBasedRule';
-import Table from './Tables/Table';
+import Rule from '../Rule';
+import LogFile from '../../LogFile';
+import FlagRule from '../FlagRule';
+import Table from '../Tables/Table';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 
 
@@ -25,7 +25,7 @@ const BACKDROP_STYLE: React.CSSProperties = {
 
 const DIALOG_STYLE: React.CSSProperties = {height: '95%', width: '95%', padding: '10px', display: 'flex', flexDirection: 'column', overflow: 'auto'};
 
-export default class RulesDialog extends React.Component<Props, State> {
+export default class FlagsDialog extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {showEdit: false, selectedRule: -1, rules: props.initialRules}
@@ -37,31 +37,37 @@ export default class RulesDialog extends React.Component<Props, State> {
         this.setState({rules});
     }
 
+    updateDefault(rule: Rule, val: string, index: number) {
+        const rules = [...this.state.rules];
+        let flagrule = rule as FlagRule;
+        rules[index] = flagrule.setDefault(val);
+        this.setState({rules});
+    }
+
     renderManage() {
         const onAddAction = () => {
-            const newRule = new StateBasedRule(`Rule${this.state.rules.filter(r => r.friendlyType === 'State based rule').length + 1}`, '', 0, 0, 0, []);
+            const newRule = new FlagRule(`FlagColumn${this.state.rules.filter(r => r.friendlyType === 'Flag rule').length + 1}`, '', '', 0, []);
             this.setState({rules: [...this.state.rules, newRule], selectedRule: this.state.rules.length, showEdit: true});
         }
 
         const onEditAction = (table_index: number) => {
-            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'State based rule')[table_index]);
+            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'Flag rule')[table_index]);
             this.setState({showEdit: true, selectedRule: index});
         }
 
         const onDeleteAction = (table_index: number) => {
-            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'State based rule')[table_index]);
+            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'Flag rule')[table_index]);
             if (this.state.selectedRule === index) this.setState({selectedRule: -1});
             this.setState({rules: this.state.rules.filter((r, i) => i !== index)});
         }
-    
 
         return (
             <div style={{marginTop: '10px'}}>
                 <Table
-                    // title='Manage rules'
+                    // title='Manage flags'
                     columns={[{name: 'Name', width: '150px'}, {name: 'Type', width: '150px'}, {name: 'Description', width: ''}]}
-                    rows={this.state.rules.filter(r => r.friendlyType === 'State based rule').map((rule) => [rule.column, rule.friendlyType, rule.description])} 
-                    noRowsText={'No rules have been defined (click + to add)'}
+                    rows={this.state.rules.filter(r => r.friendlyType === 'Flag rule').map((rule) => [rule.column, rule.friendlyType, rule.description])} 
+                    noRowsText={'No flags have been defined (click + to add)'}
                     onAddAction={onAddAction}
                     onEditAction={onEditAction}
                     onDeleteAction={onDeleteAction}
@@ -70,14 +76,15 @@ export default class RulesDialog extends React.Component<Props, State> {
         )
     }
 
-
     renderEdit() {
         if (this.state.selectedRule === -1) return;
         const ruleIndex = this.state.selectedRule;
         const rule = this.state.rules[ruleIndex];
+        let tmp = rule as FlagRule;
+        const defValue = tmp.defaultValue;
         const user_columns = this.state.rules.map((r, i) => r.column)
-        const defaultRuleColumn = `Rule${ruleIndex + 1}`;
-        const typeOptions = [StateBasedRule];
+        const defaultRuleColumn = `Flag${ruleIndex + 1}`;
+        const typeOptions = [FlagRule];
         const keyWidth = '100px';
         const textFieldWidth = '250px';
         const rows = [
@@ -91,16 +98,23 @@ export default class RulesDialog extends React.Component<Props, State> {
             [
                 ('Description'),
                 <VSCodeTextField 
-                    style={{width: '250px'}}
+                    style={{width: textFieldWidth}}
                     initialValue={rule.description} 
                     onInput={(e) => this.updateRule(rule.setDescription(e.target.value), ruleIndex)}/>
             ],
             [
-                ('Type'),
-                <VSCodeDropdown disabled style={{width: textFieldWidth, marginBottom: '2px'}} value={typeOptions.findIndex(o => rule instanceof o).toString()} onChange={() => 'TODO'}>
-                    {typeOptions.map((o, i) => <VSCodeOption key={i} value={i.toString()}>{o.friendlyType}</VSCodeOption>)}
-                </VSCodeDropdown>
+                ('Default Value'),
+                <VSCodeTextField 
+                    style={{width: textFieldWidth}}
+                    initialValue={defValue} 
+                    onInput={(e) => this.updateDefault(rule, e.target.value, ruleIndex)}/>
             ],
+            // [
+            //     ('Type'),
+            //     <VSCodeDropdown disabled style={{width: textFieldWidth, marginBottom: '2px'}} value={typeOptions.findIndex(o => rule instanceof o).toString()} onChange={() => 'TODO'}>
+            //         {typeOptions.map((o, i) => <VSCodeOption key={i} value={i.toString()}>{o.friendlyType}</VSCodeOption>)}
+            //     </VSCodeDropdown>
+            // ],
         ];
 
         return (
@@ -116,14 +130,8 @@ export default class RulesDialog extends React.Component<Props, State> {
         )
     }
 
-    render() {
-        const onReturn = () => {
-            const ruleIndex = this.state.selectedRule;
-            const rule = this.state.rules[ruleIndex];
-            this.updateRule(rule.reset(), ruleIndex)
-            this.setState({showEdit: false});
-        }
 
+    render() {
         return (
             <div style={BACKDROP_STYLE}>
                 <div className='dialog' style={DIALOG_STYLE}>
@@ -132,10 +140,10 @@ export default class RulesDialog extends React.Component<Props, State> {
                             <div className='title-big'>Annotation Columns</div>
                         }
                         {   this.state.showEdit &&
-                            <div className='title-big'>Edit State-Based Annotation Column</div>
+                            <div className='title-big'>Edit Flag Annotation Column</div>
                         }
                         {   this.state.showEdit &&
-                            <VSCodeButton style={{marginLeft: 'auto'}} appearance='icon' onClick={onReturn}>
+                            <VSCodeButton style={{marginLeft: 'auto'}} appearance='icon' onClick={() => this.setState({showEdit: false})}>
                                 <i className='codicon codicon-arrow-left'/>
                             </VSCodeButton>
                         }

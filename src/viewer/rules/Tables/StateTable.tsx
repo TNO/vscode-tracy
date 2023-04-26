@@ -5,7 +5,7 @@ interface Props {
     title?: string;
     columns: {name?: string, width: string}[];
     rows: (JSX.Element | string)[][];
-    start_state: number;
+    start_state?: number;
     hideHeader?: boolean
     noRowsText?: string;
     onAddAction?: () => void;

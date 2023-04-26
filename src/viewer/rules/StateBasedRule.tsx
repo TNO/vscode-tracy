@@ -66,9 +66,13 @@ export default class StateBasedRule extends Rule {
 
         const stateRows = this.ruleStates.map((r, i) => {
             return [
-                <VSCodeTextField initialValue={r.name}  onInput={(e) => editStateName(i, e.target.value)}/>,
+                <VSCodeTextField initialValue={r.name} onInput={(e) => editStateName(i, e.target.value)}/>,
             ]
         })
+
+        const onSetInitialState = (index: number) => {
+            onEdit(this.setInitialState(index));
+        }
 
         const onAddState = () => {
             let new_name;
@@ -78,10 +82,6 @@ export default class StateBasedRule extends Rule {
                 if (existing_states.indexOf(new_name) == -1) break;
             }
             onEdit(this.setStates([...this.ruleStates, {name: new_name, transitions: [{destination:new_name, conditions: []}]}], this.initialStateIndex));
-        }
-
-        const onSetInitialState = (index: number) => {
-            onEdit(this.setInitialState(index));
         }
 
         const onDeleteState = (index: number) => {

@@ -5,8 +5,8 @@ import LogFile from './LogFile';
 import { LogViewState } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER } from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
-import RulesDialog from './rules/RulesDialog';
-import FlagsDialog from './rules/FlagsDialog';
+import StatesDialog from './rules/Dialogs/StatesDialog';
+import FlagsDialog from './rules/Dialogs/FlagsDialog';
 import Rule from './rules/Rule';
 import MinimapHeader from './minimap/MinimapHeader';
 import { display } from '@microsoft/fast-foundation';
@@ -17,9 +17,9 @@ interface State {
     logFile: LogFile;
     logViewState: LogViewState | undefined;
     rules: Rule[];
-    showRulesDialog: boolean;
-    showMinimapHeader: boolean;
+    showStatesDialog: boolean;
     showFlagsDialog: boolean;
+    showMinimapHeader: boolean;
     searchColumn: string;
     searchText: string;
 }
@@ -40,8 +40,8 @@ export default class App extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {logFile: LogFile.create([], []), logViewState: undefined,
-            rules: [], showRulesDialog: false, showFlagsDialog: false, 
-            showMinimapHeader: true, searchColumn: '', searchText: ''};
+            rules: [], showStatesDialog: false, showFlagsDialog: false, 
+            showMinimapHeader: true, searchColumn: 'All', searchText: ''};
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
         this.vscode.postMessage({type: 'update'});
@@ -81,14 +81,9 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    handleRulesDialogClose(newRules: Rule[]) {
+    handleDialogClose(newRules: Rule[]) {
         this.vscode.postMessage({type: 'save_rules', rules: newRules.map((r) => r.toJSON())});
-        this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showRulesDialog: false});
-    }
-
-    handleFlagsDialogClose(newRules: Rule[]) {
-        this.vscode.postMessage({type: 'save_rules', rules: newRules.map((r) => r.toJSON())});
-        this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showFlagsDialog: false});
+        this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showStatesDialog: false, showFlagsDialog: false});
     }
 
     render() {
@@ -139,7 +134,7 @@ export default class App extends React.Component<Props, State> {
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
                                 <i className="codicon codicon-tag"/>
                             </VSCodeButton>
-                            <VSCodeButton appearance='icon' onClick={() => this.setState({showRulesDialog: true})}>
+                            <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
                                 <i className="codicon codicon-settings-gear"/>
                             </VSCodeButton>
                         </div>
@@ -149,18 +144,18 @@ export default class App extends React.Component<Props, State> {
                                 logViewState={this.state.logViewState}/>
                         }
                     </div>
-                    { this.state.showRulesDialog &&
-                    <RulesDialog
+                    { this.state.showStatesDialog &&
+                    <StatesDialog
                         logFile={this.state.logFile}
                         initialRules={this.state.rules}
-                        onClose={(newRules) => this.handleRulesDialogClose(newRules)}
+                        onClose={(newRules) => this.handleDialogClose(newRules)}
                     />
                     }
                     { this.state.showFlagsDialog &&
                         <FlagsDialog
                             logFile={this.state.logFile}
                             initialRules={this.state.rules}
-                            onClose={(newRules) => this.handleFlagsDialogClose(newRules)}
+                            onClose={(newRules) => this.handleDialogClose(newRules)}
                         /> 
                     }
                 </div>
