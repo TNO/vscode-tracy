@@ -77,10 +77,15 @@ export default class LogView extends React.Component<Props, State> {
     renderRows() {
         // This method only renders the rows that are visible
         if (!this.state.state) return;
-        const {startFloor, endCeil} = this.state.state;
-        const {logFile} = this.props;
         const result: any = [];
-        for (let r = startFloor; r <= endCeil; r++) {
+        const {logFile} = this.props;
+        let first_render = this.state.state.startFloor;
+        let last_render = this.state.state.endCeil;
+        if (logFile.rows.length === 1) {
+            first_render = 0;
+            last_render = -1;
+        }
+        for (let r = first_render; r <= last_render; r++) {
             const style: React.CSSProperties = {
                 position: 'absolute', height: ROW_HEIGHT, overflow: 'hidden', top: r * ROW_HEIGHT, borderBottom: BORDER
             };
