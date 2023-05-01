@@ -65,19 +65,23 @@ export default class App extends React.Component<Props, State> {
     }
 
     onMessage(event: MessageEvent) {
+        let logFile: LogFile;
         const message = event.data;
         if (message.type === 'update') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
-            if (this.state.searchText === '') {
-                const logFile = LogFile.create(JSON.parse(message.text), rules);
-                this.setState({logFile, rules});
-            }
+            let lines = JSON.parse(message.text);
+            if (this.state.searchText === '')
+                logFile = LogFile.create(lines, rules);
             else {
-                let lines = JSON.parse(message.text);
                 let filtered_lines = lines.filter(l => this.filterLogline(l, this.state.searchColumn, this.state.searchText));
-                const logFile = LogFile.create(filtered_lines, rules);
-                this.setState({logFile, rules});
+                if (filtered_lines.length === 0) {
+                    filtered_lines = [lines[0]]
+                    for (let k of Object.keys(lines[0]))
+                        filtered_lines[0][k] = ''
+                }
+                logFile = LogFile.create(filtered_lines, rules);
             }
+            this.setState({logFile, rules});
         }
     }
 

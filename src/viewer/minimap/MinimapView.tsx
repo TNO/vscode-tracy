@@ -9,6 +9,7 @@ interface Props {
 }
 interface State {
     scale: number;
+    controlDown: boolean;
 }
 
 export default class MinimapView extends React.Component<Props, State> {
@@ -18,11 +19,13 @@ export default class MinimapView extends React.Component<Props, State> {
         super(props);
         this.canvas = React.createRef();
         this.handleWheel = this.handleWheel.bind(this);
-        this.state = {scale: 1};
+        this.state = {scale: 1, controlDown: false};
     }
 
     componentDidMount(): void {
         window.addEventListener('resize', () => this.draw());
+        window.addEventListener('keydown', (e) => this.controlDownListener(e));
+        window.addEventListener('keyup', (e) => this.controlUpListener(e));
         this.draw();
     }
 
@@ -42,6 +45,7 @@ export default class MinimapView extends React.Component<Props, State> {
         var ctx = canvas.getContext("2d")!;
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (this.props.logFile.rows.length === 1) return;
 
         // Compute start and end.
         const {logViewState, logFile} = this.props;
@@ -88,10 +92,25 @@ export default class MinimapView extends React.Component<Props, State> {
     }
 
     handleWheel(e: React.WheelEvent<HTMLCanvasElement>) {
-        let offset = Math.abs(1.02 - this.state.scale) / 5;
-        let scale = this.state.scale + (e.deltaY < 0 ? offset : offset * -1);
-        scale = Math.max(Math.min(1, scale), 0);
-        this.setState({scale});
+        if (this.state.controlDown === true) {
+            let offset = Math.abs(1.02 - this.state.scale) / 5;
+            let scale = this.state.scale + (e.deltaY < 0 ? offset : offset * -1);
+            scale = Math.max(Math.min(1, scale), 0);
+            this.setState({scale});
+        }
+        else {
+            this.draw();
+        }
+    }
+
+    controlDownListener(e: any) {
+        if (e.key === 'Control')
+            this.setState({controlDown: true});
+    }
+
+    controlUpListener(e: any) {
+        if (e.key === 'Control')
+            this.setState({controlDown: false});
     }
 
     render() {
