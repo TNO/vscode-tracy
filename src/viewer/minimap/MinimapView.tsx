@@ -92,15 +92,15 @@ export default class MinimapView extends React.Component<Props, State> {
     }
 
     handleWheel(e: React.WheelEvent<HTMLCanvasElement>) {
-        if (this.state.controlDown === true) {
+        // if (this.state.controlDown === true) {
             let offset = Math.abs(1.02 - this.state.scale) / 5;
             let scale = this.state.scale + (e.deltaY < 0 ? offset : offset * -1);
             scale = Math.max(Math.min(1, scale), 0);
             this.setState({scale});
-        }
-        else {
-            this.draw();
-        }
+        // }
+        // else {
+        //     this.draw();
+        // }
     }
 
     controlDownListener(e: any) {

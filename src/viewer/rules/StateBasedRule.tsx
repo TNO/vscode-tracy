@@ -108,13 +108,13 @@ export default class StateBasedRule extends Rule {
                         <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={r.Column} onChange={(e) => editTransition(t_i, c_i, 'Column', e.target.value)}>
                             {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                         </VSCodeDropdown>,
-                        <VSCodeDropdown  style={{width: '100%'}} initialValue={r.Operation}  onChange={(e) => editTransition(t_i, c_i, 'Operation', e.target.value)}>
+                        <VSCodeDropdown  style={{width: '100%'}} value={r.Operation}  onChange={(e) => editTransition(t_i, c_i, 'Operation', e.target.value)}>
                             <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
                             <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
                             <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
                             <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
                         </VSCodeDropdown>,
-                        <VSCodeTextField  style={{width: '100%'}} initialValue={r.Text}  onInput={(e) => editTransition(t_i, c_i, 'Text', e.target.value)}/>,
+                        <VSCodeTextField  style={{width: '100%'}} value={r.Text}  onInput={(e) => editTransition(t_i, c_i, 'Text', e.target.value)}/>,
                     ];
                 }));
             }

@@ -21,7 +21,7 @@ export default class FlagTable extends React.Component<Props> {
             <div style={{width: '100%'}}>
                 {
                     this.props.rows.map((condition, c_index) => (
-                        <div>
+                        <div key={c_index}>
                             <table style={{width: '100%', borderSpacing: 0, marginBottom: '50px'}}>
                             <tbody>
                                 <tr>
