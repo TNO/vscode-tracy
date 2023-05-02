@@ -21,7 +21,7 @@ export default class TransitionTable extends React.Component<Props> {
             <div style={{width: '100%'}}>
                 {
                     this.props.rows.map((transition, t_index) => (
-                        <div>
+                        <div key={t_index}>
                             <table style={{width: '100%', borderSpacing: 0, marginBottom: '50px'}}>
                             <tbody>
                                 <tr>

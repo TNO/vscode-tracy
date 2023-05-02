@@ -17,7 +17,7 @@ export default class FlagRule extends Rule {
     readonly defaultValue: string;
     readonly selectedFlag: number;
 
-    public constructor(column: string, description: string, defaultValue: string, selectedFlag, flags: Flag[]) {
+    public constructor(column: string, description: string, defaultValue: string, selectedFlag: number, flags: Flag[]) {
         super(column, description);
         this.defaultValue = defaultValue;
         this.selectedFlag = selectedFlag;
@@ -81,13 +81,13 @@ export default class FlagRule extends Rule {
                         <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={sub.searchColumn} onChange={(e) => editSubcondition(c_i, s_i, 'searchColumn', e.target.value)}>
                             {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                         </VSCodeDropdown>,
-                        <VSCodeDropdown  style={{width: '100%'}} initialValue={sub.searchOperation}  onChange={(e) => editSubcondition(c_i, s_i, 'searchOperation', e.target.value)}>
+                        <VSCodeDropdown  style={{width: '100%'}} value={sub.searchOperation}  onChange={(e) => editSubcondition(c_i, s_i, 'searchOperation', e.target.value)}>
                             <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
                             <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
                             <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
                             <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
                         </VSCodeDropdown>,
-                        <VSCodeTextField  style={{width: '100%'}} initialValue={sub.searchText}  onInput={(e) => editSubcondition(c_i, s_i, 'searchText', e.target.value)}/>,
+                        <VSCodeTextField  style={{width: '100%'}} value={sub.searchText}  onInput={(e) => editSubcondition(c_i, s_i, 'searchText', e.target.value)}/>,
                     ];
                 }));
             }
@@ -127,9 +127,14 @@ export default class FlagRule extends Rule {
             onEdit(this.setFlags(this.flags));
         }
 
+        const onDropdownSelect = (val: string) => {
+            const index = this.flags.findIndex(x => x.name === val);
+            onEdit(this.setSelected(index));
+        }
+
         const flagDropdownRows = [
             [
-                <VSCodeDropdown style={{marginLeft: '5px'}} onChange={(e) => this.setSelected(e.key)}>
+                <VSCodeDropdown style={{marginLeft: '5px'}} onChange={(e) => onDropdownSelect(e.target.value)}>
                     {this.flags.map((state, index) =>
                         <VSCodeOption value={state.name} key={index}>{state.name}</VSCodeOption>)}
                 </VSCodeDropdown>
@@ -141,12 +146,7 @@ export default class FlagRule extends Rule {
                 <VSCodePanels aria-label="Logic-Panels">
                 <VSCodePanelTab id="tab-1">Flags</VSCodePanelTab>
                 <VSCodePanelTab id="tab-2">Conditions</VSCodePanelTab>
-                <VSCodePanelView id="view-1">
-                    {/* <div>
-                    Default:
-                    <VSCodeTextField onInput={(e) => onEdit(this.setDefault(e.target.value))}/>
-                    </div> */}
-                    
+                <VSCodePanelView id="view-1">                    
                     <Table
                         columns={[{name: 'Name', width: ''}]}
                         rows={flagRows}
