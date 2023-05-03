@@ -54,8 +54,8 @@ export default class StateBasedRule extends Rule {
         const editStateName = (state_index: number, value: string) => {
             const states = [...this.ruleStates];
             const previous_name = states[state_index].name
-            for (let i=0; i<states.length; i++){
-                for (let j=0; j<states[i].transitions.length; j++){
+            for (let i = 0; i < states.length; i++) {
+                for (let j = 0; j < states[i].transitions.length; j++) {
                     if (states[i].transitions[j].destination === previous_name)
                         states[i].transitions[j].destination = value
                 }
@@ -77,7 +77,7 @@ export default class StateBasedRule extends Rule {
         const onAddState = () => {
             let new_name;
             let existing_states = this.ruleStates.map((n, i) => n.name);
-            for (let i = 1; i < this.ruleStates.length+2; i++){
+            for (let i = 1; i < this.ruleStates.length+2; i++) {
                 new_name = 'State ' + i.toString()
                 if (existing_states.indexOf(new_name) == -1) break;
             }
@@ -87,9 +87,8 @@ export default class StateBasedRule extends Rule {
         const onDeleteState = (index: number) => {
             const states = [...this.ruleStates];
             const state_name = states[index].name
-            for (let i=0; i<states.length; i++){
+            for (let i = 0; i < states.length; i++)
                 states[i].transitions = states[i].transitions.filter((r, i) => r.destination != state_name);
-            }
             if (index === this.initialStateIndex) onEdit(this.setStates(states.filter((r, i) => index !== i), 0));
             else if (index < this.initialStateIndex) onEdit(this.setStates(states.filter((r, i) => index !== i), this.initialStateIndex-1));
             else onEdit(this.setStates(states.filter((r, i) => index !== i), this.initialStateIndex));
@@ -241,7 +240,7 @@ export default class StateBasedRule extends Rule {
         let current_state;
         const values: string[] = [];
         if (this.ruleStates.length === 0) {
-            for (let r = 1; r < logFile.amountOfRows(); r++) 
+            for (let r = 0; r < logFile.amountOfRows(); r++) 
                 values[r] = '';
         }
         else {

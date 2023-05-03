@@ -50,18 +50,24 @@ export default class App extends React.Component<Props, State> {
     filterOnEnter(key_press: any) {
         if (key_press === 'Enter') {
             this.vscode.postMessage({type: 'update'});
-        }        
+        }
     }
 
-    filterLogline(obj: Object, col: string, str: string): boolean {
-        if (col === 'All'){
-            for (let key in obj)
-                if (obj[key].indexOf(str) != -1)
-                    return true;
-            return false;
+    findIndices(rows: string[][], col_index: number, str: string) {
+        let indices: number[] = [];
+        if (col_index === -1) {
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].join(" ").indexOf(str) != -1)
+                    indices.push(i);
+            }
         }
-        else
-            return (obj[col].indexOf(str) != -1);
+        else {
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i][col_index].indexOf(str) != -1)
+                    indices.push(i);
+            }
+        }
+        return indices;        
     }
 
     onMessage(event: MessageEvent) {
@@ -70,10 +76,11 @@ export default class App extends React.Component<Props, State> {
         if (message.type === 'update') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
             let lines = JSON.parse(message.text);
-            if (this.state.searchText === '')
-                logFile = LogFile.create(lines, rules);
-            else {
-                let filtered_lines = lines.filter(l => this.filterLogline(l, this.state.searchColumn, this.state.searchText));
+            logFile = LogFile.create(lines, rules);
+            if (this.state.searchText !== '') {
+                const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
+                const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText);
+                let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
                 if (filtered_lines.length === 0) {
                     filtered_lines = [lines[0]]
                     for (let k of Object.keys(lines[0]))
@@ -85,9 +92,12 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    handleDialogClose(newRules: Rule[]) {
+    handleDialogActions(newRules: Rule[], is_close: boolean) {
         this.vscode.postMessage({type: 'save_rules', rules: newRules.map((r) => r.toJSON())});
-        this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showStatesDialog: false, showFlagsDialog: false});
+        if (is_close === true)
+            this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showStatesDialog: false, showFlagsDialog: false});
+        else
+            this.setState({rules: newRules});
     }
 
     render() {
@@ -152,15 +162,17 @@ export default class App extends React.Component<Props, State> {
                     <StatesDialog
                         logFile={this.state.logFile}
                         initialRules={this.state.rules}
-                        onClose={(newRules) => this.handleDialogClose(newRules)}
+                        onClose={(newRules) => this.handleDialogActions(newRules, true)}
+                        onReturn={(newRules) => this.handleDialogActions(newRules, false)}
                     />
                     }
                     { this.state.showFlagsDialog &&
-                        <FlagsDialog
-                            logFile={this.state.logFile}
-                            initialRules={this.state.rules}
-                            onClose={(newRules) => this.handleDialogClose(newRules)}
-                        /> 
+                    <FlagsDialog
+                        logFile={this.state.logFile}
+                        initialRules={this.state.rules}
+                        onClose={(newRules) => this.handleDialogActions(newRules, true)}
+                        onReturn={(newRules) => this.handleDialogActions(newRules, false)}
+                    /> 
                     }
                 </div>
             </div>

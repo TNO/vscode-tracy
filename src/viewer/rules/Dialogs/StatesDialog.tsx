@@ -7,6 +7,7 @@ import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vs
 
 
 interface Props {
+    onReturn: (rules: Rule[]) => void;
     onClose: (rules: Rule[]) => void;
     initialRules: Rule[];
     logFile: LogFile;
@@ -37,6 +38,16 @@ export default class StatesDialog extends React.Component<Props, State> {
         this.setState({rules});
     }
 
+    onDialogClick(is_close: boolean) {
+        const ruleIndex = this.state.selectedRule;
+        const rule = this.state.rules[ruleIndex].reset();
+        this.updateRule(rule, ruleIndex);
+        this.setState({showEdit: false}, () => {
+            if (is_close === true) this.props.onClose(this.state.rules);
+            else this.props.onReturn(this.state.rules);
+        });
+    }
+
     renderManage() {
         const onAddAction = () => {
             const newRule = new StateBasedRule(`Rule${this.state.rules.filter(r => r.friendlyType === 'State based rule').length + 1}`, '', 0, 0, 0, []);
@@ -53,7 +64,6 @@ export default class StatesDialog extends React.Component<Props, State> {
             if (this.state.selectedRule === index) this.setState({selectedRule: -1});
             this.setState({rules: this.state.rules.filter((r, i) => i !== index)});
         }
-    
 
         return (
             <div style={{marginTop: '10px'}}>
@@ -117,13 +127,6 @@ export default class StatesDialog extends React.Component<Props, State> {
     }
 
     render() {
-        const onReturn = () => {
-            const ruleIndex = this.state.selectedRule;
-            const rule = this.state.rules[ruleIndex];
-            this.updateRule(rule.reset(), ruleIndex)
-            this.setState({showEdit: false});
-        }
-
         return (
             <div style={BACKDROP_STYLE}>
                 <div className='dialog' style={DIALOG_STYLE}>
@@ -135,11 +138,11 @@ export default class StatesDialog extends React.Component<Props, State> {
                             <div className='title-big'>Edit State-Based Annotation Column</div>
                         }
                         {   this.state.showEdit &&
-                            <VSCodeButton style={{marginLeft: 'auto'}} appearance='icon' onClick={onReturn}>
+                            <VSCodeButton style={{marginLeft: 'auto'}} appearance='icon' onClick={() => this.onDialogClick(false)}>
                                 <i className='codicon codicon-arrow-left'/>
                             </VSCodeButton>
                         }
-                            <VSCodeButton appearance='icon' onClick={() => this.props.onClose(this.state.rules)}>
+                            <VSCodeButton appearance='icon' onClick={() => this.onDialogClick(true)}>
                                 <i className='codicon codicon-close'/>
                             </VSCodeButton>
                     </div>
