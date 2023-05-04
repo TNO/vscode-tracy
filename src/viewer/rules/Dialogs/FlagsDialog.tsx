@@ -7,6 +7,7 @@ import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vs
 
 
 interface Props {
+    onReturn: (rules: Rule[]) => void;
     onClose: (rules: Rule[]) => void;
     initialRules: Rule[];
     logFile: LogFile;
@@ -42,6 +43,16 @@ export default class FlagsDialog extends React.Component<Props, State> {
         let flagrule = rule as FlagRule;
         rules[index] = flagrule.setDefault(val);
         this.setState({rules});
+    }
+
+    onDialogClick(is_close: boolean) {
+        const ruleIndex = this.state.selectedRule;
+        const rule = this.state.rules[ruleIndex].reset();
+        this.updateRule(rule, ruleIndex);
+        this.setState({showEdit: false}, () => {
+            if (is_close === true) this.props.onClose(this.state.rules);
+            else this.props.onReturn(this.state.rules);
+        });
     }
 
     renderManage() {
@@ -143,11 +154,11 @@ export default class FlagsDialog extends React.Component<Props, State> {
                             <div className='title-big'>Edit Flag Annotation Column</div>
                         }
                         {   this.state.showEdit &&
-                            <VSCodeButton style={{marginLeft: 'auto'}} appearance='icon' onClick={() => this.setState({showEdit: false})}>
+                            <VSCodeButton style={{marginLeft: 'auto'}} appearance='icon' onClick={() => this.onDialogClick(false)}>
                                 <i className='codicon codicon-arrow-left'/>
                             </VSCodeButton>
                         }
-                            <VSCodeButton appearance='icon' onClick={() => this.props.onClose(this.state.rules)}>
+                            <VSCodeButton appearance='icon' onClick={() => this.onDialogClick(true)}>
                                 <i className='codicon codicon-close'/>
                             </VSCodeButton>
                     </div>

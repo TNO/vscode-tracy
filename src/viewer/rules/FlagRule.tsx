@@ -58,7 +58,7 @@ export default class FlagRule extends Rule {
         const onAddFlag = () => {
             let new_name;
             let existing_flags = this.flags.map((n, i) => n.name);
-            for (let i = 1; i < this.flags.length+2; i++){
+            for (let i = 1; i < this.flags.length+2; i++) {
                 new_name = 'Flag ' + i.toString()
                 if (existing_flags.indexOf(new_name) == -1) break;
             }
@@ -185,11 +185,11 @@ export default class FlagRule extends Rule {
         const values: string[] = [];
         for (let r = 0; r < logFile.amountOfRows(); r++) {
             values[r] = this.defaultValue;
-            for (const flag of this.flags){
+            for (const flag of this.flags) {
                 let flag_found: boolean = false;
                 for (const condition_set of flag.conditions) {
                     let all_conditions_satisfied: boolean = true;
-                    for (const condition of condition_set){
+                    for (const condition of condition_set) {
                         const logValue = logFile.value(condition.searchColumn, r) ?? '';
                         if (condition.searchOperation === 'contains') {
                             if (!logValue.includes(condition.searchText)) {

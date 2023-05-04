@@ -44,7 +44,7 @@ export default class LogView extends React.Component<Props, State> {
         window.addEventListener('resize', this.updateState);
         this.updateState();
     }
-    
+
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
         if (prevProps.logFile !== this.props.logFile) {
             this.updateState();
@@ -81,7 +81,15 @@ export default class LogView extends React.Component<Props, State> {
         const {logFile} = this.props;
         let first_render = this.state.state.startFloor;
         let last_render = this.state.state.endCeil;
-        if (logFile.rows.length === 1) {
+        if (last_render > logFile.rows.length){
+            if (!this.viewport.current) return;
+            const height = this.viewport.current.clientHeight;
+            const maxVisibleItems = height / ROW_HEIGHT;
+            last_render = logFile.rows.length - 1;
+            first_render = Math.max(0, Math.ceil(last_render - maxVisibleItems) - 1);
+        }
+        // Hide LogFile if search did not return any rows
+        if ((logFile.rows.length === 1) && (logFile.rows[0][0] === '')) {
             first_render = 0;
             last_render = -1;
         }

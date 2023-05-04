@@ -45,7 +45,8 @@ export default class MinimapView extends React.Component<Props, State> {
         var ctx = canvas.getContext("2d")!;
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (this.props.logFile.rows.length === 1) return;
+        // Hide Minimap if search did not return any rows
+        if ((this.props.logFile.rows.length === 1) && (this.props.logFile.rows[0][0] === '')) return;
 
         // Compute start and end.
         const {logViewState, logFile} = this.props;
