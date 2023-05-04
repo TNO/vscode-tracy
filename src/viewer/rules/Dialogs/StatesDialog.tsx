@@ -40,8 +40,10 @@ export default class StatesDialog extends React.Component<Props, State> {
 
     onDialogClick(is_close: boolean) {
         const ruleIndex = this.state.selectedRule;
-        const rule = this.state.rules[ruleIndex].reset();
-        this.updateRule(rule, ruleIndex);
+        if (ruleIndex !== -1) {
+            const rule = this.state.rules[ruleIndex].reset();
+            this.updateRule(rule, ruleIndex);
+        }
         this.setState({showEdit: false}, () => {
             if (is_close === true) this.props.onClose(this.state.rules);
             else this.props.onReturn(this.state.rules);
