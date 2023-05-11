@@ -43,9 +43,9 @@ export default class FlagRule extends Rule {
 
     public renderEdit(onEdit: (newRule: Rule) => void, keyWidth: string, textFieldWidth: string, user_columns:string[], logFile: LogFile) {
 
-        const editFlagName = (_index: number, value: string) => {
+        const editFlagName = (index: number, value: string) => {
             const flags = [...this.flags];
-            flags[_index] = {...flags[_index], ['name']: value};
+            flags[index] = {...flags[index], ['name']: value};
             onEdit(this.setFlags(flags));
         };
 
