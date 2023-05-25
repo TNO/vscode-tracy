@@ -18,14 +18,14 @@ export default class LogFile {
     readonly headers: Header[];
     readonly rows: string[][];
     readonly columnsColors: string[][] = [];
-    //private visibleColumns: boolean[];
+    selectedColumns: boolean[];
 
     private constructor(contentHeaders: string[], headers: Header[], rows: string[][]) {
         this.contentHeaders = contentHeaders;
         this.headerIndexLookup = Object.fromEntries(headers.map((h, i) => [h.name, i]));
         this.headers = headers;
         this.rows = rows;
-        //this.visibleColumns = new Array(contentHeaders.length).fill(true);
+        this.selectedColumns = new Array(headers.length).fill(true);
     }
 
     static create(content: {[s: string]: string}[], rules: Rule[]) {
@@ -44,16 +44,14 @@ export default class LogFile {
         return logFile;
     }
 
-    hideColumn(index: number) {
-        //hide column in the minimap
-        console.log('hide' + index);
-        //this.visibleColumns[index] = false;
+    setSelectedColumns(selected: boolean[]) {
+        this.selectedColumns = selected;
+        return this;
     }
 
-    showColumn(index: number) {
-        //show column in the minimap
-        console.log('show'+index);
-        //this.visibleColumns[index] = true;
+    getSelectedHeader(): Header[] {
+        let selectedHeaders = this.headers.filter((h, i) => this.selectedColumns[i] == true);
+        return selectedHeaders;
     }
 
     private static getContentHeaders(content: {[s: string]: string}[]) {
@@ -83,14 +81,8 @@ export default class LogFile {
         // Compute colors
         var index = 0;
         this.headers.forEach((header, column) => {
-            //if (this.visibleColumns[column]) {
-                //if visible
-                const values = this.rows.map((r) => r[column]);
-                this.columnsColors[column] = LogFile.computeColors(header, values);
-                //index++;
-            //}
-            //const values = this.rows.map((r) => r[column]);
-            //this.columnsColors[column] = LogFile.computeColors(header, values);
+            const values = this.rows.map((r) => r[column]);
+            this.columnsColors[column] = LogFile.computeColors(header, values);
         });
     }
 

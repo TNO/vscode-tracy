@@ -11,6 +11,7 @@ interface Props {
 interface State {
     state: LogViewState | undefined;
     columnWidth: { [id: string]: number };
+    logFile: LogFile;
 }
 
 const ROW_HEIGHT = 28;
@@ -37,7 +38,7 @@ export default class LogView extends React.Component<Props, State> {
         super(props);
         this.viewport = React.createRef();
         this.updateState = this.updateState.bind(this);
-        this.state = {state: undefined, columnWidth: COLUMN_WIDTH_LOOKUP};
+        this.state = {state: undefined, columnWidth: COLUMN_WIDTH_LOOKUP, logFile: this.props.logFile};
     }
 
     componentDidMount(): void {
@@ -99,7 +100,10 @@ export default class LogView extends React.Component<Props, State> {
             };
             result.push(
                 <div key={r} style={style}>
-                    {logFile.headers.map((h, c) => this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name)))}
+                    {logFile.headers.map((h, c) => 
+                    logFile.selectedColumns[c]== true &&
+                        this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name)))
+                    }
                 </div>
             );
         }
@@ -144,7 +148,7 @@ export default class LogView extends React.Component<Props, State> {
         return (
             <div style={HEADER_STYLE} className="header-background">
                 <div style={style}>
-                    {this.props.logFile.headers.map((h, i) => this.renderHeaderColumn(h.name, i, true, this.columnWidth(h.name)))}
+                    {this.props.logFile.getSelectedHeader().map((h, i) => this.renderHeaderColumn(h.name, i, true, this.columnWidth(h.name)))}
                 </div>
             </div>
         );
@@ -170,14 +174,6 @@ export default class LogView extends React.Component<Props, State> {
             </div>
             </ReactResizeDetector>
         );
-    }
-
-    handleCheckbox(e: React.ChangeEvent<HTMLInputElement>, index: number) {
-        if (e.target.checked) {
-            this.props.logFile.showColumn(index);
-        } else {
-            this.props.logFile.hideColumn(index);
-        }
     }
 
     render() {
