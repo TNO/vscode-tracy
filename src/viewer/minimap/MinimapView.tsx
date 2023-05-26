@@ -30,10 +30,12 @@ export default class MinimapView extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: State): void {
-        if (prevProps.logViewState !== this.props.logViewState || prevState.scale !== this.state.scale || 
-            prevProps.logFile !== this.props.logFile) {
-            this.draw();
-        }
+        this.draw();
+        // console.log("draw");
+        // if (prevProps.logViewState !== this.props.logViewState || prevState.scale !== this.state.scale || 
+        //     prevProps.logFile !== this.props.logFile) {
+        //     this.draw();
+        // }
     }
 
     draw() {
@@ -75,13 +77,17 @@ export default class MinimapView extends React.Component<Props, State> {
         ctx.translate(0, scrollTop - scrollBottom);
 
         // Draw blocks
-        for (let columnIndex = 0; columnIndex < logFile.columnsColors.length; columnIndex++) {
-            const colors = logFile.columnsColors[columnIndex];
-            for (let i = 0; i < colors.length; i++) {
-                ctx.beginPath();
-                ctx.fillStyle = colors[i];
-                ctx.fillRect(columnIndex * MINIMAP_COLUMN_WIDTH, i * logRowHeight, MINIMAP_COLUMN_WIDTH, logRowHeight);
-                ctx.stroke();
+        let index = 0; //for caculating the position
+        for (let columnIndex = 0; columnIndex < logFile.selectedColumns.length; columnIndex++) {
+            if (logFile.selectedColumns[columnIndex]) {
+                const colors = logFile.columnsColors[columnIndex];
+                for (let i = 0; i < colors.length; i++) {
+                    ctx.beginPath();
+                    ctx.fillStyle = colors[i];
+                    ctx.fillRect(index * MINIMAP_COLUMN_WIDTH, i * logRowHeight, MINIMAP_COLUMN_WIDTH, logRowHeight);
+                    ctx.stroke();
+                }
+                index++;
             }
         }
 

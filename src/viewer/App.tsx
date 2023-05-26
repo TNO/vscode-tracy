@@ -10,6 +10,7 @@ import FlagsDialog from './rules/Dialogs/FlagsDialog';
 import Rule from './rules/Rule';
 import MinimapHeader from './minimap/MinimapHeader';
 import { display } from '@microsoft/fast-foundation';
+import SelectColDialog from './log/SelectColDialog';
 
 interface Props {
 }
@@ -20,8 +21,10 @@ interface State {
     showStatesDialog: boolean;
     showFlagsDialog: boolean;
     showMinimapHeader: boolean;
+    showSelectDialog: boolean;
     searchColumn: string;
     searchText: string;
+    selectedColumns: boolean[];
 }
 
 const COLUMN_0_HEADER_STYLE = {
@@ -41,10 +44,18 @@ export default class App extends React.Component<Props, State> {
         super(props);
         this.state = {logFile: LogFile.create([], []), logViewState: undefined,
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
-            showMinimapHeader: true, searchColumn: 'All', searchText: ''};
+            showMinimapHeader: true, showSelectDialog: false, searchColumn: 'All', searchText: '',
+            selectedColumns: []
+        };
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
         this.vscode.postMessage({type: 'update'});
+    }
+
+    componentDidUpdate(prevState: State) {
+        if (this.state.logFile !== prevState.logFile) {
+            this.render();
+        }
     }
 
     filterOnEnter(key_press: any) {
@@ -100,6 +111,12 @@ export default class App extends React.Component<Props, State> {
             this.setState({rules: newRules});
     }
 
+    handleSelectDialog(selectedCols: boolean[], is_close: boolean) {
+        if (is_close === true) {
+            this.setState({selectedColumns: selectedCols, logFile: this.state.logFile.setSelectedColumns(selectedCols) ,showSelectDialog: false});
+        }
+    }
+
     render() {
         const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         const minimapHeight = this.state.showMinimapHeader ? '12%' : '5%' ;
@@ -108,6 +125,12 @@ export default class App extends React.Component<Props, State> {
         return (
             <div style={{display:'flex', flexDirection: 'column', height: '100%'}}>
                 <div style={{display: 'flex', flexDirection: 'row', height: minimapHeight}}>
+                    <div style={{display: 'flex'}}>
+                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '150px'}}
+                            onClick={() => this.setState({showSelectDialog: true})}>
+                            Choose Columns
+                        </VSCodeButton>
+                    </div>
                     <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
                         <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
                             {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
@@ -134,7 +157,6 @@ export default class App extends React.Component<Props, State> {
                             <MinimapHeader logFile={this.state.logFile}/>
                         </div>
                     }
-
                 </div>
                 <div style={{display: 'flex', flexDirection: 'row', height: logviewHeight}}>
                     <div style={{flex: 1, display: 'flex'}}>
@@ -173,6 +195,11 @@ export default class App extends React.Component<Props, State> {
                         onClose={(newRules) => this.handleDialogActions(newRules, true)}
                         onReturn={(newRules) => this.handleDialogActions(newRules, false)}
                     /> 
+                    }
+                    {this.state.showSelectDialog &&
+                        <SelectColDialog
+                            logFile={this.state.logFile}
+                            onClose={(selectedColumns) => this.handleSelectDialog(selectedColumns, true)}/>
                     }
                 </div>
             </div>
