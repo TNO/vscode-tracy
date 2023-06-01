@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {forwardRef} from 'react';
 import { LOG_HEADER_HEIGHT, BORDER, BORDER_SIZE } from '../constants';
 import { LogViewState } from '../types';
 import LogFile from '../LogFile';
@@ -7,6 +7,7 @@ import ReactResizeDetector from 'react-resize-detector';
 interface Props {
     logFile: LogFile;
     onLogViewStateChanged: (value: LogViewState) => void;
+    forwardRef: React.RefObject<HTMLDivElement>;
 }
 interface State {
     state: LogViewState | undefined;
@@ -29,14 +30,14 @@ const COLUMN_WIDTH_LOOKUP = {
     threadID: 80, 
     location: 200,
     message: 400,
-};
+}; 
 
 export default class LogView extends React.Component<Props, State> {
     viewport: React.RefObject<HTMLDivElement>;
 
     constructor(props: Props) {
         super(props);
-        this.viewport = React.createRef();
+        this.viewport = this.props.forwardRef;
         this.updateState = this.updateState.bind(this);
         this.state = {state: undefined, columnWidth: COLUMN_WIDTH_LOOKUP, logFile: this.props.logFile};
     }

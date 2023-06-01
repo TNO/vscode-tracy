@@ -9,7 +9,6 @@ import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
 import Rule from './rules/Rule';
 import MinimapHeader from './minimap/MinimapHeader';
-import { display } from '@microsoft/fast-foundation';
 import SelectColDialog from './log/SelectColDialog';
 
 interface Props {
@@ -39,7 +38,7 @@ const COLUMN_2_HEADER_STYLE = {
 export default class App extends React.Component<Props, State> {
     // @ts-ignore
     vscode = acquireVsCodeApi();
-
+    child = React.createRef<HTMLDivElement>();
     constructor(props: Props) {
         super(props);
         this.state = {logFile: LogFile.create([], []), logViewState: undefined,
@@ -159,12 +158,16 @@ export default class App extends React.Component<Props, State> {
                     }
                 </div>
                 <div style={{display: 'flex', flexDirection: 'row', height: logviewHeight}}>
+                    
+                    
                     <div style={{flex: 1, display: 'flex'}}>
                         <LogView
                             logFile={this.state.logFile} 
                             onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
+                            forwardRef={this.child}
                         />
                     </div>
+                    
                     <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth}}>
                         <div className='header-background' style={COLUMN_0_HEADER_STYLE}>
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
@@ -177,7 +180,10 @@ export default class App extends React.Component<Props, State> {
                         {this.state.logViewState &&
                             <MinimapView
                                 logFile={this.state.logFile}
-                                logViewState={this.state.logViewState}/>
+                                logViewState={this.state.logViewState}
+                                onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
+                                forwardRef={this.child}
+                            />
                         }
                     </div>
                     { this.state.showStatesDialog &&
