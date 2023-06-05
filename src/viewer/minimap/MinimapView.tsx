@@ -6,12 +6,15 @@ import LogFile from '../LogFile';
 interface Props {
     logFile: LogFile;
     logViewState: LogViewState;
+    onLogViewStateChanged: (value: LogViewState) => void;
+    forwardRef: React.RefObject<HTMLDivElement>;
 }
 interface State {
+    state: LogViewState | undefined;
     scale: number;
     controlDown: boolean;
 }
-
+const ROW_HEIGHT = 28;
 export default class MinimapView extends React.Component<Props, State> {
     canvas: React.RefObject<HTMLCanvasElement>;
 
@@ -19,7 +22,7 @@ export default class MinimapView extends React.Component<Props, State> {
         super(props);
         this.canvas = React.createRef();
         this.handleWheel = this.handleWheel.bind(this);
-        this.state = {scale: 1, controlDown: false};
+        this.state = {scale: 1, controlDown: false, state: this.props.logViewState};
     }
 
     componentDidMount(): void {
@@ -99,24 +102,41 @@ export default class MinimapView extends React.Component<Props, State> {
     }
 
     handleWheel(e: React.WheelEvent<HTMLCanvasElement>) {
-        // if (this.state.controlDown === true) {
+        if (this.state.controlDown === true) {
             let offset = Math.abs(1.02 - this.state.scale) / 5;
             let scale = this.state.scale + (e.deltaY < 0 ? offset : offset * -1);
             scale = Math.max(Math.min(1, scale), 0);
             this.setState({scale});
-        // }
-        // else {
-        //     this.draw();
-        // }
+        } 
+        else {
+            let scale = e.deltaY;
+            this.updateState(scale);
+        }
+    }
+
+    updateState(scale: number){
+        if (!this.props.forwardRef.current) return;
+        const height = this.props.forwardRef.current.clientHeight;
+        this.props.forwardRef.current.scrollTop = this.props.forwardRef.current.scrollTop + scale;
+        const scrollTop = this.props.forwardRef.current.scrollTop;
+        const scrollLeft = this.props.forwardRef.current.scrollLeft;
+        const maxVisibleItems = height / ROW_HEIGHT;
+        const start = scrollTop / ROW_HEIGHT;
+        const startFloor = Math.floor(start);
+        const endCeil = Math.min(Math.ceil(start + maxVisibleItems) - 1, this.props.logFile.amountOfRows() - 1);
+        const visibleItems = Math.min(this.props.logFile.amountOfRows(), maxVisibleItems);
+        const state = {height, scrollLeft, scrollTop, startFloor, start, endCeil, visibleItems, rowHeight: ROW_HEIGHT};
+        this.setState({state});
+        this.props.onLogViewStateChanged(state);
     }
 
     controlDownListener(e: any) {
-        if (e.key === 'Control')
+        if (e.key === 'Control' && this.state.controlDown === false)
             this.setState({controlDown: true});
     }
 
     controlUpListener(e: any) {
-        if (e.key === 'Control')
+        if (e.key === 'Control' && this.state.controlDown)
             this.setState({controlDown: false});
     }
 

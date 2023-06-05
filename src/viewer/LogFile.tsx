@@ -41,11 +41,16 @@ export default class LogFile {
         const headers = LogFile.getHeaders(this.contentHeaders, rules);
         const logFile = new LogFile(this.contentHeaders, headers, this.rows);
         logFile.computeRulesValuesAndColors(rules);
+        logFile.setSelectedColumns(this.selectedColumns); //only show the selected columns after updating the rules
         return logFile;
     }
 
     setSelectedColumns(selected: boolean[]) {
-        this.selectedColumns = selected;
+        for (let column = 0; column < this.selectedColumns.length; column++) {
+            if (selected[column] !== undefined) {
+                this.selectedColumns[column] = selected[column];
+            }
+        }
         return this;
     }
 
