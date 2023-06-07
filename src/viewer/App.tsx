@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import LogFile from './LogFile';
@@ -24,6 +24,7 @@ interface State {
     searchColumn: string;
     searchText: string;
     selectedColumns: boolean[];
+    coloredTable: boolean;
 }
 
 const COLUMN_0_HEADER_STYLE = {
@@ -44,7 +45,7 @@ export default class App extends React.Component<Props, State> {
         this.state = {logFile: LogFile.create([], []), logViewState: undefined,
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showMinimapHeader: true, showSelectDialog: false, searchColumn: 'All', searchText: '',
-            selectedColumns: []
+            selectedColumns: [], coloredTable: false
         };
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
@@ -116,6 +117,14 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
+    handleTableCheckbox(){
+        if (this.state.coloredTable) {
+            this.setState({coloredTable:false});
+        } else {
+            this.setState({coloredTable:true});
+        }
+    }
+
     render() {
         const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         const minimapHeight = this.state.showMinimapHeader ? '12%' : '5%' ;
@@ -129,6 +138,10 @@ export default class App extends React.Component<Props, State> {
                             onClick={() => this.setState({showSelectDialog: true})}>
                             Choose Columns
                         </VSCodeButton>
+                        <label>
+                            <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.handleTableCheckbox()}/>
+                            Color Table
+                        </label>
                     </div>
                     <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
                         <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
@@ -165,6 +178,7 @@ export default class App extends React.Component<Props, State> {
                             logFile={this.state.logFile} 
                             onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
                             forwardRef={this.child}
+                            coloredTable={this.state.coloredTable}
                         />
                     </div>
                     
