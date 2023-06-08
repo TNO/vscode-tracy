@@ -8,6 +8,7 @@ interface Props {
     logFile: LogFile;
     onLogViewStateChanged: (value: LogViewState) => void;
     forwardRef: React.RefObject<HTMLDivElement>;
+    coloredTable: boolean;
 }
 interface State {
     state: LogViewState | undefined;
@@ -56,16 +57,26 @@ export default class LogView extends React.Component<Props, State> {
         }
     }
 
-    renderColumn(value: string, index: number, isHeader: boolean, width: number) {
+    renderColumn(value: string, index: number, isHeader: boolean, width: number, colorMap: string) {
         const height = isHeader ? LOG_HEADER_HEIGHT : ROW_HEIGHT;
         const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        let color = 'transparent';
+        let fontColor = ''
+        if (this.props.coloredTable){
+            color = colorMap;
+            if (this.isLight(color)){
+                fontColor = "#000000"
+            } else {
+                fontColor = "#ffffff"
+            }
+        }
         const style: React.CSSProperties = {
             overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
-            width: widthNew, borderLeft: index !== 0 ? BORDER : '',
+            width: widthNew, borderLeft: index !== 0 ? BORDER : '', 
         };
         const innerStyle: React.CSSProperties = {
             display: 'flex', height, alignItems: 'center', justifyContent: isHeader ? 'center' : 'left', 
-            paddingLeft: '2px'
+            paddingLeft: '2px', backgroundColor: color, color: fontColor
         };
         return (
             <div style={style} key={index}>
@@ -103,7 +114,7 @@ export default class LogView extends React.Component<Props, State> {
                 <div key={r} style={style}>
                     {logFile.headers.map((h, c) => 
                     logFile.selectedColumns[c]== true &&
-                        this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name)))
+                        this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name), logFile.columnsColors[c][r]))
                     }
                 </div>
             );
@@ -139,6 +150,12 @@ export default class LogView extends React.Component<Props, State> {
 
     columnWidth(name: string) {
         return COLUMN_WIDTH_LOOKUP[name] ?? DEFAULT_COLUMN_WIDTH;
+    }
+
+    isLight(color: string) {
+        const colors = JSON.parse(color.slice(3).replace("(","[").replace(")","]"))
+        const brightness = ((colors[0] * 299) + (colors[1] * 587) + (colors[2] * 114)) / 1000;
+        return brightness > 110;
     }
 
     renderHeader(width: number) {
