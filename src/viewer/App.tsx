@@ -5,6 +5,7 @@ import LogFile from './LogFile';
 import { LogViewState } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER } from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
+import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
 import Rule from './rules/Rule';
@@ -18,6 +19,7 @@ interface State {
     logViewState: LogViewState | undefined;
     rules: Rule[];
     showStatesDialog: boolean;
+    showStructureDialog: boolean;
     showFlagsDialog: boolean;
     showMinimapHeader: boolean;
     showSelectDialog: boolean;
@@ -44,7 +46,7 @@ export default class App extends React.Component<Props, State> {
         super(props);
         this.state = {logFile: LogFile.create([], []), logViewState: undefined,
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
-            showMinimapHeader: true, showSelectDialog: false, searchColumn: 'All', searchText: '',
+            showMinimapHeader: true, showStructureDialog: false, showSelectDialog: false, searchColumn: 'All', searchText: '',
             selectedColumns: [], coloredTable: false
         };
         this.onMessage = this.onMessage.bind(this);
@@ -117,6 +119,12 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
+    handleStructureDialogActions(is_close: boolean) {
+        if (is_close === true) {
+            this.setState({showStructureDialog: false});
+        }
+    }
+
     handleTableCheckbox(){
         if (this.state.coloredTable) {
             this.setState({coloredTable:false});
@@ -170,9 +178,7 @@ export default class App extends React.Component<Props, State> {
                         </div>
                     }
                 </div>
-                <div style={{display: 'flex', flexDirection: 'row', height: logviewHeight}}>
-                    
-                    
+                <div style={{display: 'flex', flexDirection: 'row', height: logviewHeight}}>                
                     <div style={{flex: 1, display: 'flex'}}>
                         <LogView
                             logFile={this.state.logFile} 
@@ -180,10 +186,12 @@ export default class App extends React.Component<Props, State> {
                             forwardRef={this.child}
                             coloredTable={this.state.coloredTable}
                         />
-                    </div>
-                    
+                    </div>                    
                     <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth}}>
                         <div className='header-background' style={COLUMN_0_HEADER_STYLE}>
+                        <VSCodeButton appearance='icon' onClick={() => this.setState({showStructureDialog: true})}>
+                                <i className="codicon codicon-three-bars"/>
+                            </VSCodeButton>
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
                                 <i className="codicon codicon-tag"/>
                             </VSCodeButton>
@@ -221,6 +229,13 @@ export default class App extends React.Component<Props, State> {
                             logFile={this.state.logFile}
                             onClose={(selectedColumns) => this.handleSelectDialog(selectedColumns, true)}/>
                     }
+                </div>
+                <div style={{flex: 1, display: 'flex', position: 'absolute', overflow: 'visible'}}>
+                        {this.state.showStructureDialog &&
+                            <StructureDialog
+                                onClose={() => this.handleStructureDialogActions(true)}
+                            />
+                        }
                 </div>
             </div>
         );
