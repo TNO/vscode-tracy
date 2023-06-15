@@ -3,29 +3,29 @@ import LogFile from '../LogFile';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 interface Props {
     logFile: LogFile;
-    onClose: (selectedCol: boolean[]) => void;
+    onClose: (selectedCol: boolean[], selectedColMini: boolean[]) => void;
 }
 
 interface State {
     showDialog: boolean;
     selectedCol: boolean[];
+    selectedColMini: boolean[];
 }
 
 const BACKDROP_STYLE: React.CSSProperties = {
     width: '100vw', backgroundColor: '#00000030', position: 'absolute', padding: '10px'
 }
 
-const DIALOG_STYLE: React.CSSProperties = {height: '90', width: '70%', padding: '10px', display: 'flex', flexDirection: 'row', alignItems: 'center', overflow: 'auto'};
-
+const DIALOG_STYLE: React.CSSProperties = {height: '90', width: '70%', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'start', overflow: 'auto'};
+const innerStyle: React.CSSProperties = {
+    display: 'flex', height: '20px', alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
+    paddingLeft: '2px'
+};
 export default class SelectColDialog extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
-        this.state = {showDialog: false, selectedCol: this.props.logFile.selectedColumns};
+        this.state = {showDialog: false, selectedCol: this.props.logFile.selectedColumns, selectedColMini: this.props.logFile.selectedColumnsMini};
     }
-
-    // isSelected(index: number){
-    //     return this.props.logFile.selectedColumns[index];
-    // }
 
     handleCheckbox = (e, index) => {
         const cols = [...this.state.selectedCol];
@@ -38,15 +38,24 @@ export default class SelectColDialog extends React.Component<Props, State> {
         }
     }
 
+    handleCheckboxMini = (e, index) => {
+        const cols = [...this.state.selectedColMini];
+        if (e.target.checked) {
+            cols[index] = true;
+            this.setState({selectedColMini: cols});
+        } else {
+            cols[index] = false;
+            this.setState({selectedColMini: cols});
+        }
+    }
+
     renderCheckbox(name: string, index: number) {
-        const innerStyle: React.CSSProperties = {
-            display: 'flex', height: '20px', alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
-            paddingLeft: '2px'
-        };
         return (
             <div key={index}>
                 <div style={innerStyle}>
-                    <input type="checkbox" checked={this.state.selectedCol[index]} onChange={(e)=>this.handleCheckbox(e, index)} key={index}/>{name}
+                    <div style={{width: '150px'}}>{name}</div>
+                    <div style={{width: '50px'}}><input type="checkbox" checked={this.state.selectedCol[index]} onChange={(e)=>this.handleCheckbox(e, index)} key={index}/></div>
+                    <div style={{width: '50px'}}><input type="checkbox" checked={this.state.selectedColMini[index]} onChange={(e)=>this.handleCheckboxMini(e, index)} key={index}/></div>
                 </div>
             </div>
         );
@@ -55,7 +64,7 @@ export default class SelectColDialog extends React.Component<Props, State> {
     onDialogClick(is_close: boolean) {
         
         this.setState({showDialog: false}, () => {
-            if (is_close === true) this.props.onClose(this.state.selectedCol);
+            if (is_close === true) this.props.onClose(this.state.selectedCol, this.state.selectedColMini);
         });
     }
 
@@ -63,10 +72,16 @@ export default class SelectColDialog extends React.Component<Props, State> {
         return (
             <div style={BACKDROP_STYLE}>
                 <div className='dialog' style={DIALOG_STYLE}>
-                    {this.props.logFile.headers.map((h, i) => this.renderCheckbox(h.name, i))}
-                    <VSCodeButton appearance='icon' onClick={() => this.onDialogClick(true)}>
+                    <div><div style={innerStyle}><div style={{width: '150px'}}></div>
+                    <div style={{width: '50px'}}>Table</div>
+                    <div style={{width: '50px'}}>Minimap</div>
+                    <div style={{marginLeft: '20px'}}><VSCodeButton appearance='icon' onClick={() => this.onDialogClick(true)}>
                         <i className='codicon codicon-close'/>
                     </VSCodeButton>
+                    </div></div>
+                    </div>
+                    {this.props.logFile.headers.map((h, i) => this.renderCheckbox(h.name, i))}
+                    
                 </div>
             </div>
         );

@@ -19,6 +19,7 @@ export default class LogFile {
     readonly rows: string[][];
     readonly columnsColors: string[][] = [];
     selectedColumns: boolean[];
+    selectedColumnsMini: boolean[];
 
     private constructor(contentHeaders: string[], headers: Header[], rows: string[][]) {
         this.contentHeaders = contentHeaders;
@@ -26,6 +27,7 @@ export default class LogFile {
         this.headers = headers;
         this.rows = rows;
         this.selectedColumns = new Array(headers.length).fill(true);
+        this.selectedColumnsMini = new Array(headers.length).fill(true);
     }
 
     static create(content: {[s: string]: string}[], rules: Rule[]) {
@@ -41,14 +43,19 @@ export default class LogFile {
         const headers = LogFile.getHeaders(this.contentHeaders, rules);
         const logFile = new LogFile(this.contentHeaders, headers, this.rows);
         logFile.computeRulesValuesAndColors(rules);
-        logFile.setSelectedColumns(this.selectedColumns); //only show the selected columns after updating the rules
+        logFile.setSelectedColumns(this.selectedColumns, this.selectedColumnsMini); //only show the selected columns after updating the rules
         return logFile;
     }
 
-    setSelectedColumns(selected: boolean[]) {
+    setSelectedColumns(selected: boolean[], selectedMini: boolean[]) {
         for (let column = 0; column < this.selectedColumns.length; column++) {
             if (selected[column] !== undefined) {
                 this.selectedColumns[column] = selected[column];
+            }
+        }
+        for (let column = 0; column < this.selectedColumnsMini.length; column++) {
+            if (selectedMini[column] !== undefined) {
+                this.selectedColumnsMini[column] = selectedMini[column];
             }
         }
         return this;
@@ -57,6 +64,11 @@ export default class LogFile {
     getSelectedHeader(): Header[] {
         let selectedHeaders = this.headers.filter((h, i) => this.selectedColumns[i] == true);
         return selectedHeaders;
+    }
+
+    getSelectedHeaderMini(): Header[] {
+        let selectedHeadersMini = this.headers.filter((h, i) => this.selectedColumnsMini[i] == true);
+        return selectedHeadersMini;
     }
 
     private static getContentHeaders(content: {[s: string]: string}[]) {

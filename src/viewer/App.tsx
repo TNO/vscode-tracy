@@ -24,6 +24,7 @@ interface State {
     searchColumn: string;
     searchText: string;
     selectedColumns: boolean[];
+    selectedColumnsMini: boolean[];
     coloredTable: boolean;
 }
 
@@ -45,7 +46,7 @@ export default class App extends React.Component<Props, State> {
         this.state = {logFile: LogFile.create([], []), logViewState: undefined,
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showMinimapHeader: true, showSelectDialog: false, searchColumn: 'All', searchText: '',
-            selectedColumns: [], coloredTable: false
+            selectedColumns: [], selectedColumnsMini: [], coloredTable: false
         };
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
@@ -111,9 +112,9 @@ export default class App extends React.Component<Props, State> {
             this.setState({rules: newRules});
     }
 
-    handleSelectDialog(selectedCols: boolean[], is_close: boolean) {
+    handleSelectDialog(selectedCols: boolean[], selectedColsMini: boolean[], is_close: boolean) {
         if (is_close === true) {
-            this.setState({selectedColumns: selectedCols, logFile: this.state.logFile.setSelectedColumns(selectedCols) ,showSelectDialog: false});
+            this.setState({selectedColumns: selectedCols, logFile: this.state.logFile.setSelectedColumns(selectedCols, selectedColsMini) ,showSelectDialog: false});
         }
     }
 
@@ -219,7 +220,7 @@ export default class App extends React.Component<Props, State> {
                     {this.state.showSelectDialog &&
                         <SelectColDialog
                             logFile={this.state.logFile}
-                            onClose={(selectedColumns) => this.handleSelectDialog(selectedColumns, true)}/>
+                            onClose={(selectedColumns, selectedColumnsMini) => this.handleSelectDialog(selectedColumns, selectedColumnsMini, true)}/>
                     }
                 </div>
             </div>
