@@ -81,8 +81,8 @@ export default class MinimapView extends React.Component<Props, State> {
 
         // Draw blocks
         let index = 0; //for caculating the position
-        for (let columnIndex = 0; columnIndex < logFile.selectedColumns.length; columnIndex++) {
-            if (logFile.selectedColumns[columnIndex]) {
+        for (let columnIndex = 0; columnIndex < logFile.selectedColumnsMini.length; columnIndex++) {
+            if (logFile.selectedColumnsMini[columnIndex]) {
                 const colors = logFile.columnsColors[columnIndex];
                 for (let i = 0; i < colors.length; i++) {
                     ctx.beginPath();
