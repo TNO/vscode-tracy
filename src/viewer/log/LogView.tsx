@@ -1,5 +1,5 @@
 import React, {forwardRef} from 'react';
-import { LOG_HEADER_HEIGHT, BORDER, BORDER_SIZE } from '../constants';
+import { LOG_HEADER_HEIGHT, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW } from '../constants';
 import { LogViewState } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
@@ -7,8 +7,10 @@ import ReactResizeDetector from 'react-resize-detector';
 interface Props {
     logFile: LogFile;
     onLogViewStateChanged: (value: LogViewState) => void;
+    onSelectedRowsChanged: (index: number, event: React.MouseEvent) => void;
     forwardRef: React.RefObject<HTMLDivElement>;
     coloredTable: boolean;
+    selectedRows: boolean[];
 }
 interface State {
     state: LogViewState | undefined;
@@ -108,10 +110,17 @@ export default class LogView extends React.Component<Props, State> {
         }
         for (let r = first_render; r <= last_render; r++) {
             const style: React.CSSProperties = {
-                position: 'absolute', height: ROW_HEIGHT, overflow: 'hidden', top: r * ROW_HEIGHT, borderBottom: BORDER
+                position: 'absolute', height: ROW_HEIGHT, overflow: 'hidden', top: r * ROW_HEIGHT,
+
+                // Event row selection properties
+                borderBottom: this.props.selectedRows[r] ? BORDER_SELECTED_ROW : BORDER,
+                borderTop: this.props.selectedRows[r] ? BORDER_SELECTED_ROW : 'none',
+                borderRadius: this.props.selectedRows[r] ? '5px' : 'none',
+                backgroundColor: this.props.selectedRows[r] ? 'rgba(0, 117, 0, 0.5)': '',
+                userSelect: 'none'
             };
             result.push(
-                <div key={r} style={style}>
+                <div key={r} style={style} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
                     {logFile.headers.map((h, c) => 
                     logFile.selectedColumns[c]== true &&
                         this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name), logFile.columnsColors[c][r]))

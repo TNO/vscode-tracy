@@ -26,6 +26,8 @@ interface State {
     searchColumn: string;
     searchText: string;
     selectedColumns: boolean[];
+    selectedRows: boolean[];
+    lastSelectedRow: number | undefined;
     coloredTable: boolean;
 }
 
@@ -47,7 +49,7 @@ export default class App extends React.Component<Props, State> {
         this.state = {logFile: LogFile.create([], []), logViewState: undefined,
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showMinimapHeader: true, showStructureDialog: false, showSelectDialog: false, searchColumn: 'All', searchText: '',
-            selectedColumns: [], coloredTable: false
+            selectedColumns: [], selectedRows: [], coloredTable: false, lastSelectedRow: undefined
         };
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
@@ -85,6 +87,7 @@ export default class App extends React.Component<Props, State> {
 
     onMessage(event: MessageEvent) {
         let logFile: LogFile;
+        let newSelectedRows: boolean[];
         const message = event.data;
         if (message.type === 'update') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
@@ -101,7 +104,10 @@ export default class App extends React.Component<Props, State> {
                 }
                 logFile = LogFile.create(filtered_lines, rules);
             }
-            this.setState({logFile, rules});
+
+            newSelectedRows = logFile.rows.map(() => false);
+
+            this.setState({logFile, rules, selectedRows: newSelectedRows});
         }
     }
 
@@ -123,6 +129,32 @@ export default class App extends React.Component<Props, State> {
         if (is_close === true) {
             this.setState({showStructureDialog: false});
         }
+    }
+
+    handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
+        let newSelectedRows = this.state.selectedRows;
+
+        if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
+
+            if(this.state.lastSelectedRow !== undefined && this.state.lastSelectedRow < rowIndex) {
+                for(let i = this.state.lastSelectedRow + 1; i < rowIndex + 1; i++){
+                    const newvalue = !newSelectedRows[i];
+                    newSelectedRows[i] = newvalue;
+                }
+            }
+            else if(this.state.lastSelectedRow !== undefined && this.state.lastSelectedRow > rowIndex) {
+                for(let i = rowIndex; i < this.state.lastSelectedRow + 1; i++){
+                    const newvalue = !newSelectedRows[i];
+                    newSelectedRows[i] = newvalue;
+                }
+            }
+        }else {
+            newSelectedRows = this.state.selectedRows.map((isSelected, i) => {
+                return i === rowIndex ? !isSelected : isSelected;
+            })
+        }
+
+        this.setState({selectedRows: newSelectedRows, lastSelectedRow: rowIndex});
     }
 
     handleTableCheckbox(){
@@ -185,6 +217,8 @@ export default class App extends React.Component<Props, State> {
                             onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
                             forwardRef={this.child}
                             coloredTable={this.state.coloredTable}
+                            selectedRows={this.state.selectedRows}
+                            onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
                         />
                     </div>                    
                     <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth}}>
