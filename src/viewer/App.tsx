@@ -15,7 +15,9 @@ import SelectColDialog from './log/SelectColDialog';
 interface Props {
 }
 interface State {
+    logEntryRanges: number[][];
     logFile: LogFile;
+    logFileAsString: string
     logViewState: LogViewState | undefined;
     rules: Rule[];
     showStatesDialog: boolean;
@@ -46,7 +48,7 @@ export default class App extends React.Component<Props, State> {
     child = React.createRef<HTMLDivElement>();
     constructor(props: Props) {
         super(props);
-        this.state = {logFile: LogFile.create([], []), logViewState: undefined,
+        this.state = {logEntryRanges: [], logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined,
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showMinimapHeader: true, showStructureDialog: false, showSelectDialog: false, searchColumn: 'All', searchText: '',
             selectedColumns: [], selectedRows: [], coloredTable: false, lastSelectedRow: undefined
@@ -89,26 +91,53 @@ export default class App extends React.Component<Props, State> {
         let logFile: LogFile;
         let newSelectedRows: boolean[];
         const message = event.data;
+        
         if (message.type === 'update') {
-            const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
+            const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);  
+            const logFileText = message.text;
             let lines = JSON.parse(message.text);
             logFile = LogFile.create(lines, rules);
+
             if (this.state.searchText !== '') {
                 const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
                 const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText);
                 let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
+
                 if (filtered_lines.length === 0) {
                     filtered_lines = [lines[0]]
                     for (let k of Object.keys(lines[0]))
                         filtered_lines[0][k] = ''
                 }
+
                 logFile = LogFile.create(filtered_lines, rules);
             }
 
+            this.mapLogFileTextRangesToObject(logFileText);
             newSelectedRows = logFile.rows.map(() => false);
-
-            this.setState({logFile, rules, selectedRows: newSelectedRows});
+            this.setState({logFile, logFileAsString: logFileText, rules, selectedRows: newSelectedRows});
         }
+    }
+
+    mapLogFileTextRangesToObject(logFileAsString: string) {
+        const perfStart = performance.now();
+        const textRanges: number[][] = [];
+        const jsonObjectsPattern = /{.+?},?\r\n/;
+        const flags = 'gs';
+        const jsonObjectsRegExp = new RegExp(jsonObjectsPattern, flags);
+
+        let result = jsonObjectsRegExp.exec(logFileAsString);
+
+        if(result !== null) {
+            do{
+                textRanges.push([result.index, jsonObjectsRegExp.lastIndex]);
+            }
+            while ((result = jsonObjectsRegExp.exec(logFileAsString)) !== null)
+        }
+
+        this.setState({logEntryRanges: textRanges})
+
+        const perfEnd = performance.now();
+        console.log(`Execution time (mapLogFileTextIndicesToObject()): ${perfEnd - perfStart} ms`);
     }
 
     handleDialogActions(newRules: Rule[], is_close: boolean) {
@@ -158,6 +187,7 @@ export default class App extends React.Component<Props, State> {
     }
 
     handleTableCheckbox(){
+        console.log('mapped ranges', this.state.logEntryRanges.length);
         if (this.state.coloredTable) {
             this.setState({coloredTable:false});
         } else {
