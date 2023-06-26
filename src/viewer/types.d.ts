@@ -8,3 +8,8 @@ export interface LogViewState {
     scrollLeft: number,
     rowHeight: number,
 }
+
+export interface Header {
+    name: string, 
+    type: 'string' | 'number'
+}
