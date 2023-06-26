@@ -1,5 +1,5 @@
 import React, {forwardRef} from 'react';
-import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW } from '../constants';
+import { LOG_HEADER_HEIGHT, LOG_HEADER_STYLE, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW } from '../constants';
 import { LogViewState } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
@@ -19,19 +19,6 @@ interface State {
 }
 
 const VIEWPORT_STYLE: React.CSSProperties = {position: 'relative', flex: 1, overflow: 'scroll'};
-const HEADER_STYLE: React.CSSProperties = {
-    width: '100%', height: LOG_HEADER_HEIGHT, position: 'relative', overflow: 'hidden', 
-    borderBottom: BORDER,
-};
-// TODO: determine column width automatically, not hardcoded
-const DEFAULT_COLUMN_WIDTH = 100;
-const COLUMN_WIDTH_LOOKUP = {
-    timestamp: 180, 
-    level: 50, 
-    threadID: 80, 
-    location: 200,
-    message: 400,
-}; 
 
 export default class LogView extends React.Component<Props, State> {
     viewport: React.RefObject<HTMLDivElement>;
@@ -40,7 +27,7 @@ export default class LogView extends React.Component<Props, State> {
         super(props);
         this.viewport = this.props.forwardRef;
         this.updateState = this.updateState.bind(this);
-        this.state = {state: undefined, columnWidth: COLUMN_WIDTH_LOOKUP, logFile: this.props.logFile};
+        this.state = {state: undefined, columnWidth: LOG_COLUMN_WIDTH_LOOKUP, logFile: this.props.logFile};
     }
 
     componentDidMount(): void {
@@ -152,11 +139,11 @@ export default class LogView extends React.Component<Props, State> {
             return {columnWidth};
         });
         //update the width values 
-        COLUMN_WIDTH_LOOKUP[name] = width;
+        LOG_COLUMN_WIDTH_LOOKUP[name] = width;
     }
 
     columnWidth(name: string) {
-        return COLUMN_WIDTH_LOOKUP[name] ?? DEFAULT_COLUMN_WIDTH;
+        return LOG_COLUMN_WIDTH_LOOKUP[name] ?? LOG_DEFAULT_COLUMN_WIDTH;
     }
 
     isLight(color: string) {
@@ -171,7 +158,7 @@ export default class LogView extends React.Component<Props, State> {
             left: this.state.state ? this.state.state.scrollLeft * -1 : 0,
         };
         return (
-            <div style={HEADER_STYLE} className="header-background">
+            <div style={LOG_HEADER_STYLE} className="header-background">
                 <div style={style}>
                     {this.props.logFile.getSelectedHeader().map((h, i) => this.renderHeaderColumn(h.name, i, true, this.columnWidth(h.name)))}
                 </div>
