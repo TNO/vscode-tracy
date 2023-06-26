@@ -1,5 +1,5 @@
 import React, {forwardRef} from 'react';
-import { LOG_HEADER_HEIGHT, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW } from '../constants';
+import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW } from '../constants';
 import { LogViewState } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
@@ -17,8 +17,6 @@ interface State {
     columnWidth: { [id: string]: number };
     logFile: LogFile;
 }
-
-const ROW_HEIGHT = 28;
 
 const VIEWPORT_STYLE: React.CSSProperties = {position: 'relative', flex: 1, overflow: 'scroll'};
 const HEADER_STYLE: React.CSSProperties = {
@@ -60,7 +58,7 @@ export default class LogView extends React.Component<Props, State> {
     }
 
     renderColumn(value: string, index: number, isHeader: boolean, width: number, colorMap: string) {
-        const height = isHeader ? LOG_HEADER_HEIGHT : ROW_HEIGHT;
+        const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
         const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
         let color = 'transparent';
         let fontColor = ''
@@ -99,7 +97,7 @@ export default class LogView extends React.Component<Props, State> {
         if (last_render > logFile.rows.length){
             if (!this.viewport.current) return;
             const height = this.viewport.current.clientHeight;
-            const maxVisibleItems = height / ROW_HEIGHT;
+            const maxVisibleItems = height / LOG_ROW_HEIGHT;
             last_render = logFile.rows.length - 1;
             first_render = Math.max(0, Math.ceil(last_render - maxVisibleItems) - 1);
         }
@@ -110,7 +108,7 @@ export default class LogView extends React.Component<Props, State> {
         }
         for (let r = first_render; r <= last_render; r++) {
             const style: React.CSSProperties = {
-                position: 'absolute', height: ROW_HEIGHT, overflow: 'hidden', top: r * ROW_HEIGHT,
+                position: 'absolute', height: LOG_ROW_HEIGHT, overflow: 'hidden', top: r * LOG_ROW_HEIGHT,
 
                 // Event row selection properties
                 borderBottom: this.props.selectedRows[r] ? BORDER_SELECTED_ROW : BORDER,
@@ -136,12 +134,12 @@ export default class LogView extends React.Component<Props, State> {
         const height = this.viewport.current.clientHeight;
         const scrollTop = this.viewport.current.scrollTop;
         const scrollLeft = this.viewport.current.scrollLeft;
-        const maxVisibleItems = height / ROW_HEIGHT;
-        const start = scrollTop / ROW_HEIGHT;
+        const maxVisibleItems = height / LOG_ROW_HEIGHT;
+        const start = scrollTop / LOG_ROW_HEIGHT;
         const startFloor = Math.floor(start);
         const endCeil = Math.min(Math.ceil(start + maxVisibleItems) - 1, this.props.logFile.amountOfRows() - 1);
         const visibleItems = Math.min(this.props.logFile.amountOfRows(), maxVisibleItems);
-        const state = {height, scrollLeft, scrollTop, startFloor, start, endCeil, visibleItems, rowHeight: ROW_HEIGHT};
+        const state = {height, scrollLeft, scrollTop, startFloor, start, endCeil, visibleItems, rowHeight: LOG_ROW_HEIGHT};
         this.setState({state});
         this.props.onLogViewStateChanged(state);
     }
@@ -182,7 +180,7 @@ export default class LogView extends React.Component<Props, State> {
     }
 
     renderHeaderColumn(value: string, index: number, isHeader: boolean, width: number) {
-        const height = isHeader ? LOG_HEADER_HEIGHT : ROW_HEIGHT;
+        const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
         var widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
         const style: React.CSSProperties = {
             overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
@@ -205,7 +203,7 @@ export default class LogView extends React.Component<Props, State> {
 
     render() {
         const {logFile} = this.props;
-        const containerHeight = logFile.amountOfRows() * ROW_HEIGHT;
+        const containerHeight = logFile.amountOfRows() * LOG_ROW_HEIGHT;
         const containerWidth = ((logFile.amountOfColumns() - 1) * BORDER_SIZE) +
             logFile.headers.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
         return (
