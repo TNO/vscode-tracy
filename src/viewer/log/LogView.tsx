@@ -1,4 +1,4 @@
-import React, {forwardRef} from 'react';
+import React from 'react';
 import { LOG_HEADER_HEIGHT, LOG_HEADER_STYLE, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW } from '../constants';
 import { LogViewState } from '../types';
 import LogFile from '../LogFile';
@@ -35,7 +35,7 @@ export default class LogView extends React.Component<Props, State> {
         this.updateState();
     }
 
-    componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
+    componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
         if (prevProps.logFile !== this.props.logFile) {
             this.updateState();
         }
@@ -134,7 +134,7 @@ export default class LogView extends React.Component<Props, State> {
     setColumnWidth(name: string, width: number) {
         //update the state for triggering the render
         this.setState(prevState => {
-            let columnWidth = {...prevState.columnWidth};
+            const columnWidth = {...prevState.columnWidth};
             columnWidth[name] = width;
             return {columnWidth};
         });
@@ -168,7 +168,7 @@ export default class LogView extends React.Component<Props, State> {
 
     renderHeaderColumn(value: string, index: number, isHeader: boolean, width: number) {
         const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
-        var widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
         const style: React.CSSProperties = {
             overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
             width: widthNew, borderLeft: index !== 0 ? BORDER : '',
