@@ -46,6 +46,15 @@ export default class StructureDialog extends React.Component<Props, State> {
         this.state = {editStructure: false, columnWidth: LOG_COLUMN_WIDTH_LOOKUP, stateSelectedRows: []};
     }
 
+    shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
+        if((this.props.isOpen && this.props.propSelectedRows !== nextProps.propSelectedRows) 
+            || (this.state !== nextState)) {
+            return true;
+        }
+
+        return false;
+    }
+
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
         console.log("enter componentDidUpdate")
         if(this.props.isOpen && this.props.propSelectedRows.length !== 0 && this.state.stateSelectedRows !== this.props.propSelectedRows) {
@@ -61,7 +70,7 @@ export default class StructureDialog extends React.Component<Props, State> {
         const newEntries = this.props.propSelectedRows.filter( entry => !entriesInStructure.includes(entry));
         console.log('new entries selected:', newEntries.length);
 
-        if(newEntries.length !== 0){
+        if(newEntries.length !== 0) {
             newEntries.forEach(entry => entriesInStructure.push(entry));
 
             entriesInStructure.sort((a,b) => a[0].localeCompare(b[0]));
