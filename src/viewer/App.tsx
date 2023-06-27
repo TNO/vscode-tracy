@@ -42,6 +42,8 @@ const COLUMN_2_HEADER_STYLE = {
     height: '100%', display: 'flex', borderLeft: BORDER
 }
 
+let selectedLogEntries: string[][] = [];
+
 export default class App extends React.Component<Props, State> {
     // @ts-ignore
     vscode = acquireVsCodeApi();
@@ -58,7 +60,7 @@ export default class App extends React.Component<Props, State> {
         this.vscode.postMessage({type: 'update'});
     }
 
-    componentDidUpdate(prevState: State) {
+    componentDidUpdate(prevProps: Props, prevState: State) {
         if (this.state.logFile !== prevState.logFile) {
             this.render();
         }
@@ -154,10 +156,24 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    handleStructureDialogActions(is_close: boolean) {
-        if (is_close === true) {
-            this.setState({showStructureDialog: false});
+    handleStructureDialogActions(is_open: boolean) {    
+        if (is_open === false) {
+            selectedLogEntries = this.state.logFile.rows.filter((v, i) => this.state.selectedRows[i]).map((value) => value);
+        
+            if(selectedLogEntries.length === 0) {
+                return;
+            }
+
+            console.log("made selection");
         }
+
+        this.setState({showStructureDialog: !is_open});
+    }
+
+    clearSelectedRows() {
+        selectedLogEntries = [];
+        const clearedSelectedRows = this.state.selectedRows.map(() => {return false});
+        this.setState({selectedRows: clearedSelectedRows});
     }
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
@@ -253,7 +269,7 @@ export default class App extends React.Component<Props, State> {
                     </div>                    
                     <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth}}>
                         <div className='header-background' style={COLUMN_0_HEADER_STYLE}>
-                        <VSCodeButton appearance='icon' onClick={() => this.setState({showStructureDialog: true})}>
+                        <VSCodeButton appearance='icon' onClick={() => this.handleStructureDialogActions(false)}>
                                 <i className="codicon codicon-three-bars"/>
                             </VSCodeButton>
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
@@ -294,10 +310,14 @@ export default class App extends React.Component<Props, State> {
                             onClose={(selectedColumns) => this.handleSelectDialog(selectedColumns, true)}/>
                     }
                 </div>
-                <div style={{flex: 1, display: 'flex', position: 'absolute', overflow: 'visible'}}>
+                <div style={{flex: 1, display: 'flex', position: 'absolute'}}>
                         {this.state.showStructureDialog &&
                             <StructureDialog
+                                logHeaders={this.state.logFile.headers}
+                                propSelectedRows={selectedLogEntries}
+                                isOpen = {this.state.showStructureDialog}
                                 onClose={() => this.handleStructureDialogActions(true)}
+                                onStructureUpdate={() => this.clearSelectedRows()}
                             />
                         }
                 </div>
