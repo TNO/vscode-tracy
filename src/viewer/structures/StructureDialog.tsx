@@ -56,7 +56,6 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
-        console.log("enter componentDidUpdate")
         if(this.props.isOpen && this.props.propSelectedRows.length !== 0 && this.state.stateSelectedRows !== this.props.propSelectedRows) {
             this.updateStructure();
             this.props.onStructureUpdate();
@@ -64,11 +63,8 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     updateStructure(){
-        console.log('enter updateStrcture');
-        let entriesInStructure = this.state.stateSelectedRows;
-        console.log('initial entries in Structure:', entriesInStructure.length);
+        const entriesInStructure = this.state.stateSelectedRows;
         const newEntries = this.props.propSelectedRows.filter( entry => !entriesInStructure.includes(entry));
-        console.log('new entries selected:', newEntries.length);
 
         if(newEntries.length !== 0) {
             newEntries.forEach(entry => entriesInStructure.push(entry));
@@ -133,8 +129,6 @@ export default class StructureDialog extends React.Component<Props, State> {
     render() {
         const containerWidth = ((this.props.logHeaders.length - 1) * BORDER_SIZE) +
         this.props.logHeaders.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
-        console.log("render - props rows", this.props.propSelectedRows.length);
-        console.log("render - state rows", this.state.stateSelectedRows.length);
         
         return (
             <div style={BACKDROP_STYLE}>
