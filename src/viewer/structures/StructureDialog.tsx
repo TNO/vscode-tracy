@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactResizeDetector from 'react-resize-detector'
 import { Header } from '../types';
-import { LOG_HEADER_STYLE, LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH } from '../constants';
+import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH } from '../constants';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 
 interface Props {
@@ -19,11 +19,8 @@ interface State {
 }
 
 const BACKDROP_STYLE: React.CSSProperties = {
-    position: 'fixed',
     bottom: '10px',
-    height: 'auto',
-    minHeight: '25vh', 
-    width: '100vw',
+    width: '100%',
     backgroundColor: '#00000030',
     display: 'flex', 
     justifyContent: 'center', 
@@ -32,7 +29,6 @@ const BACKDROP_STYLE: React.CSSProperties = {
 }
 
 const DIALOG_STYLE: React.CSSProperties = {
-    height: '100%',
     width: '98%', 
     padding: '10px', 
     display: 'flex', 
@@ -59,6 +55,12 @@ export default class StructureDialog extends React.Component<Props, State> {
         if(this.props.isOpen && this.props.propSelectedRows.length !== 0 && this.state.stateSelectedRows !== this.props.propSelectedRows) {
             this.updateStructure();
             this.props.onStructureUpdate();
+        }
+
+        
+        if(prevState.columnWidth !== this.state.columnWidth) {
+            console.log("column width changes");
+            this.render();
         }
     }
 
@@ -88,18 +90,18 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     columnWidth(name: string) {
-        return this.columnWidth[name] ?? LOG_DEFAULT_COLUMN_WIDTH;
+        return this.state.columnWidth[name] ?? LOG_DEFAULT_COLUMN_WIDTH;
     }
 
-    renderHeaderColumn(value: string, index: number, isHeader: boolean, width: number) {
-        const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
+    renderHeaderColumn(value: string, index: number, width: number) {
+        const height = LOG_HEADER_HEIGHT;
         const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
         const style: React.CSSProperties = {
             overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
             width: widthNew, borderLeft: index !== 0 ? BORDER : '',
         };
         const innerStyle: React.CSSProperties = {
-            display: 'flex', height, alignItems: 'center', justifyContent: isHeader ? 'center' : 'left', 
+            display: 'flex', height, alignItems: 'center', justifyContent:'center', 
             paddingLeft: '2px'
         };
         return (
@@ -115,18 +117,65 @@ export default class StructureDialog extends React.Component<Props, State> {
 
     renderHeader(width: number) {
         const style: React.CSSProperties = {
-            width, height: '100%', position: 'absolute',
+            width: width, 
+            height: LOG_HEADER_HEIGHT, 
+            position: 'relative',
+            borderBottom: BORDER,
+            userSelect: 'none'
+        };
+
+        return (
+            <div style={style} className="header-background">
+                {this.props.logHeaders.map((h, i) => this.renderHeaderColumn(h.name, i, this.columnWidth(h.name)))}
+            </div>
+        );
+    }
+
+    renderColumn(value: string, index: number, width: number) {
+        const height = LOG_ROW_HEIGHT;
+        const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const color = 'transparent';
+        
+        const style: React.CSSProperties = {
+            overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
+            width: widthNew, borderLeft: index !== 0 ? BORDER : '', 
+        };
+        const innerStyle: React.CSSProperties = {
+            display: 'flex', height, alignItems: 'center', justifyContent: 'left', 
+            paddingLeft: '2px', backgroundColor: color
         };
         return (
-            <div style={LOG_HEADER_STYLE} className="header-background">
-                <div style={style}>
-                    {this.props.logHeaders.map((h, i) => this.renderHeaderColumn(h.name, i, true, this.columnWidth(h.name)))}
+            <div style={style} key={index}>
+                <div style={innerStyle}>
+                    {value}
                 </div>
             </div>
         );
     }
 
+    renderRows() {
+        // This method only renders the rows that are visible
+
+        const result: any = [];
+
+        for (let r = 0; r < this.state.stateSelectedRows.length; r++) {
+            const style: React.CSSProperties = {
+                position: 'absolute', height: LOG_ROW_HEIGHT, overflow: 'hidden', top: r * LOG_ROW_HEIGHT,
+                userSelect: 'none'
+            };
+            result.push(
+                <div key={r} style={style}>
+                    {this.props.logHeaders.map((h, c) => 
+                        this.renderColumn(this.state.stateSelectedRows[r][c], c, this.columnWidth(h.name)))
+                    }
+                </div>
+            );
+        }
+        return result;
+    }
+
     render() {
+        const containerHeight = this.state.stateSelectedRows.length * LOG_ROW_HEIGHT;
         const containerWidth = ((this.props.logHeaders.length - 1) * BORDER_SIZE) +
         this.props.logHeaders.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
         
@@ -134,18 +183,23 @@ export default class StructureDialog extends React.Component<Props, State> {
             <div style={BACKDROP_STYLE}>
                 <div className = 'dialog'style={DIALOG_STYLE}>
                     <div style={{display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'top'}}>
-                        <div className='title-big'>Structure</div>
+                        <div className='title-small'>Structure Matching</div>
                         <VSCodeButton appearance='icon' onClick={() => this.closeDialog()}>
                             <i className='codicon codicon-close'/>
                         </VSCodeButton>
                     </div>
                     <div style={{display: 'flex'}}>
                         <div style={{width: '2%', border: '1px solid red'}}>sequence div</div>
-                        <div style={{width: '98%', border: '1px solid yellow', flex: 1, display: 'flex', flexDirection: 'column'}}>
-                        {this.renderHeader(containerWidth)}
+                        <div id="structureTable" style={{width: '98%', border: '1px solid yellow', flex: 1, display: 'inline-block', flexDirection: 'column', overflow: 'auto'}}>
+                            <div id="structureHeader">
+                                {this.renderHeader(containerWidth)}
+                            </div>
+                            <div id="structureRows" style={{width: containerWidth, height: containerHeight, position: 'relative', overflow: 'auto'}}>
+                                {this.renderRows()}
+                            </div>
                         </div>
                     </div>
-                    <div style={{textAlign: 'right', padding: '10px'}}>
+                    <div style={{textAlign: 'right'}}>
                         <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '115px'}}>
                             Edit Structure
                         </VSCodeButton>

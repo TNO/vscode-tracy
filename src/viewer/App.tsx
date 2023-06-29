@@ -163,8 +163,6 @@ export default class App extends React.Component<Props, State> {
             if(selectedLogEntries.length === 0) {
                 return;
             }
-
-            console.log("made selection");
         }
 
         this.setState({showStructureDialog: !is_open});
@@ -214,114 +212,113 @@ export default class App extends React.Component<Props, State> {
     render() {
         const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         const minimapHeight = this.state.showMinimapHeader ? '12%' : '5%' ;
-        const logviewHeight = this.state.showMinimapHeader ? '88%' : '95%' ;
+
         const all_columns = ['All', ...this.state.logFile.contentHeaders, ...this.state.rules.map(i=>i.column)];
         return (
-            <div style={{display:'flex', flexDirection: 'column', height: '100%'}}>
-                <div style={{display: 'flex', flexDirection: 'row', height: minimapHeight}}>
-                    <div style={{display: 'flex'}}>
-                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '150px'}}
-                            onClick={() => this.setState({showSelectDialog: true})}>
-                            Choose Columns
-                        </VSCodeButton>
-                        <label>
-                            <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.handleTableCheckbox()}/>
-                            Color Table
-                        </label>
-                    </div>
-                    <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
-                        <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
-                            {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
-                        </VSCodeDropdown>
-                        <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.filterOnEnter(e.key)}>
-                            <span slot="end" className="codicon codicon-search"></span>
-                        </VSCodeTextField>
-                        {this.state.showMinimapHeader &&
-                            <VSCodeButton appearance='icon' onClick={() => this.setState({showMinimapHeader: false})}>
-                                <i className='codicon codicon-arrow-down' />
-                            </VSCodeButton>
-                        }
-                        {!this.state.showMinimapHeader &&
-                            <VSCodeButton appearance='icon' onClick={() => this.setState({showMinimapHeader: true})}>
-                                <i className='codicon codicon-arrow-up' />
-                            </VSCodeButton>
-                        }
-                    </div>          
-                    {!this.state.showMinimapHeader &&
-                        <div className='header-background' style={{width: minimapWidth}}></div>
-                    }
-                    {this.state.showMinimapHeader &&
-                        <div className='header-background' style={{width: minimapWidth, ...COLUMN_2_HEADER_STYLE}}>
-                            <MinimapHeader logFile={this.state.logFile}/>
-                        </div>
-                    }
+        <div id="container" style={{display:'flex', flexDirection: 'column', height: '100vh', boxSizing: 'border-box'}}>
+            <div id="header" style={{display: 'flex', flexDirection: 'row', height: minimapHeight, boxSizing: 'border-box'}}>
+                <div style={{display: 'flex'}}>
+                    <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '150px'}}
+                        onClick={() => this.setState({showSelectDialog: true})}>
+                        Choose Columns
+                    </VSCodeButton>
+                    <label>
+                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.handleTableCheckbox()}/>
+                        Color Table
+                    </label>
                 </div>
-                <div style={{display: 'flex', flexDirection: 'row', height: logviewHeight}}>                
-                    <div style={{flex: 1, display: 'flex'}}>
-                        <LogView
-                            logFile={this.state.logFile} 
-                            onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
-                            forwardRef={this.child}
-                            coloredTable={this.state.coloredTable}
-                            selectedRows={this.state.selectedRows}
-                            onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
-                        />
-                    </div>                    
-                    <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth}}>
-                        <div className='header-background' style={COLUMN_0_HEADER_STYLE}>
+                <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
+                    <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
+                    {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                    </VSCodeDropdown>
+                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.filterOnEnter(e.key)}>
+                    <span slot="end" className="codicon codicon-search"></span>
+                    </VSCodeTextField>
+                    {this.state.showMinimapHeader &&
+                    <VSCodeButton appearance='icon' onClick={() => this.setState({showMinimapHeader: false})}>
+                    <i className='codicon codicon-arrow-down' />
+                    </VSCodeButton>
+                    }
+                    {!this.state.showMinimapHeader &&
+                    <VSCodeButton appearance='icon' onClick={() => this.setState({showMinimapHeader: true})}>
+                    <i className='codicon codicon-arrow-up' />
+                    </VSCodeButton>
+                    }
+                </div>          
+                {!this.state.showMinimapHeader &&
+                <div className='header-background' style={{width: minimapWidth}}></div>
+                }
+                {this.state.showMinimapHeader &&
+                <div className='header-background' style={{width: minimapWidth, ...COLUMN_2_HEADER_STYLE}}>
+                <MinimapHeader logFile={this.state.logFile}/>
+                </div>
+                }
+            </div>
+            <div id="LogViewAndMinimap" style={{display: 'flex', flexDirection: 'row', height: `calc(100% - ${minimapHeight})`, overflow: 'auto', boxSizing: 'border-box'}}>                
+                <div style={{flex: 1, display: 'flex'}}>
+                    <LogView
+                        logFile={this.state.logFile} 
+                        onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
+                        forwardRef={this.child}
+                        coloredTable={this.state.coloredTable}
+                        selectedRows={this.state.selectedRows}
+                        onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
+                    />
+                </div>                    
+                <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth, boxSizing: 'border-box'}}>
+                    <div className='header-background' style={COLUMN_0_HEADER_STYLE}>
                         <VSCodeButton appearance='icon' onClick={() => this.handleStructureDialogActions(false)}>
-                                <i className="codicon codicon-three-bars"/>
-                            </VSCodeButton>
-                            <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
-                                <i className="codicon codicon-tag"/>
-                            </VSCodeButton>
-                            <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
-                                <i className="codicon codicon-settings-gear"/>
-                            </VSCodeButton>
-                        </div>
-                        {this.state.logViewState &&
-                            <MinimapView
-                                logFile={this.state.logFile}
-                                logViewState={this.state.logViewState}
-                                onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
-                                forwardRef={this.child}
-                            />
-                        }
+                        <i className="codicon codicon-three-bars"/>
+                        </VSCodeButton>
+                        <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
+                        <i className="codicon codicon-tag"/>
+                        </VSCodeButton>
+                        <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
+                        <i className="codicon codicon-settings-gear"/>
+                        </VSCodeButton>
                     </div>
-                    { this.state.showStatesDialog &&
-                    <StatesDialog
-                        logFile={this.state.logFile}
-                        initialRules={this.state.rules}
-                        onClose={(newRules) => this.handleDialogActions(newRules, true)}
-                        onReturn={(newRules) => this.handleDialogActions(newRules, false)}
+                    {this.state.logViewState &&
+                    <MinimapView
+                    logFile={this.state.logFile}
+                    logViewState={this.state.logViewState}
+                    onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
+                    forwardRef={this.child}
                     />
                     }
-                    { this.state.showFlagsDialog &&
-                    <FlagsDialog
-                        logFile={this.state.logFile}
-                        initialRules={this.state.rules}
-                        onClose={(newRules) => this.handleDialogActions(newRules, true)}
-                        onReturn={(newRules) => this.handleDialogActions(newRules, false)}
-                    /> 
-                    }
-                    {this.state.showSelectDialog &&
-                        <SelectColDialog
-                            logFile={this.state.logFile}
-                            onClose={(selectedColumns) => this.handleSelectDialog(selectedColumns, true)}/>
-                    }
                 </div>
-                <div style={{flex: 1, display: 'flex', position: 'absolute'}}>
-                        {this.state.showStructureDialog &&
-                            <StructureDialog
-                                logHeaders={this.state.logFile.headers}
-                                propSelectedRows={selectedLogEntries}
-                                isOpen = {this.state.showStructureDialog}
-                                onClose={() => this.handleStructureDialogActions(true)}
-                                onStructureUpdate={() => this.clearSelectedRows()}
-                            />
-                        }
-                </div>
+                { this.state.showStatesDialog &&
+                <StatesDialog
+                logFile={this.state.logFile}
+                initialRules={this.state.rules}
+                onClose={(newRules) => this.handleDialogActions(newRules, true)}
+                onReturn={(newRules) => this.handleDialogActions(newRules, false)}
+                />
+                }
+                { this.state.showFlagsDialog &&
+                <FlagsDialog
+                logFile={this.state.logFile}
+                initialRules={this.state.rules}
+                onClose={(newRules) => this.handleDialogActions(newRules, true)}
+                onReturn={(newRules) => this.handleDialogActions(newRules, false)}
+                /> 
+                }
+                {this.state.showSelectDialog &&
+                <SelectColDialog
+                logFile={this.state.logFile}
+                onClose={(selectedColumns) => this.handleSelectDialog(selectedColumns, true)}/>
+                }
             </div>
-        );
+            <div id="StructureDialog" style={{display: 'flex', position: 'relative', boxSizing: 'border-box'}}>
+                {this.state.showStructureDialog &&
+                <StructureDialog
+                logHeaders={this.state.logFile.headers}
+                propSelectedRows={selectedLogEntries}
+                isOpen = {this.state.showStructureDialog}
+                onClose={() => this.handleStructureDialogActions(true)}
+                onStructureUpdate={() => this.clearSelectedRows()}
+                />
+                }
+            </div>
+        </div>);
     }
 }
