@@ -16,11 +16,6 @@ export const BORDER_SELECTED_ROW = `${BORDER_SELECT_ROW_SIZE}px solid green`;
 
 export const BORDER_SELECTED_ROW_RADIUS = `5px`;
 
-export const LOG_HEADER_STYLE: React.CSSProperties = {
-    width: '100%', height: LOG_HEADER_HEIGHT, position: 'relative', overflow: 'hidden', 
-    borderBottom: BORDER,
-};
-
 // TODO: determine column width automatically, not hardcoded
 export const LOG_COLUMN_WIDTH_LOOKUP = {
     timestamp: 180, 

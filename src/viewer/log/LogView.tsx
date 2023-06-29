@@ -1,5 +1,5 @@
 import React from 'react';
-import { LOG_HEADER_HEIGHT, LOG_HEADER_STYLE, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW } from '../constants';
+import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW } from '../constants';
 import { LogViewState } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
@@ -17,6 +17,11 @@ interface State {
     columnWidth: { [id: string]: number };
     logFile: LogFile;
 }
+
+const HEADER_STYLE: React.CSSProperties = {
+    width: '100%', height: LOG_HEADER_HEIGHT, position: 'relative', overflow: 'hidden', 
+    borderBottom: BORDER,
+};
 
 const VIEWPORT_STYLE: React.CSSProperties = {position: 'relative', flex: 1, overflow: 'scroll'};
 
@@ -158,7 +163,7 @@ export default class LogView extends React.Component<Props, State> {
             left: this.state.state ? this.state.state.scrollLeft * -1 : 0,
         };
         return (
-            <div style={LOG_HEADER_STYLE} className="header-background">
+            <div style={HEADER_STYLE} className="header-background">
                 <div style={style}>
                     {this.props.logFile.getSelectedHeader().map((h, i) => this.renderHeaderColumn(h.name, i, true, this.columnWidth(h.name)))}
                 </div>
