@@ -13,7 +13,7 @@ interface Props {
 }
 
 interface State {
-    editStructure: boolean;
+    isEditingStructure: boolean;
     columnWidth: { [id: string]: number };
     stateSelectedRows: string[][];
 }
@@ -28,9 +28,6 @@ const BACKDROP_STYLE: React.CSSProperties = {
     overflow: 'visible', 
 }
 
-const STRUCTURE_SEQUENCE_DIV_WIDTH = LOG_ROW_HEIGHT;
-const SEQUENCE_EDGE_HEIGHT = 24;
-
 const DIALOG_STYLE: React.CSSProperties = {
     width: '98%', 
     padding: '10px', 
@@ -39,10 +36,13 @@ const DIALOG_STYLE: React.CSSProperties = {
     overflow:'scroll',
 }
 
+const STRUCTURE_SEQUENCE_DIV_WIDTH = LOG_ROW_HEIGHT;
+const SEQUENCE_EDGE_HEIGHT = 24;
+
 export default class StructureDialog extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
-        this.state = {editStructure: false, columnWidth: LOG_COLUMN_WIDTH_LOOKUP, stateSelectedRows: []};
+        this.state = {isEditingStructure: false, columnWidth: LOG_COLUMN_WIDTH_LOOKUP, stateSelectedRows: []};
     }
 
     shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
@@ -76,6 +76,20 @@ export default class StructureDialog extends React.Component<Props, State> {
     
             this.setState({stateSelectedRows: entriesInStructure});
         }
+    }
+
+    removeEntryFromStructure(rowIndex: number) {
+        const selectedRows = this.state.stateSelectedRows.filter((v, i) => i !== rowIndex);
+        this.setState({stateSelectedRows: selectedRows});
+
+        if(selectedRows.length === 0) {
+            this.closeDialog();
+        }
+    }
+
+    toggleEditingStructure() {
+        const isEditingStructureOld = this.state.isEditingStructure;
+        this.setState({isEditingStructure: !isEditingStructureOld});
     }
 
     closeDialog() {  
@@ -161,14 +175,15 @@ export default class StructureDialog extends React.Component<Props, State> {
     renderRows(containerWidth: number, containerHeight: number) {
         const newContainerWidth = containerWidth + STRUCTURE_SEQUENCE_DIV_WIDTH;
         const result: any = [];
-        const {stateSelectedRows} = this.state;
+        const {stateSelectedRows, isEditingStructure} = this.state;
         const sequenceVertexStyle: React.CSSProperties = {
             width: STRUCTURE_SEQUENCE_DIV_WIDTH,
             height: LOG_ROW_HEIGHT,
             display: 'inline-block',
             verticalAlign: 'top',
             textAlign: 'center',
-            lineHeight: `${LOG_ROW_HEIGHT}px`
+            lineHeight: `${LOG_ROW_HEIGHT}px`,
+            color: isEditingStructure ? 'red' : ''
         }
 
         let sequenceEdgeIndex = 0;
@@ -186,7 +201,8 @@ export default class StructureDialog extends React.Component<Props, State> {
 
             result.push(
                 <div key={r} style={style}>
-                    <div style={sequenceVertexStyle}><i className='codicon codicon-circle-filled'/></div>
+                    {!isEditingStructure && <div style={sequenceVertexStyle}><i className='codicon codicon-circle-filled'/></div>}
+                    {isEditingStructure && <div style={sequenceVertexStyle} onClick={() => {this.removeEntryFromStructure(r)}}><i className='codicon codicon-close'/></div>}
                     {this.props.logHeaders.map((h, c) => 
                         this.renderColumn(stateSelectedRows[r][c], c, this.columnWidth(h.name)))
                     }
@@ -221,7 +237,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 
     render() {
         const numberOfRows = this.state.stateSelectedRows.length;
-        const containerHeight = numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * 24;
+        const containerHeight = numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * SEQUENCE_EDGE_HEIGHT;
         const containerWidth = ((this.props.logHeaders.length - 1) * BORDER_SIZE) +
         this.props.logHeaders.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
         
@@ -234,15 +250,13 @@ export default class StructureDialog extends React.Component<Props, State> {
                             <i className='codicon codicon-close'/>
                         </VSCodeButton>
                     </div>
-                    <div style={{display: 'flex'}}>
-                        <div id="structureTable" style={{flex: 1, display: 'inline-block', flexDirection: 'column', overflow: 'auto'}}>
-                                {this.renderHeader(containerWidth)}
-                                {this.renderRows(containerWidth, containerHeight)}
-                        </div>
+                    <div id="structureTable" style={{flex: 1, display: 'inline-block', flexDirection: 'column', overflow: 'auto'}}>
+                            {this.renderHeader(containerWidth)}
+                            {this.renderRows(containerWidth, containerHeight)}
                     </div>
                     <div style={{textAlign: 'right'}}>
-                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '115px'}}>
-                            Edit Structure
+                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '115px'}} onClick={() => {this.toggleEditingStructure();}}>
+                            {this.state.isEditingStructure ? 'Done' : 'Edit Structure'}
                         </VSCodeButton>
                         <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '145px'}}>
                             Search for Structure
