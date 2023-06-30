@@ -28,6 +28,9 @@ const BACKDROP_STYLE: React.CSSProperties = {
     overflow: 'visible', 
 }
 
+const STRUCTURE_SEQUENCE_DIV_WIDTH = LOG_ROW_HEIGHT;
+const SEQUENCE_EDGE_HEIGHT = 24;
+
 const DIALOG_STYLE: React.CSSProperties = {
     width: '98%', 
     padding: '10px', 
@@ -57,9 +60,7 @@ export default class StructureDialog extends React.Component<Props, State> {
             this.props.onStructureUpdate();
         }
 
-        
         if(prevState.columnWidth !== this.state.columnWidth) {
-            console.log("column width changes");
             this.render();
         }
     }
@@ -115,19 +116,23 @@ export default class StructureDialog extends React.Component<Props, State> {
         );
     }
 
-    renderHeader(width: number) {
+    renderHeader(containerWidth: number) {
         const style: React.CSSProperties = {
-            width: width, 
+            width: containerWidth, 
             height: LOG_HEADER_HEIGHT, 
             position: 'relative',
             borderBottom: BORDER,
-            userSelect: 'none'
+            userSelect: 'none',
+            left: STRUCTURE_SEQUENCE_DIV_WIDTH,
+            display: "flex"
         };
 
         return (
-            <div style={style} className="header-background">
-                {this.props.logHeaders.map((h, i) => this.renderHeaderColumn(h.name, i, this.columnWidth(h.name)))}
-            </div>
+            <div id='structureHeader' style={style}>
+                <div className="header-background">
+                    {this.props.logHeaders.map((h, i) => this.renderHeaderColumn(h.name, i, this.columnWidth(h.name)))}
+                </div>
+            </div> 
         );
     }
 
@@ -138,7 +143,7 @@ export default class StructureDialog extends React.Component<Props, State> {
         
         const style: React.CSSProperties = {
             overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
-            width: widthNew, borderLeft: index !== 0 ? BORDER : '', 
+            width: widthNew, borderLeft: index !== 0 ? BORDER : '', verticalAlign: 'top' 
         };
         const innerStyle: React.CSSProperties = {
             display: 'flex', height, alignItems: 'center', justifyContent: 'left', 
@@ -153,29 +158,70 @@ export default class StructureDialog extends React.Component<Props, State> {
         );
     }
 
-    renderRows() {
-        // This method only renders the rows that are visible
-
+    renderRows(containerWidth: number, containerHeight: number) {
+        const newContainerWidth = containerWidth + STRUCTURE_SEQUENCE_DIV_WIDTH;
         const result: any = [];
+        const {stateSelectedRows} = this.state;
+        const sequenceVertexStyle: React.CSSProperties = {
+            width: STRUCTURE_SEQUENCE_DIV_WIDTH,
+            height: LOG_ROW_HEIGHT,
+            display: 'inline-block',
+            verticalAlign: 'top',
+            textAlign: 'center',
+            lineHeight: `${LOG_ROW_HEIGHT}px`
+        }
 
-        for (let r = 0; r < this.state.stateSelectedRows.length; r++) {
+        let sequenceEdgeIndex = 0;
+
+        for (let r = 0; r < stateSelectedRows.length; r++) {
             const style: React.CSSProperties = {
-                position: 'absolute', height: LOG_ROW_HEIGHT, overflow: 'hidden', top: r * LOG_ROW_HEIGHT,
+                position: 'absolute', 
+                height: LOG_ROW_HEIGHT,
+                top: r * LOG_ROW_HEIGHT + sequenceEdgeIndex * SEQUENCE_EDGE_HEIGHT,
+                overflow: 'hidden',
+                borderBottom: BORDER,
+                borderTop: (r > 0) ? BORDER: '',
                 userSelect: 'none'
             };
+
             result.push(
                 <div key={r} style={style}>
+                    <div style={sequenceVertexStyle}><i className='codicon codicon-circle-filled'/></div>
                     {this.props.logHeaders.map((h, c) => 
-                        this.renderColumn(this.state.stateSelectedRows[r][c], c, this.columnWidth(h.name)))
+                        this.renderColumn(stateSelectedRows[r][c], c, this.columnWidth(h.name)))
                     }
                 </div>
             );
+
+            if(r !== stateSelectedRows.length - 1) {
+                const sequenceEdgeStyle: React.CSSProperties = {
+                    position: 'absolute', 
+                    height: SEQUENCE_EDGE_HEIGHT,
+                    top: (r + 1) * LOG_ROW_HEIGHT + sequenceEdgeIndex * SEQUENCE_EDGE_HEIGHT,
+                    overflow: 'hidden',
+                    userSelect: 'none'
+                };
+
+                result.push(
+                    <div key={'b' + sequenceEdgeIndex} style={sequenceEdgeStyle}>
+                        <p>link between rows</p>
+                    </div>
+                );
+                sequenceEdgeIndex++;
+            }
         }
-        return result;
+
+        return(
+            <div id="structureRows" style={{width: newContainerWidth, height: containerHeight, position: 'relative', overflow: 'auto'}}>
+                {result}
+            </div>
+        );
     }
 
+
     render() {
-        const containerHeight = this.state.stateSelectedRows.length * LOG_ROW_HEIGHT;
+        const numberOfRows = this.state.stateSelectedRows.length;
+        const containerHeight = numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * 24;
         const containerWidth = ((this.props.logHeaders.length - 1) * BORDER_SIZE) +
         this.props.logHeaders.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
         
@@ -189,14 +235,9 @@ export default class StructureDialog extends React.Component<Props, State> {
                         </VSCodeButton>
                     </div>
                     <div style={{display: 'flex'}}>
-                        <div style={{width: '2%', border: '1px solid red'}}>sequence div</div>
-                        <div id="structureTable" style={{width: '98%', border: '1px solid yellow', flex: 1, display: 'inline-block', flexDirection: 'column', overflow: 'auto'}}>
-                            <div id="structureHeader">
+                        <div id="structureTable" style={{flex: 1, display: 'inline-block', flexDirection: 'column', overflow: 'auto'}}>
                                 {this.renderHeader(containerWidth)}
-                            </div>
-                            <div id="structureRows" style={{width: containerWidth, height: containerHeight, position: 'relative', overflow: 'auto'}}>
-                                {this.renderRows()}
-                            </div>
+                                {this.renderRows(containerWidth, containerHeight)}
                         </div>
                     </div>
                     <div style={{textAlign: 'right'}}>
