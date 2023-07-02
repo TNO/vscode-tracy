@@ -312,7 +312,7 @@ export default class App extends React.Component<Props, State> {
                 {this.state.showStructureDialog &&
                 <StructureDialog
                 logHeaders={this.state.logFile.headers}
-                propSelectedRows={selectedLogEntries}
+                selectedEntries={selectedLogEntries}
                 isOpen = {this.state.showStructureDialog}
                 onClose={() => this.handleStructureDialogActions(true)}
                 onStructureUpdate={() => this.clearSelectedRows()}

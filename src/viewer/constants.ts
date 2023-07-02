@@ -23,4 +23,8 @@ export const LOG_COLUMN_WIDTH_LOOKUP = {
     threadID: 80, 
     location: 200,
     message: 400,
-}; 
+};
+
+export const STRUCTURE_WIDTH = 28;
+
+export const STRUCTURE_LINK_HEIGHT = 16;
