@@ -49,7 +49,6 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
-        console.log("In componentShouldUpdate()");
         if((this.props.isOpen && this.props.selectedEntries !== nextProps.selectedEntries) 
             || (this.state !== nextState)) {
             return true;
@@ -59,7 +58,6 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
-        console.log("In componentDidUpdate()");
         if(this.props.isOpen && this.props.selectedEntries.length !== 0 && this.state.selectedEntries !== this.props.selectedEntries) {
             this.updateStructure();
             this.props.onStructureUpdate();
@@ -106,9 +104,6 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     render() {
-        console.log("Prop entries", this.props.selectedEntries);
-        console.log("State entries", this.state.selectedEntries);
-
         return (
             <div style={BACKDROP_STYLE}>
                 <div className = 'dialog'style={DIALOG_STYLE}>
@@ -120,7 +115,7 @@ export default class StructureDialog extends React.Component<Props, State> {
                     </div>
                     <StructureTable
                         logHeaders = {this.props.logHeaders}
-                        propEntriesInStructure = {this.state.selectedEntries}
+                        entriesInStructure = {this.state.selectedEntries}
                         isEditingStructure = {this.state.isEditingStructure}
                         selectedCells = {this.state.selectedEntryAttributes}
                         onEntryRemoved = {(entryIndex) => this.removeEntryFromStructure(entryIndex)}

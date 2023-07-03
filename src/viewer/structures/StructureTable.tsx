@@ -5,7 +5,7 @@ import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER, BORDER_SIZE, LOG_COLUMN_WIDT
 
 interface Props {
     logHeaders: Header[];
-    propEntriesInStructure: string[][];
+    entriesInStructure: string[][];
     selectedCells: boolean[][];
     isEditingStructure: boolean;
     onEntryRemoved: (rowIndex: number) => void;
@@ -15,15 +15,13 @@ interface Props {
 }
 
 interface State {
-    isEditingStructure: boolean;
     columnWidth: { [id: string]: number };
-    stateEntriesInStructure: string[][];
 }
 
 export default class StructureTable extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
-        this.state = {isEditingStructure: false, columnWidth: LOG_COLUMN_WIDTH_LOOKUP, stateEntriesInStructure: this.props.propEntriesInStructure};
+        this.state = {columnWidth: LOG_COLUMN_WIDTH_LOOKUP};
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
@@ -117,7 +115,8 @@ export default class StructureTable extends React.Component<Props, State> {
     renderRows(containerWidth: number, containerHeight: number) {
         const newContainerWidth = containerWidth + STRUCTURE_WIDTH;
         const result: any = [];
-        const {stateEntriesInStructure, isEditingStructure} = this.state;
+        const {entriesInStructure, isEditingStructure, logHeaders, onEntryRemoved} = this.props;
+
         const sequenceVertexStyle: React.CSSProperties = {
             width: STRUCTURE_WIDTH,
             height: LOG_ROW_HEIGHT,
@@ -130,7 +129,7 @@ export default class StructureTable extends React.Component<Props, State> {
 
         let sequenceEdgeIndex = 0;
 
-        for (let r = 0; r < stateEntriesInStructure.length; r++) {
+        for (let r = 0; r < entriesInStructure.length; r++) {
             const style: React.CSSProperties = {
                 position: 'absolute', 
                 height: LOG_ROW_HEIGHT,
@@ -142,14 +141,14 @@ export default class StructureTable extends React.Component<Props, State> {
             result.push(
                 <div key={r} style={style}>
                     {!isEditingStructure && <div style={sequenceVertexStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
-                    {isEditingStructure && <div style={sequenceVertexStyle} onClick={() => {this.props.onEntryRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
-                    {this.props.logHeaders.map((h, c) => 
-                        this.renderColumn(stateEntriesInStructure[r][c], c, this.columnWidth(h.name)))
+                    {isEditingStructure && <div style={sequenceVertexStyle} onClick={() => {onEntryRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
+                    {logHeaders.map((h, c) => 
+                        this.renderColumn(entriesInStructure[r][c], c, this.columnWidth(h.name)))
                     }
                 </div>
             );
 
-            if(r !== stateEntriesInStructure.length - 1) {
+            if(r !== entriesInStructure.length - 1) {
                 const sequenceEdgeStyle: React.CSSProperties = {
                     position: 'absolute', 
                     height: STRUCTURE_LINK_HEIGHT,
@@ -177,10 +176,11 @@ export default class StructureTable extends React.Component<Props, State> {
     }
 
     render() {
-        const numberOfRows = this.state.stateEntriesInStructure.length;
+        const {logHeaders, entriesInStructure} = this.props;
+        const numberOfRows = entriesInStructure.length;
         const containerHeight = numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * STRUCTURE_LINK_HEIGHT;
-        const containerWidth = ((this.props.logHeaders.length - 1) * BORDER_SIZE) +
-        this.props.logHeaders.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
+        const containerWidth = ((logHeaders.length - 1) * BORDER_SIZE) +
+        logHeaders.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
         
         return (
             <div id="structureTable" style={{flex: 1, display: 'inline-block', flexDirection: 'column', overflow: 'auto'}}>
