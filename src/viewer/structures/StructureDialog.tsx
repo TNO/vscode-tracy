@@ -46,6 +46,7 @@ export default class StructureDialog extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {isEditingStructure: false, selectedEntries: this.props.selectedEntries, selectedEntryAttributes: [], structureLinks: []};
+        this.props.onStructureUpdate(); //trigger first update as function isn't called for initial render.
     }
 
     shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
