@@ -28,10 +28,10 @@ const getRegExpForLogEntry = (logHeaders: Header[], row: string[], selectedEntry
     const rowString = getRegExpExactWhiteSpace(4) + '{' + lineEndString;
 
     for(let c = 0; c < row.length; c++) {
-        let isAttributeSelected = selectedEntryAttributes[c];
-        let attributeString = '';
-        let headerString = logHeaders[c].name;
-        let valueString = getAttributeValue(row[c], isAttributeSelected);
+        const isAttributeSelected = selectedEntryAttributes[c];
+        const attributeString = '';
+        const headerString = logHeaders[c].name;
+        const valueString = getAttributeValue(row[c], isAttributeSelected);
 
         if((c !== row.length - 1)) {
             valueString.concat(',');
@@ -55,7 +55,7 @@ export const useStructureQueryConstructor = (logHeaders: Header[],
             // - if cell is not selected use a wildcard
             // - after row concatenate link type
 
-    let regularExp = '';
+    const regularExp = '';
 
     for(let r = 0; r < selectedEntries.length; r++){
         const rowRegExp = getRegExpForLogEntry(logHeaders, selectedEntries[r], selectedEntryAttributes[r]);
@@ -68,10 +68,13 @@ export const useStructureQueryConstructor = (logHeaders: Header[],
             switch (structureLinks[r]) {
                 case StructureLinkDistance.None:
                     linkRegExp = '';
+                    break;
                 case StructureLinkDistance.Some:
                     linkRegExp = RegExpAnyCharMin;
+                    break;
                 case StructureLinkDistance.Max:
                     linkRegExp = RegExpAnyCharMax;
+                    break;
             }
 
             regularExp.concat(linkRegExp);
