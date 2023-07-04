@@ -1,5 +1,7 @@
 import React from 'react';
-import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW } from '../constants';
+import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, 
+         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW_QUERY, BORDER_SELECTED_ROW_USER,
+         SELECTED_ROW_QUERY_RESULT_COLOR, SELECTED_ROW_USER_SELECT_COLOR, SelectedRowType } from '../constants';
 import { LogViewState } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
@@ -10,7 +12,7 @@ interface Props {
     onSelectedRowsChanged: (index: number, event: React.MouseEvent) => void;
     forwardRef: React.RefObject<HTMLDivElement>;
     coloredTable: boolean;
-    selectedRows: boolean[];
+    selectedRows: SelectedRowType[];
 }
 interface State {
     state: LogViewState | undefined;
@@ -47,6 +49,9 @@ export default class LogView extends React.Component<Props, State> {
         if (prevState.columnWidth !== this.state.columnWidth) {
             this.render();
         }
+        // if (prevProps.selectedRows !== this.props.selectedRows) {
+        //     this.render();
+        // }
     }
 
     renderColumn(value: string, index: number, isHeader: boolean, width: number, colorMap: string) {
@@ -79,6 +84,40 @@ export default class LogView extends React.Component<Props, State> {
         );
     }
 
+    getRowSelectionStlye(rowIndex: number): React.CSSProperties {
+        let selectionStyle: React.CSSProperties;
+
+        switch(this.props.selectedRows[rowIndex]) {
+            case SelectedRowType.UserSelect:
+                selectionStyle = {
+                    // Event row selection properties
+                    borderBottom: BORDER_SELECTED_ROW_USER,
+                    borderTop: BORDER_SELECTED_ROW_USER,
+                    borderRadius: '5px',
+                    backgroundColor: SELECTED_ROW_USER_SELECT_COLOR
+                };
+                break;
+            case SelectedRowType.QueryResult:
+                selectionStyle = {
+                    // Event row selection properties
+                    borderBottom: BORDER_SELECTED_ROW_QUERY,
+                    borderTop: BORDER_SELECTED_ROW_QUERY,
+                    borderRadius: '5px',
+                    backgroundColor: SELECTED_ROW_QUERY_RESULT_COLOR,
+                };
+                break;
+            case SelectedRowType.None: 
+                    selectionStyle = {
+                        // Event row selection properties
+                        borderBottom: BORDER,
+                        borderRadius: '5px',
+                };
+                break;
+        }
+
+        return selectionStyle;
+    }
+
     renderRows() {
         // This method only renders the rows that are visible
         if (!this.state.state) return;
@@ -86,6 +125,7 @@ export default class LogView extends React.Component<Props, State> {
         const {logFile} = this.props;
         let first_render = this.state.state.startFloor;
         let last_render = this.state.state.endCeil;
+
         if (last_render > logFile.rows.length){
             if (!this.viewport.current) return;
             const height = this.viewport.current.clientHeight;
@@ -93,24 +133,26 @@ export default class LogView extends React.Component<Props, State> {
             last_render = logFile.rows.length - 1;
             first_render = Math.max(0, Math.ceil(last_render - maxVisibleItems) - 1);
         }
+
         // Hide LogFile if search did not return any rows
         if ((logFile.rows.length === 1) && (logFile.rows[0][0] === '')) {
             first_render = 0;
             last_render = -1;
         }
+
         for (let r = first_render; r <= last_render; r++) {
             const style: React.CSSProperties = {
-                position: 'absolute', height: LOG_ROW_HEIGHT, overflow: 'hidden', top: r * LOG_ROW_HEIGHT,
-
-                // Event row selection properties
-                borderBottom: this.props.selectedRows[r] ? BORDER_SELECTED_ROW : BORDER,
-                borderTop: this.props.selectedRows[r] ? BORDER_SELECTED_ROW : 'none',
-                borderRadius: this.props.selectedRows[r] ? '5px' : 'none',
-                backgroundColor: this.props.selectedRows[r] ? 'rgba(0, 117, 0, 0.5)': '',
-                userSelect: 'none'
+                position: 'absolute', height: LOG_ROW_HEIGHT, overflow: 'hidden', top: r * LOG_ROW_HEIGHT, userSelect: 'none'
             };
+            const rowSelectionStyle = this.getRowSelectionStlye(r);
+            const finalStyle: React.CSSProperties = {...style, ...rowSelectionStyle,};
+
+            if(this.props.selectedRows[r] === SelectedRowType.UserSelect){
+                console.log(finalStyle);
+            }
+            
             result.push(
-                <div key={r} style={style} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
+                <div key={r} style={finalStyle} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
                     {logFile.headers.map((h, c) => 
                     logFile.selectedColumns[c]== true &&
                         this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name), logFile.columnsColors[c][r]))

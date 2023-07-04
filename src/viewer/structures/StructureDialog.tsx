@@ -1,19 +1,17 @@
 import React from 'react';
 import StructureTable from './StructureTable';
 import { Header } from '../types';
+import { StructureLinkDistance } from '../constants';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
+import { useStructureQueryConstructor } from '../hooks/useStructureRegularExpression';
 
-enum StructureLinkDistance {
-    None = "NONE",
-    Some = "SOME",
-    Max = "MAX"
-    }
 
 interface Props {
     isOpen: boolean;
     logHeaders: Header[];
     selectedEntries: string[][];
     onClose: () => void;
+    onSearch: (expression: string) => void;
     onStructureUpdate: () => void;
 }
 
@@ -104,6 +102,15 @@ export default class StructureDialog extends React.Component<Props, State> {
 
     }
 
+    searchForStructure(){
+        const structureRegExp = useStructureQueryConstructor(this.props.logHeaders,
+                                     this.state.selectedEntries,
+                                     this.state.selectedEntryAttributes,
+                                     this.state.structureLinks);
+        
+        this.props.onSearch(structureRegExp);
+    }
+
     render() {
         return (
             <div style={BACKDROP_STYLE}>
@@ -127,7 +134,7 @@ export default class StructureDialog extends React.Component<Props, State> {
                         <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '115px'}} onClick={() => {this.toggleIsEditingStructure();}}>
                             {this.state.isEditingStructure ? 'Done' : 'Edit Structure'}
                         </VSCodeButton>
-                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '145px'}}>
+                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '145px'}} onClick={() => {this.searchForStructure();}}>
                             Search for Structure
                         </VSCodeButton>
                     </div>

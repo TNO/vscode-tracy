@@ -3,8 +3,9 @@ import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import LogFile from './LogFile';
 import { LogViewState } from './types';
-import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER } from './constants';
+import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
+import {useJsonObjectToTextRangesMap, useStructureQuery} from '../viewer/hooks/useStructureRegularExpression'
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
@@ -28,7 +29,7 @@ interface State {
     searchColumn: string;
     searchText: string;
     selectedColumns: boolean[];
-    selectedRows: boolean[];
+    selectedRows: SelectedRowType[];
     lastSelectedRow: number | undefined;
     coloredTable: boolean;
 }
@@ -91,7 +92,7 @@ export default class App extends React.Component<Props, State> {
 
     onMessage(event: MessageEvent) {
         let logFile: LogFile;
-        let newSelectedRows: boolean[];
+        let newSelectedRows: SelectedRowType[];
         const message = event.data;
         
         if (message.type === 'update') {
@@ -114,32 +115,39 @@ export default class App extends React.Component<Props, State> {
                 logFile = LogFile.create(filtered_lines, rules);
             }
 
-            this.mapLogFileTextRangesToObject(logFileText);
-            newSelectedRows = logFile.rows.map(() => false);
-            this.setState({logFile, logFileAsString: logFileText, rules, selectedRows: newSelectedRows});
+            const textRanges = useJsonObjectToTextRangesMap(logFileText);
+            newSelectedRows = logFile.rows.map(() => SelectedRowType.None);
+            this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRows: newSelectedRows});
         }
     }
 
-    mapLogFileTextRangesToObject(logFileAsString: string) {
-        const perfStart = performance.now();
-        const textRanges: number[][] = [];
-        const jsonObjectsPattern = /{.+?},?\r\n/;
-        const flags = 'gs';
-        const jsonObjectsRegExp = new RegExp(jsonObjectsPattern, flags);
+    searchForStructure(expression:string) {
+        let {logEntryRanges, selectedRows} = this.state;
+        const LogEntriesInStructure: number[][] = [];
+        const StructureTextRanges: number[][] = useStructureQuery(expression, this.state.logFileAsString);
 
-        let result = jsonObjectsRegExp.exec(logFileAsString);
+        StructureTextRanges.forEach(matchRanges => {
+            let startingIndexOfMatch: number = 0;
+            let endingIndexOfMatch: number = -1;
 
-        if(result !== null) {
-            do{
-                textRanges.push([result.index, jsonObjectsRegExp.lastIndex]);
+            for(let i = 0; i < logEntryRanges.length; i++) {
+
+                if(matchRanges[0] === logEntryRanges[i][0]) {
+                    startingIndexOfMatch = i;
+                }
+
+                if(matchRanges[1] === logEntryRanges[i][1]){
+                    endingIndexOfMatch = i;
+                    break;
+                }
             }
-            while ((result = jsonObjectsRegExp.exec(logFileAsString)) !== null)
-        }
 
-        this.setState({logEntryRanges: textRanges})
+            for(let o = startingIndexOfMatch; o <= endingIndexOfMatch; o++){
+                selectedRows[o] = SelectedRowType.QueryResult;
+            }
+        });
 
-        const perfEnd = performance.now();
-        console.log(`Execution time (mapLogFileTextIndicesToObject()): ${perfEnd - perfStart} ms`);
+        this.setState({selectedRows: selectedRows});
     }
 
     handleDialogActions(newRules: Rule[], is_close: boolean) {
@@ -156,9 +164,9 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    handleStructureDialogActions(is_open: boolean) {    
+    handleStructureDialogActions(is_open: boolean) { 
         if (is_open === false) {
-            selectedLogEntries = this.state.logFile.rows.filter((v, i) => this.state.selectedRows[i]).map((value) => value);
+            selectedLogEntries = this.state.logFile.rows.filter((v, i) => this.state.selectedRows[i] === SelectedRowType.UserSelect);
         
             if(selectedLogEntries.length === 0) {
                 return;
@@ -169,33 +177,37 @@ export default class App extends React.Component<Props, State> {
     }
 
     clearSelectedRows() {
-        selectedLogEntries = [];
-        const clearedSelectedRows = this.state.selectedRows.map(() => {return false});
+        console.log("clearing selected rows");
+        const clearedSelectedRows = this.state.selectedRows.map(() => SelectedRowType.None);
         this.setState({selectedRows: clearedSelectedRows});
     }
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
+        console.log("handleSelectedLogRow with index", rowIndex);
         let newSelectedRows = this.state.selectedRows;
+        console.log(newSelectedRows[rowIndex]);
 
         if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
 
+            // Shift click higher in the event log
             if(this.state.lastSelectedRow !== undefined && this.state.lastSelectedRow < rowIndex) {
+
                 for(let i = this.state.lastSelectedRow + 1; i < rowIndex + 1; i++){
-                    const newvalue = !newSelectedRows[i];
-                    newSelectedRows[i] = newvalue;
+                    newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
                 }
+
             }
+            // Shift click lower in the event log
             else if(this.state.lastSelectedRow !== undefined && this.state.lastSelectedRow > rowIndex) {
                 for(let i = rowIndex; i < this.state.lastSelectedRow + 1; i++){
-                    const newvalue = !newSelectedRows[i];
-                    newSelectedRows[i] = newvalue;
+                    newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
                 }
             }
         }else {
-            newSelectedRows = this.state.selectedRows.map((isSelected, i) => {
-                return i === rowIndex ? !isSelected : isSelected;
-            })
+            newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
         }
+
+        console.log(newSelectedRows[rowIndex]);
 
         this.setState({selectedRows: newSelectedRows, lastSelectedRow: rowIndex});
     }
@@ -315,6 +327,7 @@ export default class App extends React.Component<Props, State> {
                 selectedEntries={selectedLogEntries}
                 isOpen = {this.state.showStructureDialog}
                 onClose={() => this.handleStructureDialogActions(true)}
+                onSearch={(expression) => this.searchForStructure(expression)}
                 onStructureUpdate={() => this.clearSelectedRows()}
                 />
                 }
