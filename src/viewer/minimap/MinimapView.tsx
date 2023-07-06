@@ -2,6 +2,7 @@ import React from 'react';
 import { LogViewState } from '../types';
 import { MINIMAP_COLUMN_WIDTH } from '../constants';
 import LogFile from '../LogFile';
+import { log } from 'console';
 
 interface Props {
     logFile: LogFile;
@@ -22,6 +23,7 @@ export default class MinimapView extends React.Component<Props, State> {
         super(props);
         this.canvas = React.createRef();
         this.handleWheel = this.handleWheel.bind(this);
+        this.handleClick = this.handleClick.bind(this);
         this.state = {scale: 1, controlDown: false, state: this.props.logViewState};
     }
 
@@ -101,6 +103,56 @@ export default class MinimapView extends React.Component<Props, State> {
         ctx.stroke();
     }
 
+    handleClick(e: React.MouseEvent<HTMLElement>) {
+        const canvas = this.canvas?.current;
+        if (!canvas) return;
+        const bounding = canvas.getBoundingClientRect();
+        var x = e.clientX;
+        var y = e.clientY;
+        if (bounding != undefined) {
+            x = e.clientX - bounding.left;
+            y = e.clientY - bounding.top;
+        }
+        const {logViewState, logFile} = this.props;
+        const {rowHeight: logRowHeight, visibleItems: logVisibleItems, height, start: logStart, scrollTop: logScrollTop}= logViewState;
+        const minVisibleItems = logVisibleItems;
+        const maxVisibleItems = logFile.amountOfRows();
+        const visibleItems = ((maxVisibleItems - minVisibleItems) * Math.abs(this.state.scale - 1)) + minVisibleItems;
+        const scaleItem = logVisibleItems / visibleItems;
+
+        const minimapEnd = logScrollTop + (height / scaleItem);
+        const minimapCenter = logScrollTop + ((minimapEnd - logScrollTop) / 2);
+        const logEnd = (logStart + logVisibleItems) * logRowHeight;
+        const logCenter = logScrollTop + ((logEnd - logScrollTop) / 2);
+
+        const logMinimapCenterDiff = minimapCenter - logCenter;
+        const scrollTopBox = Math.min(logMinimapCenterDiff, logScrollTop);
+        const scrollBottom = minVisibleItems === maxVisibleItems ? 0 : Math.min((logFile.amountOfRows() * logRowHeight) + scrollTopBox - minimapEnd, 0);
+        let nrOfRows = 0;
+        let scrollTop = 0;
+        if (scrollBottom < 0) {//scrollBottom becomes smaller than 0, when the log view scrolls to the last part of the log.
+            nrOfRows = ((scrollTopBox - scrollBottom)*scaleItem - y)/(height/visibleItems); //number of rows to move, can be positive or negative
+            scrollTop = (logStart - nrOfRows)*ROW_HEIGHT;
+        } else {
+            nrOfRows =  (y - scrollTopBox*scaleItem)/(height/visibleItems);//number of rows to move, can be positive or negative
+            scrollTop = (logStart + nrOfRows)*ROW_HEIGHT;
+        }
+
+        //set scrollTop of the log to the new value
+        if (!this.props.forwardRef.current) return;
+        const scrollLeft = this.props.forwardRef.current.scrollLeft;
+        const start = scrollTop / ROW_HEIGHT;
+        const startFloor = Math.floor(start);
+        const endCeil = Math.min(Math.ceil(start + maxVisibleItems) - 1, this.props.logFile.amountOfRows() - 1);
+        this.props.forwardRef.current.scrollTop = scrollTop;
+        const state = {height, scrollLeft, scrollTop, startFloor, start, endCeil, visibleItems: logVisibleItems, rowHeight: ROW_HEIGHT};
+        const scale = this.state.scale
+        this.setState({state});
+        this.setState({scale});
+        this.draw();
+        this.props.onLogViewStateChanged(state);
+    }
+
     handleWheel(e: React.WheelEvent<HTMLCanvasElement>) {
         if (this.state.controlDown === true) {
             let offset = Math.abs(1.02 - this.state.scale) / 5;
@@ -143,7 +195,7 @@ export default class MinimapView extends React.Component<Props, State> {
     render() {
         return (
             <div style={{flex: 1, overflow: 'hidden', display: 'flex'}}>
-                <canvas ref={this.canvas} style={{width: '100%', height: '100%'}} onWheel={this.handleWheel}/>
+                <canvas id= 'canvas' ref={this.canvas} style={{width: '100%', height: '100%'}} onWheel={this.handleWheel} onClick={this.handleClick}/>
             </div>
         );
     }
