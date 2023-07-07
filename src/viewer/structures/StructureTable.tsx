@@ -1,17 +1,18 @@
 import React from 'react';
 import ReactResizeDetector from 'react-resize-detector'
 import { Header } from '../types';
-import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, STRUCTURE_WIDTH, STRUCTURE_LINK_HEIGHT } from '../constants';
+import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, STRUCTURE_WIDTH, STRUCTURE_LINK_HEIGHT, StructureLinkDistance} from '../constants';
 
 interface Props {
-    logHeaders: Header[];
-    entriesInStructure: string[][];
+    headerColumns: Header[];
+    structureRows: string[][];
     selectedCells: boolean[][];
-    isEditingStructure: boolean;
-    onEntryRemoved: (rowIndex: number) => void;
-    onToggleAttributeSelection: () => void;
-    onToggleHeaderSelection: () => void;
-    onToggleLinkDistance: () => void;
+    structureLinks: StructureLinkDistance[];
+    isRemovingRows: boolean;
+    onRowRemoved: (rowIndex: number) => void;
+    onToggleIsCellSelected: () => void;
+    onToggleIsHeaderColumnSelected: (headerIndex: number) => void;
+    onToggleLink: (previousRowIndex) => void;
 }
 
 interface State {
@@ -77,7 +78,7 @@ export default class StructureTable extends React.Component<Props, State> {
         return (
             <div id='structureHeader' style={style}>
                 <div className="header-background">
-                    {this.props.logHeaders.map((h, i) => this.renderHeaderColumn(h.name, i, this.columnWidth(h.name)))}
+                    {this.props.headerColumns.map((h, i) => this.renderHeaderColumn(h.name, i, this.columnWidth(h.name)))}
                 </div>
             </div> 
         );
@@ -115,7 +116,7 @@ export default class StructureTable extends React.Component<Props, State> {
     renderRows(containerWidth: number, containerHeight: number) {
         const newContainerWidth = containerWidth + STRUCTURE_WIDTH;
         const result: any = [];
-        const {entriesInStructure, isEditingStructure, logHeaders, onEntryRemoved} = this.props;
+        const {structureRows, isRemovingRows, headerColumns, onRowRemoved} = this.props;
 
         const sequenceVertexStyle: React.CSSProperties = {
             width: STRUCTURE_WIDTH,
@@ -124,12 +125,12 @@ export default class StructureTable extends React.Component<Props, State> {
             verticalAlign: 'top',
             textAlign: 'center',
             lineHeight: `${LOG_ROW_HEIGHT}px`,
-            color: isEditingStructure ? 'red' : ''
+            color: isRemovingRows ? 'red' : ''
         }
 
         let sequenceEdgeIndex = 0;
 
-        for (let r = 0; r < entriesInStructure.length; r++) {
+        for (let r = 0; r < structureRows.length; r++) {
             const style: React.CSSProperties = {
                 position: 'absolute', 
                 height: LOG_ROW_HEIGHT,
@@ -140,15 +141,15 @@ export default class StructureTable extends React.Component<Props, State> {
 
             result.push(
                 <div key={r} style={style}>
-                    {!isEditingStructure && <div style={sequenceVertexStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
-                    {isEditingStructure && <div style={sequenceVertexStyle} onClick={() => {onEntryRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
-                    {logHeaders.map((h, c) => 
-                        this.renderColumn(entriesInStructure[r][c], c, this.columnWidth(h.name)))
+                    {!isRemovingRows && <div style={sequenceVertexStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
+                    {isRemovingRows && <div style={sequenceVertexStyle} onClick={() => {onRowRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
+                    {headerColumns.map((h, c) => 
+                        this.renderColumn(structureRows[r][c], c, this.columnWidth(h.name)))
                     }
                 </div>
             );
 
-            if(r !== entriesInStructure.length - 1) {
+            if(r !== structureRows.length - 1) {
                 const sequenceEdgeStyle: React.CSSProperties = {
                     position: 'absolute', 
                     height: STRUCTURE_LINK_HEIGHT,
@@ -159,9 +160,12 @@ export default class StructureTable extends React.Component<Props, State> {
                     textAlign: 'center'
                 };
 
+                const distanceSome = (this.props.structureLinks[r] === StructureLinkDistance.Some);
+
                 result.push(
-                    <div key={'b' + sequenceEdgeIndex} style={sequenceEdgeStyle}>
-                        <i className='codicon codicon-kebab-vertical'/>
+                    <div key={'b' + sequenceEdgeIndex} style={sequenceEdgeStyle} onClick={() => this.props.onToggleLink(r)}>
+                        {distanceSome && <i className='codicon codicon-kebab-vertical'/>}
+                        {!distanceSome && <i className='codicon codicon-arrow-down'/>}
                     </div>
                 );
                 sequenceEdgeIndex++;
@@ -176,11 +180,11 @@ export default class StructureTable extends React.Component<Props, State> {
     }
 
     render() {
-        const {logHeaders, entriesInStructure} = this.props;
-        const numberOfRows = entriesInStructure.length;
+        const {headerColumns, structureRows} = this.props;
+        const numberOfRows = structureRows.length;
         const containerHeight = numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * STRUCTURE_LINK_HEIGHT;
-        const containerWidth = ((logHeaders.length - 1) * BORDER_SIZE) +
-        logHeaders.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
+        const containerWidth = ((headerColumns.length - 1) * BORDER_SIZE) +
+        headerColumns.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
         
         return (
             <div id="structureTable" style={{flex: 1, display: 'inline-block', flexDirection: 'column', overflow: 'auto'}}>

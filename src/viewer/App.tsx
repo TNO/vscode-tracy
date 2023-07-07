@@ -3,9 +3,9 @@ import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import LogFile from './LogFile';
 import { LogViewState } from './types';
-import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType} from './constants';
+import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
-import {useJsonObjectToTextRangesMap, useStructureQuery} from '../viewer/hooks/useStructureRegularExpression'
+import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch} from '../viewer/hooks/useStructureRegularExpression'
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
@@ -44,6 +44,7 @@ const COLUMN_2_HEADER_STYLE = {
 }
 
 let selectedLogEntries: string[][] = [];
+let structureHeaderTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
     // @ts-ignore
@@ -122,21 +123,24 @@ export default class App extends React.Component<Props, State> {
     }
 
     searchForStructure(expression:string) {
+        console.log(expression);
+        const StructureTextRanges: number[][] = useStructureRegularExpressionSearch(expression, this.state.logFileAsString);
         let {logEntryRanges, selectedRows} = this.state;
-        const LogEntriesInStructure: number[][] = [];
-        const StructureTextRanges: number[][] = useStructureQuery(expression, this.state.logFileAsString);
 
         StructureTextRanges.forEach(matchRanges => {
+            console.log(matchRanges);
             let startingIndexOfMatch: number = 0;
             let endingIndexOfMatch: number = -1;
 
             for(let i = 0; i < logEntryRanges.length; i++) {
 
                 if(matchRanges[0] === logEntryRanges[i][0]) {
+                    console.log("matched start");
                     startingIndexOfMatch = i;
                 }
 
                 if(matchRanges[1] === logEntryRanges[i][1]){
+                    console.log("matched end");
                     endingIndexOfMatch = i;
                     break;
                 }
@@ -166,18 +170,41 @@ export default class App extends React.Component<Props, State> {
 
     handleStructureDialogActions(is_open: boolean) { 
         if (is_open === false) {
-            selectedLogEntries = this.state.logFile.rows.filter((v, i) => this.state.selectedRows[i] === SelectedRowType.UserSelect);
-        
+
+            let {logFile, selectedRows, rules} = this.state
+
+            selectedLogEntries = logFile.rows.filter((v, i) => selectedRows[i] === SelectedRowType.UserSelect);
+            
             if(selectedLogEntries.length === 0) {
                 return;
             }
+            
+            for(let h = 0; h < logFile.headers.length; h++){
+                let headerType = StructureHeaderColumnType.Selected;
+
+                if(logFile.headers[h].name === 'TimeStamp'){
+                    headerType = StructureHeaderColumnType.Unselected;
+                }
+
+                rules.forEach(rule => {
+                    if(rule.column === logFile.headers[h].name){
+                        headerType = StructureHeaderColumnType.Unusable;
+                    }
+                });
+
+                structureHeaderTypes.push(headerType);
+            }
+        }
+
+        if (is_open === true){
+            this.clearSelectedRows();
         }
 
         this.setState({showStructureDialog: !is_open});
     }
 
     clearSelectedRows() {
-        console.log("clearing selected rows");
+        selectedLogEntries = [];
         const clearedSelectedRows = this.state.selectedRows.map(() => SelectedRowType.None);
         this.setState({selectedRows: clearedSelectedRows});
     }
@@ -206,8 +233,6 @@ export default class App extends React.Component<Props, State> {
         }else {
             newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
         }
-
-        console.log(newSelectedRows[rowIndex]);
 
         this.setState({selectedRows: newSelectedRows, lastSelectedRow: rowIndex});
     }
@@ -323,8 +348,9 @@ export default class App extends React.Component<Props, State> {
             <div id="StructureDialog" style={{display: 'flex', position: 'relative', boxSizing: 'border-box'}}>
                 {this.state.showStructureDialog &&
                 <StructureDialog
-                logHeaders={this.state.logFile.headers}
-                selectedEntries={selectedLogEntries}
+                logHeaderColumns={this.state.logFile.headers}
+                logHeaderColumnsTypes = {structureHeaderTypes}
+                logSelectedRows={selectedLogEntries}
                 isOpen = {this.state.showStructureDialog}
                 onClose={() => this.handleStructureDialogActions(true)}
                 onSearch={(expression) => this.searchForStructure(expression)}

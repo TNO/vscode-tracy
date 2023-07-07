@@ -37,6 +37,12 @@ export enum StructureLinkDistance {
     Max = "MAX"
 }
 
+export enum StructureHeaderColumnType {
+    Unselected = "UNSELECTED",
+    Selected = "SELECTED",
+    Unusable = "UNUSABLE"
+}
+
 export const SELECTED_ROW_USER_SELECT_COLOR = 'rgba(0, 117, 0, 0.5)';
 
 export const SELECTED_ROW_QUERY_RESULT_COLOR = 'rgba(246, 192, 22, 0.5)';

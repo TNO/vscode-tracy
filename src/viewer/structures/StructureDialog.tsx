@@ -1,25 +1,27 @@
 import React from 'react';
 import StructureTable from './StructureTable';
 import { Header } from '../types';
-import { StructureLinkDistance } from '../constants';
+import { StructureHeaderColumnType, StructureLinkDistance } from '../constants';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useStructureQueryConstructor } from '../hooks/useStructureRegularExpression';
 
 
 interface Props {
     isOpen: boolean;
-    logHeaders: Header[];
-    selectedEntries: string[][];
+    logHeaderColumns: Header[];
+    logHeaderColumnsTypes: StructureHeaderColumnType[];
+    logSelectedRows: string[][];
     onClose: () => void;
     onSearch: (expression: string) => void;
     onStructureUpdate: () => void;
 }
 
 interface State {
-    isEditingStructure: boolean;
-    selectedEntries: string[][];
-    selectedEntryAttributes: boolean[][];
+    isRemovingRows: boolean;
+    structureRows: string[][];
     structureLinks: StructureLinkDistance[];
+    structureHeaderColumnsTypes: StructureHeaderColumnType[];
+    selectedCells: boolean[][];
 }
 
 const BACKDROP_STYLE: React.CSSProperties = {
@@ -43,12 +45,29 @@ const DIALOG_STYLE: React.CSSProperties = {
 export default class StructureDialog extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
-        this.state = {isEditingStructure: false, selectedEntries: this.props.selectedEntries, selectedEntryAttributes: [], structureLinks: []};
+
+        const {logHeaderColumnsTypes, logSelectedRows} = this.props;
+
+        const initSelectedEnryAttributes = logSelectedRows.map((row) => row.map(() => true));
+        const newStructureLinks:StructureLinkDistance[] = [];
+
+        for(let i = 0; i < logSelectedRows.length -1; i++) {
+            newStructureLinks.push(StructureLinkDistance.Some);
+        }
+
+        this.state = {
+            isRemovingRows: false, 
+            structureHeaderColumnsTypes: logHeaderColumnsTypes, 
+            structureRows: logSelectedRows, 
+            selectedCells: initSelectedEnryAttributes, 
+            structureLinks: newStructureLinks
+        };
+
         this.props.onStructureUpdate(); //trigger first update as function isn't called for initial render.
     }
 
     shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
-        if((this.props.isOpen && this.props.selectedEntries !== nextProps.selectedEntries) 
+        if((this.props.isOpen && this.props.logSelectedRows !== nextProps.logSelectedRows) 
             || (this.state !== nextState)) {
             return true;
         }
@@ -57,56 +76,89 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
-        if(this.props.isOpen && this.props.selectedEntries.length !== 0 && this.state.selectedEntries !== this.props.selectedEntries) {
+        if(this.props.isOpen && this.props.logSelectedRows.length !== 0 && this.state.structureRows !== this.props.logSelectedRows) {
             this.updateStructure();
             this.props.onStructureUpdate();
         }
     }
 
     updateStructure(){
-        const entriesInStructure = this.state.selectedEntries;
-        const newEntries = this.props.selectedEntries.filter( entry => !entriesInStructure.includes(entry));
+        const structureRows = this.state.structureRows;
+        const newEntries = this.props.logSelectedRows.filter( entry => !structureRows.includes(entry));
+
+        const newStructureLinks: StructureLinkDistance[] = [];
 
         if(newEntries.length !== 0) {
-            newEntries.forEach(entry => entriesInStructure.push(entry));
+            newEntries.forEach(entry => structureRows.push(entry));
 
-            entriesInStructure.sort((a,b) => a[0].localeCompare(b[0]));
-    
-            this.setState({selectedEntries: entriesInStructure});
+            structureRows.sort((a,b) => a[0].localeCompare(b[0]));
+
+            for(let i = 0; i < structureRows.length - 1; i++) {
+                newStructureLinks.push(StructureLinkDistance.Some);
+            }
+
+            this.setState({structureRows: structureRows, structureLinks: newStructureLinks});
         }
     }
 
-    removeEntryFromStructure(rowIndex: number) {
-        const selectedRows = this.state.selectedEntries.filter((v, i) => i !== rowIndex);
-        this.setState({selectedEntries: selectedRows});
+    removeRowFromStructure(rowIndex: number) {
+        const remainingRows = this.state.structureRows.filter((v, i) => i !== rowIndex);
+        this.setState({structureRows: remainingRows});
 
-        if(selectedRows.length === 0) {
+        if(remainingRows.length === 0) {
             this.props.onClose();
         }
     }
 
-    toggleIsEditingStructure() {
-        const isEditingStructureOld = this.state.isEditingStructure;
-        this.setState({isEditingStructure: !isEditingStructureOld});
+    toggleIsRemovingRows() {
+        const isEditingStructureOld = this.state.isRemovingRows;
+        this.setState({isRemovingRows: !isEditingStructureOld});
     }
 
-    toggleHeaderSelection() {
+    toggleIsHeaderColumnSelected(headerIndex: number) {
+        // let newHeaderType;
+        // let {structureHeaderColumnsTypes} = this.state;
+        // let newSelectedEntryAttributes = this.state.selectedCells;
+        // let isSelected = true;
+
+        // if(structureHeaderColumnsTypes[headerIndex] === StructureHeaderColumnType.Selected){
+        //     newHeaderType = StructureHeaderColumnType.Unselected;
+        //     isSelected = false;
+        // }
+        // else if(structureHeaderColumnsTypes[headerIndex] === StructureHeaderColumnType.Unselected){
+        //     newHeaderType = StructureHeaderColumnType.Selected;
+        // }
+
+        // newSelectedEntryAttributes.forEach(row => {
+        //     row[headerIndex] = isSelected;
+        // });
+    }
+
+    toggleIsCellSelected() {
 
     }
 
-    toggleAttributeSelection() {
+    toggleStructureLink(previousStructureRowIndex: number) {
+        const currentLinkDistance = this.state.structureLinks;
 
-    }
+        if (currentLinkDistance[previousStructureRowIndex] === StructureLinkDistance.Some) {
+            currentLinkDistance[previousStructureRowIndex] = StructureLinkDistance.None;
+        }
+        else if (currentLinkDistance[previousStructureRowIndex] === StructureLinkDistance.None) {
+            currentLinkDistance[previousStructureRowIndex] = StructureLinkDistance.Some;
+        }
 
-    toggleLinkDistance() {
-
+        this.setState({})
     }
 
     searchForStructure(){
-        const structureRegExp = useStructureQueryConstructor(this.props.logHeaders,
-                                     this.state.selectedEntries,
-                                     this.state.selectedEntryAttributes,
-                                     this.state.structureLinks);
+        const structureRegExp = useStructureQueryConstructor(
+            this.props.logHeaderColumns,
+            this.state.structureHeaderColumnsTypes,
+            this.state.structureRows,
+            this.state.selectedCells,
+            this.state.structureLinks
+            );
         
         this.props.onSearch(structureRegExp);
     }
@@ -122,17 +174,18 @@ export default class StructureDialog extends React.Component<Props, State> {
                         </VSCodeButton>
                     </div>
                     <StructureTable
-                        logHeaders = {this.props.logHeaders}
-                        entriesInStructure = {this.state.selectedEntries}
-                        isEditingStructure = {this.state.isEditingStructure}
-                        selectedCells = {this.state.selectedEntryAttributes}
-                        onEntryRemoved = {(entryIndex) => this.removeEntryFromStructure(entryIndex)}
-                        onToggleAttributeSelection = {() => this.toggleAttributeSelection()}
-                        onToggleHeaderSelection = {() => this.toggleHeaderSelection()}
-                        onToggleLinkDistance = {() => this.toggleLinkDistance()}/>
+                        headerColumns = {this.props.logHeaderColumns}
+                        structureRows = {this.state.structureRows}
+                        isRemovingRows = {this.state.isRemovingRows}
+                        selectedCells = {this.state.selectedCells}
+                        structureLinks={this.state.structureLinks}
+                        onRowRemoved = {(entryIndex) => this.removeRowFromStructure(entryIndex)}
+                        onToggleIsCellSelected = {() => this.toggleIsCellSelected()}
+                        onToggleIsHeaderColumnSelected = {(headerIndex) => this.toggleIsHeaderColumnSelected(headerIndex)}
+                        onToggleLink = {(previousRowIndex) => this.toggleStructureLink(previousRowIndex)}/>
                     <div style={{textAlign: 'right'}}>
-                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '115px'}} onClick={() => {this.toggleIsEditingStructure();}}>
-                            {this.state.isEditingStructure ? 'Done' : 'Edit Structure'}
+                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '115px'}} onClick={() => {this.toggleIsRemovingRows();}}>
+                            {this.state.isRemovingRows ? 'Done' : 'Remove rows'}
                         </VSCodeButton>
                         <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '145px'}} onClick={() => {this.searchForStructure();}}>
                             Search for Structure

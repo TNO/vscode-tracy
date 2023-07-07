@@ -1,73 +1,89 @@
 import { Header } from '../types';
-import { StructureLinkDistance } from '../constants';
+import { StructureHeaderColumnType, StructureLinkDistance } from '../constants';
 
 const RegExpAnyCharMin = '.+?';
 const RegExpAnyCharMax = '.+!';
 const RegExpLineFeed = '\\r';
 const RegExpCarriageReturn = '\\n';
+const RegExpValuePattern = '[A-Za-z0-9 .:-]+';
 const RegExpjsonObject = '{.+?},?\\r\\n';
 const flags = 'gs';
 
 const getRegExpExactWhiteSpace = (amountOfWhitespace: number): string => `\\s{${amountOfWhitespace}}`;
 
-const getAttributeValue = (content: string, isSelected: boolean): string => {
+const escapeBrackets = (text: string): string => {
+    let safeText = '';
+
+    if(text !== undefined) {
+        safeText = text.replace(/[\[\]]/g, "\\$&");
+    }
+        return safeText;
+};
+
+const getAttributeValue = (content: string, headerColumnType: StructureHeaderColumnType, isSelected: boolean): string => {
     let value = '';
 
-    if(!isSelected) {
-        value = `"${content}"`;
+    if(isSelected && headerColumnType === StructureHeaderColumnType.Selected) {
+        value = `"${escapeBrackets(content)}"`;
      }
      else {
-         value = `"${RegExpAnyCharMin}"`;
+         value = `"${RegExpValuePattern}"`;
      }
 
      return value;
 };
 
-const getRegExpForLogEntry = (logHeaders: Header[], row: string[], selectedEntryAttributes: boolean[]): string => {
-    const lineEndString = RegExpLineFeed + RegExpCarriageReturn + getRegExpExactWhiteSpace(8);
-    const rowString = getRegExpExactWhiteSpace(4) + '{' + lineEndString;
+const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeaderColumnType[], row: string[], selectedEntryAttributes: boolean[]): string => {
+    let lineEndString = RegExpLineFeed + RegExpCarriageReturn + getRegExpExactWhiteSpace(8);
+    let rowString = '{' + lineEndString;
 
     for(let c = 0; c < row.length; c++) {
+        const headerString = `"${logHeaders[c].name}"`;
+        const headerType = headerTypes[c];
         const isAttributeSelected = selectedEntryAttributes[c];
-        const attributeString = '';
-        const headerString = logHeaders[c].name;
-        const valueString = getAttributeValue(row[c], isAttributeSelected);
 
-        if((c !== row.length - 1)) {
-            valueString.concat(',');
+        let valueString = getAttributeValue(row[c], headerType, isAttributeSelected);
+        let attributeString = '';
+
+        if(headerType !== StructureHeaderColumnType.Unusable && row[c] !== undefined) {
+
+            if((c !== row.length - 1)) {
+                valueString = valueString.concat(',');
+            }
+            
+            if(c === row.length - 1){
+                lineEndString = RegExpLineFeed + RegExpCarriageReturn + getRegExpExactWhiteSpace(4);
+            }
+
+            attributeString = attributeString.concat(headerString, ": ", valueString, lineEndString);
+            
+            rowString = rowString.concat(attributeString)
         }
-
-        attributeString.concat(headerString, ": ", valueString, lineEndString);
-        rowString.concat(attributeString)
     }
 
-    rowString.concat('},?', RegExpLineFeed, RegExpCarriageReturn);
+    rowString = rowString.concat('},?', RegExpLineFeed, RegExpCarriageReturn);
 
     return rowString;
 };
 
 export const useStructureQueryConstructor = (logHeaders: Header[],
-                                       selectedEntries: string[][],
-                                       selectedEntryAttributes: boolean[][],
+                                       headerColumnTypes: StructureHeaderColumnType[],
+                                       structureRows: string[][],
+                                       selectedCells: boolean[][],
                                        structureLinks: StructureLinkDistance[]):string => {
-    // 1. Loop through all the rows
-    // 2. Loop through all the cells and concate them with headers and then in result string
-            // - if cell is not selected use a wildcard
-            // - after row concatenate link type
+    let regularExp = '';
 
-    const regularExp = '';
-
-    for(let r = 0; r < selectedEntries.length; r++){
-        const rowRegExp = getRegExpForLogEntry(logHeaders, selectedEntries[r], selectedEntryAttributes[r]);
-
-        regularExp.concat(rowRegExp);
+    for(let r = 0; r < structureRows.length; r++){
+        const rowRegExp = getRegExpForLogEntry(logHeaders, headerColumnTypes, structureRows[r], selectedCells[r]);
+        regularExp = regularExp.concat(rowRegExp);
 
         if(structureLinks[r] !== undefined) {
+            console.log("structureLink",structureLinks[r]);
             let linkRegExp = '';
 
             switch (structureLinks[r]) {
                 case StructureLinkDistance.None:
-                    linkRegExp = '';
+                    linkRegExp = getRegExpExactWhiteSpace(4);
                     break;
                 case StructureLinkDistance.Some:
                     linkRegExp = RegExpAnyCharMin;
@@ -77,7 +93,7 @@ export const useStructureQueryConstructor = (logHeaders: Header[],
                     break;
             }
 
-            regularExp.concat(linkRegExp);
+            regularExp = regularExp.concat(linkRegExp);
         }
     }
 
@@ -104,21 +120,21 @@ export const useJsonObjectToTextRangesMap = (logFileAsString: string): number[][
     return textRanges;
 }
 
-export const useStructureQuery = (expression: string, logFileAsString: string): number[][] => {
+export const useStructureRegularExpressionSearch = (expression: string, logFileAsString: string): number[][] => {
+    console.log('Starting Search: \n', expression);
     const perfStart = performance.now();
-    let result;
     const textRanges: number[][] = [];
-
     const structureQuery = new RegExp(expression, flags);
-    // const result = this.state.logFileText.matchAll(example);
+    let result;
+
 
     while ((result = structureQuery.exec(logFileAsString)) !== null) {
-        //console.log(`Range is ${result.index} - ${result.lastIndex}.`);
-        textRanges.push([result.index, result.lastIndex]);
+        // console.log(`Range is ${result.index} - ${structureQuery.lastIndex}.`);
+        textRanges.push([result.index, structureQuery.lastIndex]);
     }
 
         const perfEnd = performance.now();
-        console.log(`Execution time (Matching regular expression): ${perfEnd - perfStart} ms`);
+        console.log(`Execution time (useStructureRegularExpressionSearch()): ${perfEnd - perfStart} ms`);
 
-        return result;
+        return textRanges;
 }
