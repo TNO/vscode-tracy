@@ -43,8 +43,8 @@ const COLUMN_2_HEADER_STYLE = {
     height: '100%', display: 'flex', borderLeft: BORDER
 }
 
-let selectedLogEntries: string[][] = [];
-let structureHeaderTypes: StructureHeaderColumnType[] = [];
+let selectedLogRows: string[][] = [];
+let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
     // @ts-ignore
@@ -168,45 +168,52 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    handleStructureDialogActions(is_open: boolean) { 
-        if (is_open === false) {
+    handleStructureDialogActions(isClosing: boolean) {
 
-            let {logFile, selectedRows, rules} = this.state
+        if (isClosing === true){
+            this.clearStructureHeaderTypes();
+            this.clearSelectedRows();
+        }else {
 
-            selectedLogEntries = logFile.rows.filter((v, i) => selectedRows[i] === SelectedRowType.UserSelect);
+            let {logFile, selectedRows, rules, showStructureDialog} = this.state
+
+            selectedLogRows = logFile.rows.filter((v, i) => selectedRows[i] === SelectedRowType.UserSelect);
             
-            if(selectedLogEntries.length === 0) {
+            if(selectedLogRows.length === 0) {
                 return;
             }
-            
-            for(let h = 0; h < logFile.headers.length; h++){
-                let headerType = StructureHeaderColumnType.Selected;
 
-                if(logFile.headers[h].name === 'TimeStamp'){
-                    headerType = StructureHeaderColumnType.Unselected;
-                }
+            if(!showStructureDialog) {
 
-                rules.forEach(rule => {
-                    if(rule.column === logFile.headers[h].name){
-                        headerType = StructureHeaderColumnType.Unusable;
+                for(let h = 0; h < logFile.headers.length; h++){
+                    let headerType = StructureHeaderColumnType.Selected;
+    
+                    if(logFile.headers[h].name === 'TimeStamp'){
+                        headerType = StructureHeaderColumnType.Unselected;
                     }
-                });
-
-                structureHeaderTypes.push(headerType);
+    
+                    rules.forEach(rule => {
+                        if(rule.column === logFile.headers[h].name){
+                            headerType = StructureHeaderColumnType.Unusable;
+                        }
+                    });
+    
+                    logHeaderColumnTypes.push(headerType);
+                }
             }
         }
 
-        if (is_open === true){
-            this.clearSelectedRows();
-        }
-
-        this.setState({showStructureDialog: !is_open});
+        this.setState({showStructureDialog: !isClosing});
     }
 
     clearSelectedRows() {
-        selectedLogEntries = [];
+        selectedLogRows = [];
         const clearedSelectedRows = this.state.selectedRows.map(() => SelectedRowType.None);
         this.setState({selectedRows: clearedSelectedRows});
+    }
+
+    clearStructureHeaderTypes() {
+        logHeaderColumnTypes = [];
     }
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
@@ -349,8 +356,8 @@ export default class App extends React.Component<Props, State> {
                 {this.state.showStructureDialog &&
                 <StructureDialog
                 logHeaderColumns={this.state.logFile.headers}
-                logHeaderColumnsTypes = {structureHeaderTypes}
-                logSelectedRows={selectedLogEntries}
+                logHeaderColumnsTypes = {logHeaderColumnTypes}
+                logSelectedRows={selectedLogRows}
                 isOpen = {this.state.showStructureDialog}
                 onClose={() => this.handleStructureDialogActions(true)}
                 onSearch={(expression) => this.searchForStructure(expression)}

@@ -48,25 +48,26 @@ export default class StructureDialog extends React.Component<Props, State> {
 
         const {logHeaderColumnsTypes, logSelectedRows} = this.props;
 
-        const initSelectedEnryAttributes = logSelectedRows.map((row) => row.map(() => true));
-        const newStructureLinks:StructureLinkDistance[] = [];
+        const initSelectedCells = logSelectedRows.map((row) => row.map(() => true));
+        const initStructureLinks: StructureLinkDistance[] = [];
 
         for(let i = 0; i < logSelectedRows.length -1; i++) {
-            newStructureLinks.push(StructureLinkDistance.Some);
+            initStructureLinks.push(StructureLinkDistance.Some);
         }
 
         this.state = {
             isRemovingRows: false, 
             structureHeaderColumnsTypes: logHeaderColumnsTypes, 
             structureRows: logSelectedRows, 
-            selectedCells: initSelectedEnryAttributes, 
-            structureLinks: newStructureLinks
+            selectedCells: initSelectedCells, 
+            structureLinks: initStructureLinks
         };
 
-        this.props.onStructureUpdate(); //trigger first update as function isn't called for initial render.
+        this.props.onStructureUpdate(); //trigger manually, as update function isn't called for initial render.
     }
 
     shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
+        console.log('is checking whether to update component');
         if((this.props.isOpen && this.props.logSelectedRows !== nextProps.logSelectedRows) 
             || (this.state !== nextState)) {
             return true;
@@ -76,13 +77,15 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
+        console.log('component did update');
+        console.log(this.state.structureRows);
         if(this.props.isOpen && this.props.logSelectedRows.length !== 0 && this.state.structureRows !== this.props.logSelectedRows) {
             this.updateStructure();
-            this.props.onStructureUpdate();
         }
     }
 
     updateStructure(){
+        console.log('is updating structure');
         const structureRows = this.state.structureRows;
         const newEntries = this.props.logSelectedRows.filter( entry => !structureRows.includes(entry));
 
@@ -99,11 +102,26 @@ export default class StructureDialog extends React.Component<Props, State> {
 
             this.setState({structureRows: structureRows, structureLinks: newStructureLinks});
         }
+        
+        this.props.onStructureUpdate();
     }
 
     removeRowFromStructure(rowIndex: number) {
-        const remainingRows = this.state.structureRows.filter((v, i) => i !== rowIndex);
-        this.setState({structureRows: remainingRows});
+        const {structureRows, structureLinks, selectedCells} = this.state;
+        const remainingRows = structureRows.filter((v, i) => i !== rowIndex);
+        const remainingSelectedCells = selectedCells.filter((v, i) => i !== rowIndex);
+        let remainingLinks = structureLinks;
+        
+        if(rowIndex < this.state.structureRows.length -1) {
+            remainingLinks = remainingLinks.filter((v, i) => i !== rowIndex);
+        } else{
+            remainingLinks = remainingLinks.filter((v, i) => i !== (rowIndex - 1));
+        }
+
+        console.log(remainingLinks);
+        console.log(remainingSelectedCells);
+
+        this.setState({structureRows: remainingRows, structureLinks: remainingLinks, selectedCells: remainingSelectedCells});
 
         if(remainingRows.length === 0) {
             this.props.onClose();
@@ -111,8 +129,8 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     toggleIsRemovingRows() {
-        const isEditingStructureOld = this.state.isRemovingRows;
-        this.setState({isRemovingRows: !isEditingStructureOld});
+        const isRemovingRows = this.state.isRemovingRows;
+        this.setState({isRemovingRows: !isRemovingRows});
     }
 
     toggleIsHeaderColumnSelected(headerIndex: number) {
@@ -187,7 +205,7 @@ export default class StructureDialog extends React.Component<Props, State> {
                         <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '115px'}} onClick={() => {this.toggleIsRemovingRows();}}>
                             {this.state.isRemovingRows ? 'Done' : 'Remove rows'}
                         </VSCodeButton>
-                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '145px'}} onClick={() => {this.searchForStructure();}}>
+                        <VSCodeButton style={{marginLeft: '5px', height: '25px', width: '145px'}} onClick={() => {this.searchForStructure();}} disabled={this.state.isRemovingRows}>
                             Search for Structure
                         </VSCodeButton>
                     </div>
