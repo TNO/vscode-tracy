@@ -66,8 +66,7 @@ export default class StructureDialog extends React.Component<Props, State> {
         this.props.onStructureUpdate(); //trigger manually, as update function isn't called for initial render.
     }
 
-    shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
-        console.log('is checking whether to update component');
+    shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {    
         if((this.props.isOpen && this.props.logSelectedRows !== nextProps.logSelectedRows) 
             || (this.state !== nextState)) {
             return true;
@@ -77,15 +76,12 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
-        console.log('component did update');
-        console.log(this.state.structureRows);
         if(this.props.isOpen && this.props.logSelectedRows.length !== 0 && this.state.structureRows !== this.props.logSelectedRows) {
             this.updateStructure();
         }
     }
 
-    updateStructure(){
-        console.log('is updating structure');
+    updateStructure(){  
         const structureRows = this.state.structureRows;
         const newEntries = this.props.logSelectedRows.filter( entry => !structureRows.includes(entry));
 
@@ -116,10 +112,7 @@ export default class StructureDialog extends React.Component<Props, State> {
             remainingLinks = remainingLinks.filter((v, i) => i !== rowIndex);
         } else{
             remainingLinks = remainingLinks.filter((v, i) => i !== (rowIndex - 1));
-        }
-
-        console.log(remainingLinks);
-        console.log(remainingSelectedCells);
+        }     
 
         this.setState({structureRows: remainingRows, structureLinks: remainingLinks, selectedCells: remainingSelectedCells});
 
@@ -177,7 +170,7 @@ export default class StructureDialog extends React.Component<Props, State> {
             this.state.selectedCells,
             this.state.structureLinks
             );
-        
+
         this.props.onSearch(structureRegExp);
     }
 

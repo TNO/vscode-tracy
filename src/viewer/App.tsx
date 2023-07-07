@@ -123,24 +123,21 @@ export default class App extends React.Component<Props, State> {
     }
 
     searchForStructure(expression:string) {
-        console.log(expression);
-        const StructureTextRanges: number[][] = useStructureRegularExpressionSearch(expression, this.state.logFileAsString);
-        let {logEntryRanges, selectedRows} = this.state;
+        const selectedRows = this.clearSelectedRows();
+        const StructureTextRanges = useStructureRegularExpressionSearch(expression, this.state.logFileAsString);
+        let {logEntryRanges} = this.state;
 
         StructureTextRanges.forEach(matchRanges => {
-            console.log(matchRanges);
-            let startingIndexOfMatch: number = 0;
-            let endingIndexOfMatch: number = -1;
+            let startingIndexOfMatch = 0;
+            let endingIndexOfMatch = -1;
 
             for(let i = 0; i < logEntryRanges.length; i++) {
 
                 if(matchRanges[0] === logEntryRanges[i][0]) {
-                    console.log("matched start");
                     startingIndexOfMatch = i;
                 }
 
                 if(matchRanges[1] === logEntryRanges[i][1]){
-                    console.log("matched end");
                     endingIndexOfMatch = i;
                     break;
                 }
@@ -171,8 +168,10 @@ export default class App extends React.Component<Props, State> {
     handleStructureDialogActions(isClosing: boolean) {
 
         if (isClosing === true){
-            this.clearStructureHeaderTypes();
-            this.clearSelectedRows();
+            logHeaderColumnTypes = []; //empty headersColumnTypes array
+            const clearedSelectedRows = this.clearSelectedRows();
+
+            this.setState({selectedRows: clearedSelectedRows, showStructureDialog: false});
         }else {
 
             let {logFile, selectedRows, rules, showStructureDialog} = this.state
@@ -197,29 +196,22 @@ export default class App extends React.Component<Props, State> {
                             headerType = StructureHeaderColumnType.Unusable;
                         }
                     });
-    
+
                     logHeaderColumnTypes.push(headerType);
+
+                    this.setState({showStructureDialog: true});
                 }
             }
         }
-
-        this.setState({showStructureDialog: !isClosing});
     }
 
-    clearSelectedRows() {
-        selectedLogRows = [];
+    clearSelectedRows(): SelectedRowType[] {
         const clearedSelectedRows = this.state.selectedRows.map(() => SelectedRowType.None);
-        this.setState({selectedRows: clearedSelectedRows});
-    }
-
-    clearStructureHeaderTypes() {
-        logHeaderColumnTypes = [];
+        return clearedSelectedRows;
     }
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
-        console.log("handleSelectedLogRow with index", rowIndex);
         let newSelectedRows = this.state.selectedRows;
-        console.log(newSelectedRows[rowIndex]);
 
         if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
 
@@ -245,7 +237,6 @@ export default class App extends React.Component<Props, State> {
     }
 
     handleTableCheckbox(){
-        console.log('mapped ranges', this.state.logEntryRanges.length);
         if (this.state.coloredTable) {
             this.setState({coloredTable:false});
         } else {
