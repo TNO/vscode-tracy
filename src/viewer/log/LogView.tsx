@@ -49,9 +49,6 @@ export default class LogView extends React.Component<Props, State> {
         if (prevState.columnWidth !== this.state.columnWidth) {
             this.render();
         }
-        // if (prevProps.selectedRows !== this.props.selectedRows) {
-        //     this.render();
-        // }
     }
 
     renderColumn(value: string, index: number, isHeader: boolean, width: number, colorMap: string) {
@@ -147,10 +144,6 @@ export default class LogView extends React.Component<Props, State> {
             const rowSelectionStyle = this.getRowSelectionStlye(r);
             const finalStyle: React.CSSProperties = {...style, ...rowSelectionStyle,};
 
-            if(this.props.selectedRows[r] === SelectedRowType.UserSelect){
-                console.log(finalStyle);
-            }
-            
             result.push(
                 <div key={r} style={finalStyle} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
                     {logFile.headers.map((h, c) => 
