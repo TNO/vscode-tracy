@@ -1,3 +1,5 @@
+import { StructureLinkDistance } from "./constants"
+
 export interface LogViewState {
     height: number,
     start: number,
@@ -6,10 +8,16 @@ export interface LogViewState {
     endCeil: number,
     scrollTop: number,
     scrollLeft: number,
-    rowHeight: number,
+    rowHeight: number
 }
 
 export interface Header {
     name: string, 
     type: 'string' | 'number'
+}
+
+export interface StructureEntry {
+    row: string[], 
+    cellSelection: boolean[],
+    structureLink: StructureLinkDistance | undefined
 }

@@ -1,4 +1,4 @@
-import { Header } from '../types';
+import { Header, StructureEntry } from '../types';
 import { StructureHeaderColumnType, StructureLinkDistance } from '../constants';
 
 const RegExpAnyCharMin = '.+?';
@@ -15,12 +15,12 @@ const escapeBrackets = (text: string): string => {
     let safeText = '';
 
     if(text !== undefined) {
-        safeText = text.replace(/[\[\]]/g, "\\$&");
+        safeText = text.replace(/[\[\]]|[\(\)]/g, "\\$&"); // replace brackets or parentheses
     }
         return safeText;
 };
 
-const getAttributeValue = (content: string, headerColumnType: StructureHeaderColumnType, isSelected: boolean): string => {
+const getCellValue = (content: string, headerColumnType: StructureHeaderColumnType, isSelected: boolean): string => {
     let value = '';
 
     if(isSelected && headerColumnType === StructureHeaderColumnType.Selected) {
@@ -33,17 +33,17 @@ const getAttributeValue = (content: string, headerColumnType: StructureHeaderCol
      return value;
 };
 
-const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeaderColumnType[], row: string[], selectedEntryAttributes: boolean[]): string => {
+const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeaderColumnType[], row: string[], cellSelection: boolean[]): string => {
     let lineEndString = RegExpLineFeed + RegExpCarriageReturn + getRegExpExactWhiteSpace(8);
     let rowString = '{' + lineEndString;
 
     for(let c = 0; c < row.length; c++) {
         const headerString = `"${logHeaders[c].name}"`;
         const headerType = headerTypes[c];
-        const isAttributeSelected = selectedEntryAttributes[c];
+        const isCellSelected = cellSelection[c];
 
-        let valueString = getAttributeValue(row[c], headerType, isAttributeSelected);
-        let attributeString = '';
+        let valueString = getCellValue(row[c], headerType, isCellSelected);
+        let headerAndCellString = '';
 
         if(headerType !== StructureHeaderColumnType.Unusable && row[c] !== undefined) {
 
@@ -55,9 +55,9 @@ const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeader
                 lineEndString = RegExpLineFeed + RegExpCarriageReturn + getRegExpExactWhiteSpace(4);
             }
 
-            attributeString = attributeString.concat(headerString, ": ", valueString, lineEndString);
+            headerAndCellString = headerAndCellString.concat(headerString, ": ", valueString, lineEndString);
             
-            rowString = rowString.concat(attributeString)
+            rowString = rowString.concat(headerAndCellString)
         }
     }
 
@@ -68,32 +68,31 @@ const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeader
 
 export const useStructureQueryConstructor = (logHeaders: Header[],
                                        headerColumnTypes: StructureHeaderColumnType[],
-                                       structureRows: string[][],
-                                       selectedCells: boolean[][],
-                                       structureLinks: StructureLinkDistance[]):string => {
+                                       structureEntries: StructureEntry[]):string => {
     let regularExp = '';
 
-    for(let r = 0; r < structureRows.length; r++){
-        const rowRegExp = getRegExpForLogEntry(logHeaders, headerColumnTypes, structureRows[r], selectedCells[r]);
+    for(let r = 0; r < structureEntries.length; r++){
+        const structureEntry = structureEntries[r];
+        const rowRegExp = getRegExpForLogEntry(logHeaders, headerColumnTypes, structureEntry.row, structureEntry.cellSelection);
         regularExp = regularExp.concat(rowRegExp);
 
-        if(structureLinks[r] !== undefined) {
-            console.log("structureLink",structureLinks[r]);
-            let linkRegExp = '';
+        if(structureEntry.structureLink !== undefined) {
+            // console.log("structureLink", structureEntry.structureLink);
+            let structureLinkRegExp = '';
 
-            switch (structureLinks[r]) {
+            switch (structureEntry.structureLink) {
                 case StructureLinkDistance.None:
-                    linkRegExp = getRegExpExactWhiteSpace(4);
+                    structureLinkRegExp = getRegExpExactWhiteSpace(4);
                     break;
                 case StructureLinkDistance.Some:
-                    linkRegExp = RegExpAnyCharMin;
+                    structureLinkRegExp = RegExpAnyCharMin;
                     break;
                 case StructureLinkDistance.Max:
-                    linkRegExp = RegExpAnyCharMax;
+                    structureLinkRegExp = RegExpAnyCharMax;
                     break;
             }
 
-            regularExp = regularExp.concat(linkRegExp);
+            regularExp = regularExp.concat(structureLinkRegExp);
         }
     }
 

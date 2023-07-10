@@ -1,18 +1,16 @@
 import React from 'react';
 import ReactResizeDetector from 'react-resize-detector'
-import { Header } from '../types';
+import { Header, StructureEntry } from '../types';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, STRUCTURE_WIDTH, STRUCTURE_LINK_HEIGHT, StructureLinkDistance} from '../constants';
 
 interface Props {
     headerColumns: Header[];
-    structureRows: string[][];
-    selectedCells: boolean[][];
-    structureLinks: StructureLinkDistance[];
-    isRemovingRows: boolean;
-    onRowRemoved: (rowIndex: number) => void;
+    structureEntries: StructureEntry[]; 
+    isRemovingStructureEntries: boolean;
     onToggleIsCellSelected: () => void;
     onToggleIsHeaderColumnSelected: (headerIndex: number) => void;
-    onToggleLink: (previousRowIndex) => void;
+    onToggleStructureLink: (structureEntryIndex) => void;
+    onStructureEntryRemoved: (structureEntryIndex: number) => void;
 }
 
 interface State {
@@ -116,7 +114,7 @@ export default class StructureTable extends React.Component<Props, State> {
     renderRows(containerWidth: number, containerHeight: number) {
         const newContainerWidth = containerWidth + STRUCTURE_WIDTH;
         const result: any = [];
-        const {structureRows, isRemovingRows, headerColumns, onRowRemoved} = this.props;
+        const {structureEntries, isRemovingStructureEntries, headerColumns, onStructureEntryRemoved} = this.props;
 
         const sequenceVertexStyle: React.CSSProperties = {
             width: STRUCTURE_WIDTH,
@@ -125,12 +123,12 @@ export default class StructureTable extends React.Component<Props, State> {
             verticalAlign: 'top',
             textAlign: 'center',
             lineHeight: `${LOG_ROW_HEIGHT}px`,
-            color: isRemovingRows ? 'red' : ''
+            color: isRemovingStructureEntries ? 'red' : ''
         }
 
         let sequenceEdgeIndex = 0;
 
-        for (let r = 0; r < structureRows.length; r++) {
+        for (let r = 0; r < structureEntries.length; r++) {
             const style: React.CSSProperties = {
                 position: 'absolute', 
                 height: LOG_ROW_HEIGHT,
@@ -141,16 +139,16 @@ export default class StructureTable extends React.Component<Props, State> {
 
             result.push(
                 <div key={r} style={style}>
-                    {!isRemovingRows && <div style={sequenceVertexStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
-                    {isRemovingRows && <div style={sequenceVertexStyle} onClick={() => {onRowRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
+                    {!isRemovingStructureEntries && <div style={sequenceVertexStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
+                    {isRemovingStructureEntries && <div style={sequenceVertexStyle} onClick={() => {onStructureEntryRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
                     {headerColumns.map((h, c) => 
-                        this.renderColumn(structureRows[r][c], c, this.columnWidth(h.name)))
+                        this.renderColumn(structureEntries[r].row[c], c, this.columnWidth(h.name)))
                     }
                 </div>
             );
 
-            if(r !== structureRows.length - 1) {
-                const sequenceEdgeStyle: React.CSSProperties = {
+            if(r !== structureEntries.length - 1) {
+                const structureLinkStyle: React.CSSProperties = {
                     position: 'absolute', 
                     height: STRUCTURE_LINK_HEIGHT,
                     top: (r + 1) * LOG_ROW_HEIGHT + sequenceEdgeIndex * STRUCTURE_LINK_HEIGHT,
@@ -160,12 +158,12 @@ export default class StructureTable extends React.Component<Props, State> {
                     textAlign: 'center'
                 };
 
-                const distanceSome = (this.props.structureLinks[r] === StructureLinkDistance.Some);
+                const structureLinkSomeDistance = (structureEntries[r].structureLink === StructureLinkDistance.Some);
 
                 result.push(
-                    <div key={'b' + sequenceEdgeIndex} style={sequenceEdgeStyle} onClick={() => this.props.onToggleLink(r)}>
-                        {distanceSome && <i className='codicon codicon-kebab-vertical'/>}
-                        {!distanceSome && <i className='codicon codicon-arrow-down'/>}
+                    <div key={'b' + sequenceEdgeIndex} style={structureLinkStyle} onClick={() => this.props.onToggleStructureLink(r)}>
+                        {structureLinkSomeDistance && <i className='codicon codicon-kebab-vertical'/>}
+                        {!structureLinkSomeDistance && <i className='codicon codicon-arrow-down'/>}
                     </div>
                 );
                 sequenceEdgeIndex++;
@@ -180,8 +178,8 @@ export default class StructureTable extends React.Component<Props, State> {
     }
 
     render() {
-        const {headerColumns, structureRows} = this.props;
-        const numberOfRows = structureRows.length;
+        const {headerColumns, structureEntries} = this.props;
+        const numberOfRows = structureEntries.length;
         const containerHeight = numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * STRUCTURE_LINK_HEIGHT;
         const containerWidth = ((headerColumns.length - 1) * BORDER_SIZE) +
         headerColumns.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
