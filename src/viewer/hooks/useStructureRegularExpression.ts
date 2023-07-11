@@ -5,7 +5,7 @@ const RegExpAnyCharMin = '.+?';
 const RegExpAnyCharMax = '.+!';
 const RegExpLineFeed = '\\r';
 const RegExpCarriageReturn = '\\n';
-const RegExpValuePattern = '[A-Za-z0-9 .:_\\(\\)\\[\\]\\/\\-]*';
+const RegExpValuePattern = "[A-Za-z0-9 ,:~`'_=@#%&\\|\\!\\$\\^\\*\\+\\<\\>\\?\\.\\{\\}\\(\\)\\[\\]\\/\\-]*";
 const RegExpjsonObject = '{.+?},?\\r\\n';
 const flags = 'gs';
 
@@ -15,7 +15,7 @@ const escapeBrackets = (text: string): string => {
     let safeText = '';
 
     if(text !== undefined) {
-        safeText = text.replace(/[\[\]]|[\(\)]|\//g, "\\$&"); // replace brackets or parentheses
+        safeText = text.replace(/[\\\.\*\+\?\^\$\{\}\(\)\|\[\]\-]/g, "\\$&"); // replace special characters
     }
         return safeText;
 };
