@@ -16,9 +16,8 @@ export const constructStructureEntriesArray = (rows: string[][]): StructureEntry
 export const constructNewStructureEntry = (row:string[]):StructureEntry => {
     const allCellsSelected = row.map(() => true);
     const defaultStructureLink = StructureLinkDistance.Some;
-    let newEntry: StructureEntry;
 
-    newEntry = {row: row, cellSelection: allCellsSelected, structureLink: defaultStructureLink};
+    const newEntry:StructureEntry = {row: row, cellSelection: allCellsSelected, structureLink: defaultStructureLink};
     
     return newEntry;
 };
@@ -64,6 +63,26 @@ export const toggleStructureLink = (structureEntries: StructureEntry[], structur
     }
 
     finalStructureEntries[structureEntryIndex].structureLink = structureLink;
+
+    return finalStructureEntries;
+};
+
+export const toggleCellSelection = (structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean): StructureEntry[] => {
+    const finalStructureEntries = structureEntries;
+
+    const selectedCell = finalStructureEntries[structureEntryIndex].cellSelection[cellIndex];
+
+    if(isKeyPressed){
+        finalStructureEntries[structureEntryIndex].cellSelection.forEach((cell, index) => {
+
+            if(index != cellIndex) {
+                finalStructureEntries[structureEntryIndex].cellSelection[index] = !selectedCell;
+            }
+
+        });     
+    }else{
+        finalStructureEntries[structureEntryIndex].cellSelection[cellIndex] = !selectedCell;
+    }
 
     return finalStructureEntries;
 };

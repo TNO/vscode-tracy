@@ -4,7 +4,7 @@ import { Header, StructureEntry } from '../types';
 import { StructureHeaderColumnType } from '../constants';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useStructureQueryConstructor } from '../hooks/useStructureRegularExpression';
-import { constructStructureEntriesArray, appendNewStructureEntries, removeStructureEntryFromList, toggleStructureLink, removeLastStructureLink } from '../hooks/useManageStructure'; 
+import { constructStructureEntriesArray, appendNewStructureEntries, removeStructureEntryFromList, toggleCellSelection, toggleStructureLink, removeLastStructureLink } from '../hooks/useManageStructure'; 
 
 
 interface Props {
@@ -129,8 +129,12 @@ export default class StructureDialog extends React.Component<Props, State> {
         // });
     }
 
-    toggleIsCellSelected() {
+    toggleIsCellSelected(structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean) {
+        let {structureEntries} = this.state;
+        console.log(isKeyPressed);
+        structureEntries = toggleCellSelection(structureEntries, structureEntryIndex, cellIndex, isKeyPressed);
 
+        this.setState({structureEntries: structureEntries});
     }
 
     toggleStructureLink(structureEntryIndex: number) {
@@ -164,7 +168,7 @@ export default class StructureDialog extends React.Component<Props, State> {
                         headerColumns = {this.props.logHeaderColumns}
                         structureEntries = {this.state.structureEntries}
                         isRemovingStructureEntries = {this.state.isRemovingStructureEntries}
-                        onToggleIsCellSelected = {() => this.toggleIsCellSelected()}
+                        onToggleIsCellSelected = {(structureEntryIndex, cellIndex, isKeyPressed) => this.toggleIsCellSelected(structureEntryIndex, cellIndex, isKeyPressed)}
                         onToggleIsHeaderColumnSelected = {(headerIndex) => this.toggleIsHeaderColumnSelected(headerIndex)}
                         onToggleStructureLink = {(structureEntryIndex) => this.toggleStructureLink(structureEntryIndex)}
                         onStructureEntryRemoved = {(structureEntryIndex) => this.removeStructureEntry(structureEntryIndex)}/>

@@ -7,10 +7,10 @@ interface Props {
     headerColumns: Header[];
     structureEntries: StructureEntry[]; 
     isRemovingStructureEntries: boolean;
-    onToggleIsCellSelected: () => void;
     onToggleIsHeaderColumnSelected: (headerIndex: number) => void;
-    onToggleStructureLink: (structureEntryIndex) => void;
+    onToggleStructureLink: (structureEntryIndex: number) => void;
     onStructureEntryRemoved: (structureEntryIndex: number) => void;
+    onToggleIsCellSelected: (structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean) => void;
 }
 
 interface State {
@@ -39,6 +39,26 @@ export default class StructureTable extends React.Component<Props, State> {
 
     columnWidth(name: string) {
         return this.state.columnWidth[name] ?? LOG_DEFAULT_COLUMN_WIDTH;
+    }
+
+    getCellSelectionStyle(rowIndex: number, cellIndex: number): React.CSSProperties {
+        let selectionStyle: React.CSSProperties;
+
+        if(this.props.structureEntries[rowIndex].cellSelection[cellIndex]) {
+            selectionStyle = {
+                display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
+                paddingLeft: '2px', backgroundColor: 'transparent'
+            };
+        }else{
+            selectionStyle = {
+                display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
+                paddingLeft: '2px', 
+                color: "var(--vscode-titleBar-inactiveForeground)",
+                background: 'repeating-linear-gradient(-55deg, #22222288, #22222288 10px, #33333388 10px, #33333388 20px)'
+            };
+        }
+
+        return selectionStyle;
     }
 
     renderHeaderColumn(value: string, index: number, width: number) {
@@ -82,29 +102,24 @@ export default class StructureTable extends React.Component<Props, State> {
         );
     }
 
-    renderColumn(value: string, index: number, width: number) {
-        const height = LOG_ROW_HEIGHT;
+    renderColumn(value: string, rowIndex: number, index: number, width: number) {
         const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
-        const color = 'transparent';
-        
         const style: React.CSSProperties = {
             overflow: 'hidden', 
             whiteSpace: 'nowrap', 
             display: 'inline-block', 
-            height, 
+            height: LOG_ROW_HEIGHT, 
             width: widthNew,
             verticalAlign: 'top',
             borderLeft: index !== 0 ? BORDER : '',
             borderTop: BORDER,
             borderBottom: BORDER
         };
-        const innerStyle: React.CSSProperties = {
-            display: 'flex', height, alignItems: 'center', justifyContent: 'left', 
-            paddingLeft: '2px', backgroundColor: color
-        };
+        const innerStyle = this.getCellSelectionStyle(rowIndex, index);
+
         return (
             <div style={style} key={index}>
-                <div style={innerStyle}>
+                <div style={innerStyle} onClick={(event) => this.props.onToggleIsCellSelected(rowIndex, index, event.ctrlKey)}>
                     {value}
                 </div>
             </div>
@@ -142,7 +157,7 @@ export default class StructureTable extends React.Component<Props, State> {
                     {!isRemovingStructureEntries && <div style={sequenceVertexStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
                     {isRemovingStructureEntries && <div style={sequenceVertexStyle} onClick={() => {onStructureEntryRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
                     {headerColumns.map((h, c) => 
-                        this.renderColumn(structureEntries[r].row[c], c, this.columnWidth(h.name)))
+                        this.renderColumn(structureEntries[r].row[c], r, c, this.columnWidth(h.name)))
                     }
                 </div>
             );
