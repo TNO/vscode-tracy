@@ -81,7 +81,7 @@ export default class LogView extends React.Component<Props, State> {
         );
     }
 
-    getRowSelectionStlye(rowIndex: number): React.CSSProperties {
+    getRowSelectionStyle(rowIndex: number): React.CSSProperties {
         let selectionStyle: React.CSSProperties;
 
         switch(this.props.selectedRows[rowIndex]) {
@@ -141,7 +141,7 @@ export default class LogView extends React.Component<Props, State> {
             const style: React.CSSProperties = {
                 position: 'absolute', height: LOG_ROW_HEIGHT, overflow: 'hidden', top: r * LOG_ROW_HEIGHT, userSelect: 'none'
             };
-            const rowSelectionStyle = this.getRowSelectionStlye(r);
+            const rowSelectionStyle = this.getRowSelectionStyle(r);
             const finalStyle: React.CSSProperties = {...style, ...rowSelectionStyle,};
 
             result.push(
