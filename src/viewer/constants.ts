@@ -40,7 +40,7 @@ export enum StructureLinkDistance {
 export enum StructureHeaderColumnType {
     Unselected = "UNSELECTED",
     Selected = "SELECTED",
-    Unusable = "UNUSABLE"
+    Custom = "CUSTOM"
 }
 
 export const SELECTED_ROW_USER_SELECT_COLOR = 'rgba(0, 117, 0, 0.5)';

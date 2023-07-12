@@ -27,7 +27,7 @@ const getLineEndString = (amountOfWhiteSpace: number): string => {
 const getCellValue = (content: string, headerColumnType: StructureHeaderColumnType, isSelected: boolean): string => {
     let value = '';
 
-    if(isSelected && headerColumnType !== StructureHeaderColumnType.Unusable) {
+    if(isSelected && headerColumnType !== StructureHeaderColumnType.Custom) {
         value = `"${escapeBrackets(content)}"`;
      }
      else {
@@ -48,7 +48,7 @@ const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeader
         const headerType = headerTypes[c];
         const isCellSelected = cellSelection[c];
 
-        if(headerType !== StructureHeaderColumnType.Unusable && row[c] !== undefined) {
+        if(headerType !== StructureHeaderColumnType.Custom && row[c] !== undefined) {
             let valueString = getCellValue(row[c], headerType, isCellSelected);
             let headerAndCellString = '';
 

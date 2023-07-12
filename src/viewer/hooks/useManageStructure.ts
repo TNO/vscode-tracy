@@ -77,11 +77,11 @@ export const toggleCellSelection = (headerColumnType: StructureHeaderColumnType[
 
     const selectedCell = finalStructureEntries[structureEntryIndex].cellSelection[cellIndex];
 
-    if(headerColumnType[cellIndex] !== StructureHeaderColumnType.Unusable) {
+    if(headerColumnType[cellIndex] !== StructureHeaderColumnType.Custom) {
         if(isKeyPressed){
             finalStructureEntries[structureEntryIndex].cellSelection.forEach((cell, index) => {
     
-                if(index != cellIndex && headerColumnType[index] !== StructureHeaderColumnType.Unusable) {
+                if(index != cellIndex && headerColumnType[index] !== StructureHeaderColumnType.Custom) {
                     finalStructureEntries[structureEntryIndex].cellSelection[index] = !selectedCell;
                 }
     
