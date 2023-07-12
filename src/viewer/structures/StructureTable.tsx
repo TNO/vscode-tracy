@@ -7,7 +7,6 @@ interface Props {
     headerColumns: Header[];
     structureEntries: StructureEntry[]; 
     isRemovingStructureEntries: boolean;
-    onToggleIsHeaderColumnSelected: (headerIndex: number) => void;
     onToggleStructureLink: (structureEntryIndex: number) => void;
     onStructureEntryRemoved: (structureEntryIndex: number) => void;
     onToggleIsCellSelected: (structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean) => void;
@@ -44,17 +43,17 @@ export default class StructureTable extends React.Component<Props, State> {
     getCellSelectionStyle(rowIndex: number, cellIndex: number): React.CSSProperties {
         let selectionStyle: React.CSSProperties;
 
-        if(this.props.structureEntries[rowIndex].cellSelection[cellIndex]) {
-            selectionStyle = {
-                display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
-                paddingLeft: '2px', backgroundColor: 'transparent'
-            };
-        }else{
+        if(!this.props.structureEntries[rowIndex].cellSelection[cellIndex]) {
             selectionStyle = {
                 display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
                 paddingLeft: '2px', 
                 color: "var(--vscode-titleBar-inactiveForeground)",
-                background: 'repeating-linear-gradient(-55deg, #22222288, #22222288 10px, #33333388 10px, #33333388 20px)'
+                background: 'repeating-linear-gradient(-55deg, #222222b3, #222222b3 10px, #333333b3 10px, #333333b3 20px)'
+            };
+        }else{
+            selectionStyle = {
+                display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
+                paddingLeft: '2px', backgroundColor: 'transparent'
             };
         }
 

@@ -46,8 +46,9 @@ export default class StructureDialog extends React.Component<Props, State> {
         super(props);
 
         const {logHeaderColumnsTypes, logSelectedRows} = this.props;
+        console.log(logSelectedRows);
 
-        let structureEntries = constructStructureEntriesArray(logSelectedRows);
+        let structureEntries = constructStructureEntriesArray(logHeaderColumnsTypes, logSelectedRows);
         structureEntries = removeLastStructureLink(structureEntries);
 
 
@@ -81,11 +82,11 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     updateStructure(){
-        const {structureEntries} = this.state;
-        const newEntries = this.props.logSelectedRows.filter( entry => structureEntries.map( value => value.row !== entry));
+        const {structureHeaderColumnsTypes, structureEntries} = this.state;
+        const newSelectedRows = this.props.logSelectedRows.filter( entry => structureEntries.map( value => value.row !== entry));
 
-        if(newEntries.length !== 0) {
-            const newStructureEntries = constructStructureEntriesArray(newEntries);
+        if(newSelectedRows.length !== 0) {
+            const newStructureEntries = constructStructureEntriesArray(structureHeaderColumnsTypes, newSelectedRows);
             const finalStructureEntries = appendNewStructureEntries(structureEntries, newStructureEntries)
             this.setState({structureEntries: finalStructureEntries});
             console.log(finalStructureEntries);
@@ -110,29 +111,9 @@ export default class StructureDialog extends React.Component<Props, State> {
         this.setState({isRemovingStructureEntries: !isRemovingStructureEntries});
     }
 
-    toggleIsHeaderColumnSelected(headerIndex: number) {
-        // let newHeaderType;
-        // let {structureHeaderColumnsTypes} = this.state;
-        // let newSelectedEntryAttributes = this.state.selectedCells;
-        // let isSelected = true;
-
-        // if(structureHeaderColumnsTypes[headerIndex] === StructureHeaderColumnType.Selected){
-        //     newHeaderType = StructureHeaderColumnType.Unselected;
-        //     isSelected = false;
-        // }
-        // else if(structureHeaderColumnsTypes[headerIndex] === StructureHeaderColumnType.Unselected){
-        //     newHeaderType = StructureHeaderColumnType.Selected;
-        // }
-
-        // newSelectedEntryAttributes.forEach(row => {
-        //     row[headerIndex] = isSelected;
-        // });
-    }
-
     toggleIsCellSelected(structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean) {
-        let {structureEntries} = this.state;
-        console.log(isKeyPressed);
-        structureEntries = toggleCellSelection(structureEntries, structureEntryIndex, cellIndex, isKeyPressed);
+        let {structureHeaderColumnsTypes, structureEntries} = this.state;
+        structureEntries = toggleCellSelection(structureHeaderColumnsTypes, structureEntries, structureEntryIndex, cellIndex, isKeyPressed);
 
         this.setState({structureEntries: structureEntries});
     }
@@ -169,7 +150,6 @@ export default class StructureDialog extends React.Component<Props, State> {
                         structureEntries = {this.state.structureEntries}
                         isRemovingStructureEntries = {this.state.isRemovingStructureEntries}
                         onToggleIsCellSelected = {(structureEntryIndex, cellIndex, isKeyPressed) => this.toggleIsCellSelected(structureEntryIndex, cellIndex, isKeyPressed)}
-                        onToggleIsHeaderColumnSelected = {(headerIndex) => this.toggleIsHeaderColumnSelected(headerIndex)}
                         onToggleStructureLink = {(structureEntryIndex) => this.toggleStructureLink(structureEntryIndex)}
                         onStructureEntryRemoved = {(structureEntryIndex) => this.removeStructureEntry(structureEntryIndex)}/>
                     <div style={{textAlign: 'right'}}>

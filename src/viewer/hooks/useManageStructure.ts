@@ -1,20 +1,25 @@
-import { StructureLinkDistance } from "../constants";
+import { StructureHeaderColumnType, StructureLinkDistance } from "../constants";
 import { StructureEntry } from "../types";
 
-export const constructStructureEntriesArray = (rows: string[][]): StructureEntry[] => {
+export const constructStructureEntriesArray = (headerColumnTypes: StructureHeaderColumnType[], selectedRows: string[][]): StructureEntry[] => {
     const structureEntries:StructureEntry[] = [];
     let structureEntry: StructureEntry;
 
-    for(let i = 0; i < rows.length; i++){
-        structureEntry = constructNewStructureEntry(rows[i]);
+    for(let i = 0; i < selectedRows.length; i++){
+        structureEntry = constructNewStructureEntry(headerColumnTypes,selectedRows[i]);
         structureEntries.push(structureEntry);
     }
 
     return structureEntries;
 };
 
-export const constructNewStructureEntry = (row:string[]):StructureEntry => {
-    const allCellsSelected = row.map(() => true);
+export const constructNewStructureEntry = (headerColumnType: StructureHeaderColumnType[], row:string[]):StructureEntry => {
+    const allCellsSelected = row.map((v, i) => {
+        if(headerColumnType[i] === StructureHeaderColumnType.Selected){
+            return true;
+        }
+        return false;
+    });
     const defaultStructureLink = StructureLinkDistance.Some;
 
     const newEntry:StructureEntry = {row: row, cellSelection: allCellsSelected, structureLink: defaultStructureLink};
@@ -67,21 +72,23 @@ export const toggleStructureLink = (structureEntries: StructureEntry[], structur
     return finalStructureEntries;
 };
 
-export const toggleCellSelection = (structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean): StructureEntry[] => {
+export const toggleCellSelection = (headerColumnType: StructureHeaderColumnType[], structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean): StructureEntry[] => {
     const finalStructureEntries = structureEntries;
 
     const selectedCell = finalStructureEntries[structureEntryIndex].cellSelection[cellIndex];
 
-    if(isKeyPressed){
-        finalStructureEntries[structureEntryIndex].cellSelection.forEach((cell, index) => {
-
-            if(index != cellIndex) {
-                finalStructureEntries[structureEntryIndex].cellSelection[index] = !selectedCell;
-            }
-
-        });     
-    }else{
-        finalStructureEntries[structureEntryIndex].cellSelection[cellIndex] = !selectedCell;
+    if(headerColumnType[cellIndex] !== StructureHeaderColumnType.Unusable) {
+        if(isKeyPressed){
+            finalStructureEntries[structureEntryIndex].cellSelection.forEach((cell, index) => {
+    
+                if(index != cellIndex && headerColumnType[index] !== StructureHeaderColumnType.Unusable) {
+                    finalStructureEntries[structureEntryIndex].cellSelection[index] = !selectedCell;
+                }
+    
+            });     
+        }else{
+            finalStructureEntries[structureEntryIndex].cellSelection[cellIndex] = !selectedCell;
+        }
     }
 
     return finalStructureEntries;

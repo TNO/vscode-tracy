@@ -20,10 +20,14 @@ const escapeBrackets = (text: string): string => {
         return safeText;
 };
 
+const getLineEndString = (amountOfWhiteSpace: number): string => {
+    return RegExpLineFeed + RegExpCarriageReturn + getRegExpExactWhiteSpace(amountOfWhiteSpace);
+};
+
 const getCellValue = (content: string, headerColumnType: StructureHeaderColumnType, isSelected: boolean): string => {
     let value = '';
 
-    if(isSelected && headerColumnType === StructureHeaderColumnType.Selected) {
+    if(isSelected && headerColumnType !== StructureHeaderColumnType.Unusable) {
         value = `"${escapeBrackets(content)}"`;
      }
      else {
@@ -34,36 +38,36 @@ const getCellValue = (content: string, headerColumnType: StructureHeaderColumnTy
 };
 
 const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeaderColumnType[], row: string[], cellSelection: boolean[]): string => {
-    let lineEndString = RegExpLineFeed + RegExpCarriageReturn + getRegExpExactWhiteSpace(8);
-    let rowString = '{' + lineEndString;
+    let objectString = '{' + getLineEndString(8);
+    let rowString = '';
+    let hasProcessedLastUsableColumn = false;
 
-    for(let c = 0; c < row.length; c++) {
+    for(let c = row.length - 1; c >= 0; c--) {
+
         const headerString = `"${logHeaders[c].name}"`;
         const headerType = headerTypes[c];
         const isCellSelected = cellSelection[c];
 
-        let valueString = getCellValue(row[c], headerType, isCellSelected);
-        let headerAndCellString = '';
-
         if(headerType !== StructureHeaderColumnType.Unusable && row[c] !== undefined) {
+            let valueString = getCellValue(row[c], headerType, isCellSelected);
+            let headerAndCellString = '';
 
-            if((c !== row.length - 1)) {
+            if(hasProcessedLastUsableColumn){
                 valueString = valueString.concat(',');
-            }
-            
-            if(c === row.length - 1){
-                lineEndString = RegExpLineFeed + RegExpCarriageReturn + getRegExpExactWhiteSpace(4);
+                headerAndCellString = headerAndCellString.concat(headerString, ": ", valueString, getLineEndString(8));
+            }else {
+                headerAndCellString = headerAndCellString.concat(headerString, ": ", valueString, getLineEndString(4));
             }
 
-            headerAndCellString = headerAndCellString.concat(headerString, ": ", valueString, lineEndString);
-            
-            rowString = rowString.concat(headerAndCellString)
+            rowString = headerAndCellString.concat(rowString);
+
+            hasProcessedLastUsableColumn = true;
         }
     }
 
-    rowString = rowString.concat('},?', RegExpLineFeed, RegExpCarriageReturn);
+    objectString = objectString.concat(rowString, '},?', RegExpLineFeed, RegExpCarriageReturn);
 
-    return rowString;
+    return objectString;
 };
 
 export const useStructureQueryConstructor = (logHeaders: Header[],
