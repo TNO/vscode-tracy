@@ -1,3 +1,4 @@
+import { type } from "os"
 import { StructureLinkDistance } from "./constants"
 
 export interface LogViewState {
@@ -21,3 +22,5 @@ export interface StructureEntry {
     cellSelection: boolean[],
     structureLink: StructureLinkDistance | undefined
 }
+
+export type StructureMatchId = number | null;

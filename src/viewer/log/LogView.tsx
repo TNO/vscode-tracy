@@ -2,7 +2,7 @@ import React from 'react';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, 
          LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW_QUERY, BORDER_SELECTED_ROW_USER,
          SELECTED_ROW_QUERY_RESULT_COLOR, SELECTED_ROW_USER_SELECT_COLOR, SelectedRowType } from '../constants';
-import { LogViewState } from '../types';
+import { LogViewState, StructureMatchId } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
 
@@ -13,6 +13,7 @@ interface Props {
     forwardRef: React.RefObject<HTMLDivElement>;
     coloredTable: boolean;
     selectedRows: SelectedRowType[];
+    rowIndexOfCurrentStructureMatch: StructureMatchId;
 }
 interface State {
     state: LogViewState | undefined;
@@ -25,7 +26,7 @@ const HEADER_STYLE: React.CSSProperties = {
     borderBottom: BORDER,
 };
 
-const VIEWPORT_STYLE: React.CSSProperties = {position: 'relative', flex: 1, overflow: 'scroll'};
+const VIEWPORT_STYLE: React.CSSProperties = {position: 'relative', flex: 1, overflow: 'auto'};
 
 export default class LogView extends React.Component<Props, State> {
     viewport: React.RefObject<HTMLDivElement>;
@@ -38,13 +39,16 @@ export default class LogView extends React.Component<Props, State> {
     }
 
     componentDidMount(): void {
-        window.addEventListener('resize', this.updateState);
+        window.addEventListener('resize', () => this.updateState());
         this.updateState();
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
         if (prevProps.logFile !== this.props.logFile) {
             this.updateState();
+        }
+        if (prevProps.rowIndexOfCurrentStructureMatch !== this.props.rowIndexOfCurrentStructureMatch) {
+            this.updateState(this.props.rowIndexOfCurrentStructureMatch);
         }
         if (prevState.columnWidth !== this.state.columnWidth) {
             this.render();
@@ -156,20 +160,40 @@ export default class LogView extends React.Component<Props, State> {
         return result;
     }
 
-    updateState() {
+    updateState(rowIndexOfCurrentStructureMatch: StructureMatchId = null) {
         if (!this.viewport.current) return;
         const height = this.viewport.current.clientHeight;
-        const scrollTop = this.viewport.current.scrollTop;
-        const scrollLeft = this.viewport.current.scrollLeft;
         const maxVisibleItems = height / LOG_ROW_HEIGHT;
-        const start = scrollTop / LOG_ROW_HEIGHT;
+        const visibleItems = Math.min(this.props.logFile.amountOfRows(), maxVisibleItems);
+        let scrollTop;
+
+        if(rowIndexOfCurrentStructureMatch !== null) {
+            if(rowIndexOfCurrentStructureMatch + visibleItems < this.props.logFile.amountOfRows()) {
+                scrollTop = rowIndexOfCurrentStructureMatch * LOG_ROW_HEIGHT;
+            }else {
+                scrollTop = (visibleItems < this.props.logFile.amountOfRows()) ? ((this.props.logFile.amountOfRows() - 1) - visibleItems) * LOG_ROW_HEIGHT : 0;
+            }
+        }else{
+            scrollTop = this.viewport.current.scrollTop;
+        }
+
+        const scrollLeft = this.viewport.current.scrollLeft;
+
+        const start = (rowIndexOfCurrentStructureMatch !== null && rowIndexOfCurrentStructureMatch + maxVisibleItems < this.props.logFile.amountOfRows()) ? rowIndexOfCurrentStructureMatch : scrollTop / LOG_ROW_HEIGHT;
         const startFloor = Math.floor(start);
         const endCeil = Math.min(Math.ceil(start + maxVisibleItems) - 1, this.props.logFile.amountOfRows() - 1);
-        const visibleItems = Math.min(this.props.logFile.amountOfRows(), maxVisibleItems);
+
         const state = {height, scrollLeft, scrollTop, startFloor, start, endCeil, visibleItems, rowHeight: LOG_ROW_HEIGHT};
+        
+        if (rowIndexOfCurrentStructureMatch !== null) {
+        this.viewport.current.scrollTop = scrollTop;
+        }
+
         this.setState({state});
         this.props.onLogViewStateChanged(state);
     }
+
+
 
     setColumnWidth(name: string, width: number) {
         //update the state for triggering the render
@@ -236,7 +260,7 @@ export default class LogView extends React.Component<Props, State> {
         return (
             <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
                 {this.renderHeader(containerWidth)}
-                <div style={VIEWPORT_STYLE} ref={this.viewport} onScroll={this.updateState}>
+                <div style={VIEWPORT_STYLE} ref={this.viewport} onScroll={() => this.updateState()}>
                     <div style={{width: containerWidth, height: containerHeight, position: 'absolute'}}>
                         {this.renderRows()}
                     </div>

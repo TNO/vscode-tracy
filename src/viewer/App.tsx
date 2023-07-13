@@ -2,7 +2,7 @@ import React, { ChangeEvent } from 'react';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import LogFile from './LogFile';
-import { LogViewState } from './types';
+import { LogViewState, StructureMatchId } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch} from '../viewer/hooks/useStructureRegularExpression'
@@ -16,9 +16,7 @@ import SelectColDialog from './log/SelectColDialog';
 interface Props {
 }
 interface State {
-    logEntryRanges: number[][];
     logFile: LogFile;
-    logFileAsString: string
     logViewState: LogViewState | undefined;
     rules: Rule[];
     showStatesDialog: boolean;
@@ -29,10 +27,17 @@ interface State {
     searchColumn: string;
     searchText: string;
     selectedColumns: boolean[];
+    coloredTable: boolean;
+
+    // Structure related
+    logFileAsString: string
+    logEntryRanges: number[][];
     selectedLogRows: string[][];
     selectedRowsTypes: SelectedRowType[];
     lastSelectedRow: number | undefined;
-    coloredTable: boolean;
+    structureMatches: number[][];
+    currentStructureMatchIndex: StructureMatchId;
+    rowIndexOfCurrentStructureMatch: StructureMatchId;
 }
 
 const COLUMN_0_HEADER_STYLE = {
@@ -52,10 +57,11 @@ export default class App extends React.Component<Props, State> {
     child = React.createRef<HTMLDivElement>();
     constructor(props: Props) {
         super(props);
-        this.state = {logEntryRanges: [], logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined,
-            rules: [], showStatesDialog: false, showFlagsDialog: false, 
-            showMinimapHeader: true, showStructureDialog: false, showSelectDialog: false, searchColumn: 'All', searchText: '',
-            selectedColumns: [], selectedLogRows: [], selectedRowsTypes: [], coloredTable: false, lastSelectedRow: undefined
+        this.state = {
+            logEntryRanges: [], logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined,
+            rules: [], showStatesDialog: false, showFlagsDialog: false, showMinimapHeader: true, showStructureDialog: false, showSelectDialog: false, 
+            searchColumn: 'All', searchText: '', selectedColumns: [], selectedLogRows: [], selectedRowsTypes: [], coloredTable: false, 
+            structureMatches: [], currentStructureMatchIndex: null, rowIndexOfCurrentStructureMatch: null, lastSelectedRow: undefined
         };
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
@@ -122,35 +128,6 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    searchForStructure(expression:string) {
-        const selectedRows = this.clearSelectedRows();
-        const StructureTextRanges = useStructureRegularExpressionSearch(expression, this.state.logFileAsString);
-        let {logEntryRanges} = this.state;
-
-        StructureTextRanges.forEach(matchRanges => {
-            let startingIndexOfMatch = 0;
-            let endingIndexOfMatch = -1;
-
-            for(let i = 0; i < logEntryRanges.length; i++) {
-
-                if(matchRanges[0] === logEntryRanges[i][0]) {
-                    startingIndexOfMatch = i;
-                }
-
-                if(matchRanges[1] === logEntryRanges[i][1]){
-                    endingIndexOfMatch = i;
-                    break;
-                }
-            }
-
-            for(let o = startingIndexOfMatch; o <= endingIndexOfMatch; o++){
-                selectedRows[o] = SelectedRowType.QueryResult;
-            }
-        });
-
-        this.setState({selectedRowsTypes: selectedRows});
-    }
-
     handleDialogActions(newRules: Rule[], is_close: boolean) {
         this.vscode.postMessage({type: 'save_rules', rules: newRules.map((r) => r.toJSON())});
         if (is_close === true)
@@ -201,19 +178,9 @@ export default class App extends React.Component<Props, State> {
 
                 this.setState({showStructureDialog: true});
             }
+
             this.setState({selectedLogRows: selectedLogRows});
         }
-    }
-
-    clearSelectedRows(): SelectedRowType[] {
-        const clearedSelectedRows = this.state.selectedRowsTypes.map(() => SelectedRowType.None);
-        return clearedSelectedRows;
-    }
-
-    handleStructureUpdate() {
-        console.log("cleared Rows");
-        const clearedSelectedRows = this.clearSelectedRows();
-        this.setState({selectedRowsTypes: clearedSelectedRows});
     }
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
@@ -240,6 +207,53 @@ export default class App extends React.Component<Props, State> {
         }
 
         this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
+    }
+
+    clearSelectedRows(): SelectedRowType[] {
+        const clearedSelectedRows = this.state.selectedRowsTypes.map(() => SelectedRowType.None);
+        return clearedSelectedRows;
+    }
+
+    handleStructureUpdate() {
+        const clearedSelectedRows = this.clearSelectedRows();
+
+        this.setState({selectedRowsTypes: clearedSelectedRows, structureMatches: [], currentStructureMatchIndex: null, rowIndexOfCurrentStructureMatch: null});
+    }
+
+    handleStructureMatching(expression:string) {
+        const selectedRows = this.clearSelectedRows();
+        let {logFileAsString, logEntryRanges, rowIndexOfCurrentStructureMatch, currentStructureMatchIndex} = this.state;
+        const structureMatches = useStructureRegularExpressionSearch(expression, logFileAsString, logEntryRanges);
+
+        structureMatches.forEach(matchArray => {
+            matchArray.forEach(rowIndex => selectedRows[rowIndex] = SelectedRowType.QueryResult);
+        });
+
+        if(structureMatches.length >= 1){
+            currentStructureMatchIndex = 0;
+            rowIndexOfCurrentStructureMatch = structureMatches[0][0];
+        }else{
+            currentStructureMatchIndex = null;
+            rowIndexOfCurrentStructureMatch = null;
+        }
+
+        this.setState({selectedRowsTypes: selectedRows, structureMatches, rowIndexOfCurrentStructureMatch, currentStructureMatchIndex});
+    }
+
+    handleNavigateStructureMatches(isGoingForward: boolean) {
+        let {currentStructureMatchIndex, rowIndexOfCurrentStructureMatch, structureMatches} = this.state;
+
+        if(currentStructureMatchIndex !== null) {
+
+            if(isGoingForward) {
+                currentStructureMatchIndex =(currentStructureMatchIndex < structureMatches.length - 1) ? currentStructureMatchIndex + 1 : currentStructureMatchIndex = 0;
+            }else {
+                currentStructureMatchIndex = (currentStructureMatchIndex > 0) ? currentStructureMatchIndex - 1 : structureMatches.length - 1
+            }
+
+            rowIndexOfCurrentStructureMatch = structureMatches[currentStructureMatchIndex][0];
+            this.setState({currentStructureMatchIndex, rowIndexOfCurrentStructureMatch});
+        }
     }
 
     handleTableCheckbox(){
@@ -303,6 +317,7 @@ export default class App extends React.Component<Props, State> {
                         forwardRef={this.child}
                         coloredTable={this.state.coloredTable}
                         selectedRows={this.state.selectedRowsTypes}
+                        rowIndexOfCurrentStructureMatch = {this.state.rowIndexOfCurrentStructureMatch}
                         onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
                     />
                 </div>                    
@@ -355,10 +370,12 @@ export default class App extends React.Component<Props, State> {
                 logHeaderColumns={this.state.logFile.headers}
                 logHeaderColumnsTypes = {logHeaderColumnTypes}
                 logSelectedRows={this.state.selectedLogRows}
-                isOpen = {this.state.showStructureDialog}
+                currentStructureMatchIndex={this.state.currentStructureMatchIndex}
+                numberOfMatches={this.state.structureMatches.length}
                 onClose={() => this.handleStructureDialogActions(true)}
-                onSearch={(expression) => this.searchForStructure(expression)}
                 onStructureUpdate={() => this.handleStructureUpdate()}
+                onMatchStructure={(expression) => this.handleStructureMatching(expression)}
+                onNavigateStructureMatches={(isGoingForward) => this.handleNavigateStructureMatches(isGoingForward)}
                 />
                 }
             </div>

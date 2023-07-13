@@ -122,21 +122,45 @@ export const useJsonObjectToTextRangesMap = (logFileAsString: string): number[][
     return textRanges;
 }
 
-export const useStructureRegularExpressionSearch = (expression: string, logFileAsString: string): number[][] => {
-    console.log('Starting Search: \n', expression);
+export const useStructureRegularExpressionSearch = (expression: string, logFileAsString: string, logEntryRanges: number[][]): number[][] => {
+    console.log('Starting Structure Matching: \n', expression);
     const perfStart = performance.now();
     const textRanges: number[][] = [];
+    const resultingMatches: number[][] = [];
     const structureQuery = new RegExp(expression, flags);
     let result;
-
 
     while ((result = structureQuery.exec(logFileAsString)) !== null) {
         // console.log(`Range is ${result.index} - ${structureQuery.lastIndex}.`);
         textRanges.push([result.index, structureQuery.lastIndex]);
     }
 
-        const perfEnd = performance.now();
-        console.log(`Execution time (useStructureRegularExpressionSearch()): ${perfEnd - perfStart} ms`);
+    const perfEnd = performance.now();
+    console.log(`Execution time (useStructureRegularExpressionSearch()): ${perfEnd - perfStart} ms`);
 
-        return textRanges;
+    textRanges.forEach(matchRanges => {
+        const indexesOfEntriesInMatch: number[] = [];
+        let startingIndexOfMatch = 0;
+        let endingIndexOfMatch = -1;
+
+        for(let i = 0; i < logEntryRanges.length; i++) {
+
+            if(matchRanges[0] === logEntryRanges[i][0]) {
+                startingIndexOfMatch = i;
+            }
+
+            if(matchRanges[1] === logEntryRanges[i][1]){
+                endingIndexOfMatch = i;
+                break;
+            }
+        }
+
+            for(let o = startingIndexOfMatch; o <= endingIndexOfMatch; o++){
+                indexesOfEntriesInMatch.push(o);
+            }
+
+        resultingMatches.push(indexesOfEntriesInMatch);
+    });
+
+        return resultingMatches;
 }
