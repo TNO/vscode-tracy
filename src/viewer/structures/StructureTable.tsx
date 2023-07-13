@@ -130,7 +130,7 @@ export default class StructureTable extends React.Component<Props, State> {
         const result: any = [];
         const {structureEntries, isRemovingStructureEntries, headerColumns, onStructureEntryRemoved} = this.props;
 
-        const sequenceVertexStyle: React.CSSProperties = {
+        const structureEntryIconStyle: React.CSSProperties = {
             width: STRUCTURE_WIDTH,
             height: LOG_ROW_HEIGHT,
             display: 'inline-block',
@@ -140,21 +140,21 @@ export default class StructureTable extends React.Component<Props, State> {
             color: isRemovingStructureEntries ? 'red' : ''
         }
 
-        let sequenceEdgeIndex = 0;
+        let structureLinkIndex = 0;
 
         for (let r = 0; r < structureEntries.length; r++) {
             const style: React.CSSProperties = {
                 position: 'absolute', 
                 height: LOG_ROW_HEIGHT,
-                top: r * LOG_ROW_HEIGHT + sequenceEdgeIndex * STRUCTURE_LINK_HEIGHT,
+                top: r * LOG_ROW_HEIGHT + structureLinkIndex * STRUCTURE_LINK_HEIGHT,
                 overflow: 'hidden',
                 userSelect: 'none'
             };
 
             result.push(
                 <div key={r} style={style}>
-                    {!isRemovingStructureEntries && <div style={sequenceVertexStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
-                    {isRemovingStructureEntries && <div style={sequenceVertexStyle} onClick={() => {onStructureEntryRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
+                    {!isRemovingStructureEntries && <div style={structureEntryIconStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
+                    {isRemovingStructureEntries && <div style={structureEntryIconStyle} onClick={() => {onStructureEntryRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
                     {headerColumns.map((h, c) => 
                         this.renderColumn(structureEntries[r].row[c], r, c, this.columnWidth(h.name)))
                     }
@@ -165,7 +165,7 @@ export default class StructureTable extends React.Component<Props, State> {
                 const structureLinkStyle: React.CSSProperties = {
                     position: 'absolute', 
                     height: STRUCTURE_LINK_HEIGHT,
-                    top: (r + 1) * LOG_ROW_HEIGHT + sequenceEdgeIndex * STRUCTURE_LINK_HEIGHT,
+                    top: (r + 1) * LOG_ROW_HEIGHT + structureLinkIndex * STRUCTURE_LINK_HEIGHT,
                     overflow: 'hidden',
                     userSelect: 'none',
                     width: STRUCTURE_WIDTH,
@@ -175,12 +175,12 @@ export default class StructureTable extends React.Component<Props, State> {
                 const structureLinkSomeDistance = (structureEntries[r].structureLink === StructureLinkDistance.Some);
 
                 result.push(
-                    <div key={'b' + sequenceEdgeIndex} style={structureLinkStyle} onClick={() => this.props.onToggleStructureLink(r)}>
+                    <div key={'l' + structureLinkIndex} style={structureLinkStyle} onClick={() => this.props.onToggleStructureLink(r)}>
                         {structureLinkSomeDistance && <i className='codicon codicon-kebab-vertical'/>}
                         {!structureLinkSomeDistance && <i className='codicon codicon-arrow-down'/>}
                     </div>
                 );
-                sequenceEdgeIndex++;
+                structureLinkIndex++;
             }
         }
 
