@@ -5,7 +5,7 @@ import LogFile from './LogFile';
 import { LogViewState, StructureMatchId } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
-import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch} from '../viewer/hooks/useStructureRegularExpression'
+import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch} from './hooks/useStructureRegularExpressionManager'
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';

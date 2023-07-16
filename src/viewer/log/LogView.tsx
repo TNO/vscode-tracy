@@ -1,7 +1,7 @@
 import React from 'react';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, 
-         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, BORDER_SELECTED_ROW_QUERY, BORDER_SELECTED_ROW_USER,
-         SELECTED_ROW_QUERY_RESULT_COLOR, SELECTED_ROW_USER_SELECT_COLOR, SelectedRowType } from '../constants';
+         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE,SelectedRowType } from '../constants';
+import { getHeaderColumnInnerStyle, getHeaderColumnStyle, getLogViewRowSelectionStyle } from '../hooks/useStyleManager';
 import { LogViewState, StructureMatchId } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
@@ -55,11 +55,12 @@ export default class LogView extends React.Component<Props, State> {
         }
     }
 
-    renderColumn(value: string, index: number, isHeader: boolean, width: number, colorMap: string) {
+    renderColumn(value: string, columnIndex: number, isHeader: boolean, width: number, colorMap: string) {
         const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
-        const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const widthNew = columnIndex !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
         let color = 'transparent';
         let fontColor = ''
+
         if (this.props.coloredTable){
             color = colorMap;
             if (this.isLight(color)){
@@ -68,55 +69,19 @@ export default class LogView extends React.Component<Props, State> {
                 fontColor = "#ffffff"
             }
         }
-        const style: React.CSSProperties = {
-            overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
-            width: widthNew, borderLeft: index !== 0 ? BORDER : '', 
-        };
-        const innerStyle: React.CSSProperties = {
-            display: 'flex', height, alignItems: 'center', justifyContent: isHeader ? 'center' : 'left', 
-            paddingLeft: '2px', backgroundColor: color, color: fontColor
-        };
+
+        const columnHeaderStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
+        const columnHeaderInnerStyle = getHeaderColumnInnerStyle(height, isHeader);    
+        const colorStyle: React.CSSProperties = {backgroundColor: color, color: fontColor};
+        const innerStyle = {...columnHeaderInnerStyle, ...colorStyle};
+
         return (
-            <div style={style} key={index}>
+            <div style={columnHeaderStyle} key={columnIndex}>
                 <div style={innerStyle}>
                     {value}
                 </div>
             </div>
         );
-    }
-
-    getRowSelectionStyle(rowIndex: number): React.CSSProperties {
-        let selectionStyle: React.CSSProperties;
-
-        switch(this.props.selectedRows[rowIndex]) {
-            case SelectedRowType.UserSelect:
-                selectionStyle = {
-                    // Event row selection properties
-                    borderBottom: BORDER_SELECTED_ROW_USER,
-                    borderTop: BORDER_SELECTED_ROW_USER,
-                    borderRadius: '5px',
-                    backgroundColor: SELECTED_ROW_USER_SELECT_COLOR
-                };
-                break;
-            case SelectedRowType.QueryResult:
-                selectionStyle = {
-                    // Event row selection properties
-                    borderBottom: BORDER_SELECTED_ROW_QUERY,
-                    borderTop: BORDER_SELECTED_ROW_QUERY,
-                    borderRadius: '5px',
-                    backgroundColor: SELECTED_ROW_QUERY_RESULT_COLOR,
-                };
-                break;
-            case SelectedRowType.None: 
-                    selectionStyle = {
-                        // Event row selection properties
-                        borderBottom: BORDER,
-                        borderRadius: '5px',
-                };
-                break;
-        }
-
-        return selectionStyle;
     }
 
     renderRows() {
@@ -145,7 +110,7 @@ export default class LogView extends React.Component<Props, State> {
             const style: React.CSSProperties = {
                 position: 'absolute', height: LOG_ROW_HEIGHT, overflow: 'hidden', top: r * LOG_ROW_HEIGHT, userSelect: 'none'
             };
-            const rowSelectionStyle = this.getRowSelectionStyle(r);
+            const rowSelectionStyle = getLogViewRowSelectionStyle(this.props.selectedRows, r);
             const finalStyle: React.CSSProperties = {...style, ...rowSelectionStyle,};
 
             result.push(
@@ -230,21 +195,16 @@ export default class LogView extends React.Component<Props, State> {
         );
     }
 
-    renderHeaderColumn(value: string, index: number, isHeader: boolean, width: number) {
+    renderHeaderColumn(value: string, columnIndex: number, isHeader: boolean, width: number) {
         const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
-        const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
-        const style: React.CSSProperties = {
-            overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
-            width: widthNew, borderLeft: index !== 0 ? BORDER : '',
-        };
-        const innerStyle: React.CSSProperties = {
-            display: 'flex', height, alignItems: 'center', justifyContent: isHeader ? 'center' : 'left', 
-            paddingLeft: '2px'
-        };
+        const widthNew = columnIndex !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const columnHeaderStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
+        const columnHeaderInnerStyle = getHeaderColumnInnerStyle(height, isHeader);
+
         return (
-            <ReactResizeDetector handleWidth key={index} onResize={(width)=>this.setColumnWidth(value, width!)}>
-            <div className="resizable-content" style={style} key={index}>
-                <div style={innerStyle}>
+            <ReactResizeDetector handleWidth key={columnIndex} onResize={(width)=>this.setColumnWidth(value, width!)}>
+            <div className="resizable-content" style={columnHeaderStyle} key={columnIndex}>
+                <div style={columnHeaderInnerStyle}>
                     {value}
                 </div>
             </div>

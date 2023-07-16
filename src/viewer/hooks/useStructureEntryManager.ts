@@ -1,4 +1,4 @@
-import { StructureHeaderColumnType, StructureLinkDistance } from "../constants";
+import { StructureHeaderColumnType, StructureLinkDistance} from "../constants";
 import { StructureEntry } from "../types";
 
 export const constructStructureEntriesArray = (headerColumnTypes: StructureHeaderColumnType[], selectedRows: string[][]): StructureEntry[] => {

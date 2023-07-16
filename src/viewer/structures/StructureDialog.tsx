@@ -3,8 +3,9 @@ import StructureTable from './StructureTable';
 import { Header, StructureEntry } from '../types';
 import { StructureHeaderColumnType } from '../constants';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
-import { useStructureQueryConstructor } from '../hooks/useStructureRegularExpression';
-import { constructStructureEntriesArray, appendNewStructureEntries, removeStructureEntryFromList, toggleCellSelection, toggleStructureLink, removeLastStructureLink } from '../hooks/useManageStructure'; 
+import { useStructureQueryConstructor } from '../hooks/useStructureRegularExpressionManager';
+import { constructStructureEntriesArray, appendNewStructureEntries, removeStructureEntryFromList, toggleCellSelection, toggleStructureLink, removeLastStructureLink } from '../hooks/useStructureEntryManager'; 
+import { StructureDialogBackdropStyle, StructureDialogDialogStyle } from '../hooks/useStyleManager';
 
 
 interface Props {
@@ -24,24 +25,6 @@ interface State {
     isRemovingStructureEntries: boolean;
     isStructureMatching: boolean;
     structureHeaderColumnsTypes: StructureHeaderColumnType[];
-}
-
-const BACKDROP_STYLE: React.CSSProperties = {
-    bottom: '10px',
-    width: '100%',
-    backgroundColor: '#00000030',
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    overflow: 'visible', 
-}
-
-const DIALOG_STYLE: React.CSSProperties = {
-    width: '98%', 
-    padding: '10px', 
-    display: 'flex', 
-    flexDirection: 'column',
-    overflow:'scroll',
 }
 
 export default class StructureDialog extends React.Component<Props, State> {
@@ -137,8 +120,8 @@ export default class StructureDialog extends React.Component<Props, State> {
     render() {
         const {structureEntries, isRemovingStructureEntries, isStructureMatching} = this.state;
         return (
-            <div style={BACKDROP_STYLE}>
-                <div className = 'dialog'style={DIALOG_STYLE}>
+            <div style={StructureDialogBackdropStyle}>
+                <div className = 'dialog'style={StructureDialogDialogStyle}>
                     <div style={{display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'top'}}>
                         <div className='title-small'>Structure Matching</div>
                         <VSCodeButton appearance='icon' onClick={() => this.props.onClose()}>

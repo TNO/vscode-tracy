@@ -1,7 +1,9 @@
 import React from 'react';
 import ReactResizeDetector from 'react-resize-detector'
 import { Header, StructureEntry } from '../types';
-import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, STRUCTURE_WIDTH, STRUCTURE_LINK_HEIGHT, StructureLinkDistance} from '../constants';
+import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, STRUCTURE_WIDTH, STRUCTURE_LINK_HEIGHT, StructureLinkDistance} from '../constants';
+import { getStructureTableColumnStyle, getStructureTableHeaderStyle, getHeaderColumnStyle, getHeaderColumnInnerStyle, 
+         getStructureTableCellSelectionStyle, getStructureTableEntryIconStyle, getStructureTableRowStyle, getStructureTableLinkStyle } from '../hooks/useStyleManager';
 
 interface Props {
     headerColumns: Header[];
@@ -40,41 +42,15 @@ export default class StructureTable extends React.Component<Props, State> {
         return this.state.columnWidth[name] ?? LOG_DEFAULT_COLUMN_WIDTH;
     }
 
-    getCellSelectionStyle(rowIndex: number, cellIndex: number): React.CSSProperties {
-        let selectionStyle: React.CSSProperties;
-
-        if(!this.props.structureEntries[rowIndex].cellSelection[cellIndex]) {
-            selectionStyle = {
-                display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
-                paddingLeft: '2px', 
-                color: "var(--vscode-titleBar-inactiveForeground)",
-                background: 'repeating-linear-gradient(-55deg, #222222b3, #222222b3 10px, #333333b3 10px, #333333b3 20px)'
-            };
-        }else{
-            selectionStyle = {
-                display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
-                paddingLeft: '2px', backgroundColor: 'transparent'
-            };
-        }
-
-        return selectionStyle;
-    }
-
-    renderHeaderColumn(value: string, index: number, width: number) {
+    renderHeaderColumn(value: string, columnIndex: number, width: number) {
         const height = LOG_HEADER_HEIGHT;
-        const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
-        const style: React.CSSProperties = {
-            overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-block', height, 
-            width: widthNew, borderLeft: index !== 0 ? BORDER : '',
-        };
-        const innerStyle: React.CSSProperties = {
-            display: 'flex', height, alignItems: 'center', justifyContent:'center', 
-            paddingLeft: '2px'
-        };
+        const widthNew = columnIndex !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const headerColumnStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
+        const headerColumnInnerStyle = getHeaderColumnInnerStyle(height, true);
         return (
-            <ReactResizeDetector handleWidth key={index} onResize={(width)=>this.setColumnWidth(value, width!)}>
-            <div className="resizable-content" style={style} key={index}>
-                <div style={innerStyle}>
+            <ReactResizeDetector handleWidth key={columnIndex} onResize={(width)=>this.setColumnWidth(value, width!)}>
+            <div className="resizable-content" style={headerColumnStyle} key={columnIndex}>
+                <div style={headerColumnInnerStyle}>
                     {value}
                 </div>
             </div>
@@ -83,14 +59,7 @@ export default class StructureTable extends React.Component<Props, State> {
     }
 
     renderHeader(containerWidth: number) {
-        const style: React.CSSProperties = {
-            width: containerWidth, 
-            height: LOG_HEADER_HEIGHT, 
-            position: 'relative',
-            userSelect: 'none',
-            left: STRUCTURE_WIDTH,
-            display: "flex"
-        };
+        const style = getStructureTableHeaderStyle(containerWidth);
 
         return (
             <div id='structureHeader' style={style}>
@@ -103,22 +72,12 @@ export default class StructureTable extends React.Component<Props, State> {
 
     renderColumn(value: string, rowIndex: number, index: number, width: number) {
         const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
-        const style: React.CSSProperties = {
-            overflow: 'hidden', 
-            whiteSpace: 'nowrap', 
-            display: 'inline-block', 
-            height: LOG_ROW_HEIGHT, 
-            width: widthNew,
-            verticalAlign: 'top',
-            borderLeft: index !== 0 ? BORDER : '',
-            borderTop: BORDER,
-            borderBottom: BORDER
-        };
-        const innerStyle = this.getCellSelectionStyle(rowIndex, index);
+        const columnStyle = getStructureTableColumnStyle(widthNew, index);
+        const columnInnerStyle = getStructureTableCellSelectionStyle(this.props.structureEntries, rowIndex, index);
 
         return (
-            <div style={style} key={index}>
-                <div style={innerStyle} onClick={(event) => this.props.onToggleIsCellSelected(rowIndex, index, event.ctrlKey)}>
+            <div style={columnStyle} key={index}>
+                <div style={columnInnerStyle} onClick={(event) => this.props.onToggleIsCellSelected(rowIndex, index, event.ctrlKey)}>
                     {value}
                 </div>
             </div>
@@ -129,30 +88,14 @@ export default class StructureTable extends React.Component<Props, State> {
         const newContainerWidth = containerWidth + STRUCTURE_WIDTH;
         const result: any = [];
         const {structureEntries, isRemovingStructureEntries, headerColumns, onStructureEntryRemoved} = this.props;
-
-        const structureEntryIconStyle: React.CSSProperties = {
-            width: STRUCTURE_WIDTH,
-            height: LOG_ROW_HEIGHT,
-            display: 'inline-block',
-            verticalAlign: 'top',
-            textAlign: 'center',
-            lineHeight: `${LOG_ROW_HEIGHT}px`,
-            color: isRemovingStructureEntries ? 'red' : ''
-        }
-
+        const structureEntryIconStyle = getStructureTableEntryIconStyle(isRemovingStructureEntries);
         let structureLinkIndex = 0;
 
         for (let r = 0; r < structureEntries.length; r++) {
-            const style: React.CSSProperties = {
-                position: 'absolute', 
-                height: LOG_ROW_HEIGHT,
-                top: r * LOG_ROW_HEIGHT + structureLinkIndex * STRUCTURE_LINK_HEIGHT,
-                overflow: 'hidden',
-                userSelect: 'none'
-            };
+            const rowStyle = getStructureTableRowStyle(r, structureLinkIndex);
 
             result.push(
-                <div key={r} style={style}>
+                <div key={r} style={rowStyle}>
                     {!isRemovingStructureEntries && <div style={structureEntryIconStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
                     {isRemovingStructureEntries && <div style={structureEntryIconStyle} onClick={() => {onStructureEntryRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
                     {headerColumns.map((h, c) => 
@@ -162,15 +105,7 @@ export default class StructureTable extends React.Component<Props, State> {
             );
 
             if(r !== structureEntries.length - 1) {
-                const structureLinkStyle: React.CSSProperties = {
-                    position: 'absolute', 
-                    height: STRUCTURE_LINK_HEIGHT,
-                    top: (r + 1) * LOG_ROW_HEIGHT + structureLinkIndex * STRUCTURE_LINK_HEIGHT,
-                    overflow: 'hidden',
-                    userSelect: 'none',
-                    width: STRUCTURE_WIDTH,
-                    textAlign: 'center'
-                };
+                const structureLinkStyle = getStructureTableLinkStyle(r, structureLinkIndex);
 
                 const structureLinkSomeDistance = (structureEntries[r].structureLink === StructureLinkDistance.Some);
 
