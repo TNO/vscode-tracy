@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactResizeDetector from 'react-resize-detector'
+import Tooltip from '@mui/material/Tooltip'
 import { Header, StructureEntry } from '../types';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, STRUCTURE_WIDTH, STRUCTURE_LINK_HEIGHT, StructureLinkDistance} from '../constants';
 import { getStructureTableColumnStyle, getStructureTableHeaderStyle, getHeaderColumnStyle, getHeaderColumnInnerStyle, 
@@ -111,8 +112,8 @@ export default class StructureTable extends React.Component<Props, State> {
 
                 result.push(
                     <div key={'l' + structureLinkIndex} style={structureLinkStyle} onClick={() => this.props.onToggleStructureLink(r)}>
-                        {structureLinkSomeDistance && <i className='codicon codicon-kebab-vertical'/>}
-                        {!structureLinkSomeDistance && <i className='codicon codicon-arrow-down'/>}
+                        {structureLinkSomeDistance && <Tooltip title={<h3>Some rows in-between</h3>} placement="right" arrow><i className='codicon codicon-kebab-vertical' /></Tooltip>}
+                        {!structureLinkSomeDistance && <Tooltip title={<h3>No rows in-between</h3>} placement="right" arrow><i className='codicon codicon-arrow-down' /></Tooltip>}
                     </div>
                 );
                 structureLinkIndex++;
