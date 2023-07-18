@@ -1,5 +1,18 @@
-import { SelectedRowType, LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, STRUCTURE_LINK_HEIGHT, STRUCTURE_WIDTH, BORDER, BORDER_SELECTED_ROW_USER, SELECTED_ROW_USER_SELECT_COLOR, BORDER_SELECTED_ROW_QUERY, SELECTED_ROW_QUERY_RESULT_COLOR } from '../constants';
+import { SelectedRowType, LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, STRUCTURE_LINK_HEIGHT, STRUCTURE_WIDTH, BORDER, BORDER_SELECTED_ROW, BORDER_STRUCTURE_MATCH_CURRENT, BORDER_STRUCTURE_MATCH_OTHER, BACKGROUND_COLOR_MATCHED_ROW_CURRENT, BACKGROUND_COLOR_MATCHED_ROW_OTHER, BACKGROUND_COLOR_SELECTED_ROW } from '../constants';
 import { StructureEntry } from '../types';
+
+const getLogViewRowStyle = (rowIndex: number): React.CSSProperties => {
+    const rowStyle: React.CSSProperties = {
+        position: 'absolute', 
+        height: LOG_ROW_HEIGHT, 
+        overflow: 'hidden', 
+        top: rowIndex * LOG_ROW_HEIGHT, 
+        userSelect: 'none',
+        borderRadius: '5px'
+    };
+
+    return rowStyle;
+};
 
 export const StructureDialogBackdropStyle: React.CSSProperties = {
     bottom: '10px',
@@ -134,35 +147,83 @@ export const getStructureTableCellSelectionStyle = (structureEntries: StructureE
 }
 
 export const getLogViewRowSelectionStyle = (selectedRows: string[], rowIndex: number): React.CSSProperties => {
-    let selectionStyle: React.CSSProperties = {};
+    let rowSelectionStyle: React.CSSProperties = {};
 
     switch(selectedRows[rowIndex]) {
         case SelectedRowType.UserSelect:
-            selectionStyle = {
-                // Event row selection properties
-                borderBottom: BORDER_SELECTED_ROW_USER,
-                borderTop: BORDER_SELECTED_ROW_USER,
-                borderRadius: '5px',
-                backgroundColor: SELECTED_ROW_USER_SELECT_COLOR
-            };
-            break;
-        case SelectedRowType.QueryResult:
-            selectionStyle = {
-                // Event row selection properties
-                borderBottom: BORDER_SELECTED_ROW_QUERY,
-                borderTop: BORDER_SELECTED_ROW_QUERY,
-                borderRadius: '5px',
-                backgroundColor: SELECTED_ROW_QUERY_RESULT_COLOR,
+            rowSelectionStyle = {
+                borderBottom: BORDER_SELECTED_ROW,
+                borderTop: BORDER_SELECTED_ROW,
+                backgroundColor: BACKGROUND_COLOR_SELECTED_ROW
             };
             break;
         case SelectedRowType.None: 
-                selectionStyle = {
-                    // Event row selection properties
+            rowSelectionStyle = {
                     borderBottom: BORDER,
-                    borderRadius: '5px',
             };
             break;
     }
 
-    return selectionStyle;
+    rowSelectionStyle = {...getLogViewRowStyle(rowIndex), ...rowSelectionStyle};
+
+    return rowSelectionStyle;
 }
+
+export const getLogViewStructureMatchStyle = (currentStructureMatch: number[], structureMatches: number[][], rowIndex: number): React.CSSProperties => {
+    const isCurrentMatch = currentStructureMatch.includes(rowIndex) ? true : false;
+    let structureMatchRowStyle = getLogViewRowStyle(rowIndex);
+    const currentStructureMatchLastIndex = currentStructureMatch.length - 1;
+
+    const structureMatchFirstAndLastRowStyle = {
+        borderTop: isCurrentMatch ? BORDER_STRUCTURE_MATCH_CURRENT : BORDER_STRUCTURE_MATCH_OTHER,
+        borderBottom: isCurrentMatch ? BORDER_STRUCTURE_MATCH_CURRENT : BORDER_STRUCTURE_MATCH_OTHER,
+        backgroundColor: isCurrentMatch ? BACKGROUND_COLOR_MATCHED_ROW_CURRENT : BACKGROUND_COLOR_MATCHED_ROW_OTHER
+    };
+    const structureMatchFirstRowStyle = {
+        borderTop: isCurrentMatch ? BORDER_STRUCTURE_MATCH_CURRENT : BORDER_STRUCTURE_MATCH_OTHER,
+        borderBottom: BORDER,
+        backgroundColor: isCurrentMatch ? BACKGROUND_COLOR_MATCHED_ROW_CURRENT : BACKGROUND_COLOR_MATCHED_ROW_OTHER
+    };
+    const structureMatchMiddleRowStyle = {
+        backgroundColor: isCurrentMatch ? BACKGROUND_COLOR_MATCHED_ROW_CURRENT : BACKGROUND_COLOR_MATCHED_ROW_OTHER,
+        borderBottom: BORDER
+    };
+    const structureMatchLastRowStyle = {
+        borderBottom: isCurrentMatch ? BORDER_STRUCTURE_MATCH_CURRENT : BORDER_STRUCTURE_MATCH_OTHER,
+        backgroundColor: isCurrentMatch ?BACKGROUND_COLOR_MATCHED_ROW_CURRENT : BACKGROUND_COLOR_MATCHED_ROW_OTHER
+    };
+
+
+    if(rowIndex === currentStructureMatch[0] && currentStructureMatch.length === 1) {
+        structureMatchRowStyle = {...structureMatchRowStyle, ...structureMatchFirstAndLastRowStyle};
+    } else if(rowIndex === currentStructureMatch[0]) {
+        structureMatchRowStyle = {...structureMatchRowStyle, ...structureMatchFirstRowStyle};
+    } else if(rowIndex === currentStructureMatch[currentStructureMatchLastIndex]) {
+        structureMatchRowStyle = {...structureMatchRowStyle, ...structureMatchLastRowStyle};
+    } else if(currentStructureMatch[0] < rowIndex && rowIndex < currentStructureMatch[currentStructureMatchLastIndex]) {
+        structureMatchRowStyle = {...structureMatchRowStyle, ...structureMatchMiddleRowStyle};
+    }
+     else {
+        structureMatches = structureMatches.filter(match => match !== currentStructureMatch);
+            
+        for (let i = 0; i < structureMatches.length; i++) {
+            const match = structureMatches[i];
+
+            if ((match.length > 1 && rowIndex <= match[match.length - 1]) || rowIndex <= match[0]) {
+                if (rowIndex === match[0] && match.length === 1) {
+                    structureMatchRowStyle = {...structureMatchRowStyle, ...structureMatchFirstAndLastRowStyle};
+                } else if (rowIndex === match[0]) {
+                    structureMatchRowStyle = {...structureMatchRowStyle, ...structureMatchFirstRowStyle};
+                } else if (rowIndex === match[match.length - 1]) {
+                    structureMatchRowStyle = {...structureMatchRowStyle, ...structureMatchLastRowStyle};
+                }else{
+                    structureMatchRowStyle = {...structureMatchRowStyle, ...structureMatchMiddleRowStyle};
+                }
+
+                break;
+            }
+        }
+   }
+    
+    return structureMatchRowStyle;
+};

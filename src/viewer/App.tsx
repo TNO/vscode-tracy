@@ -36,8 +36,9 @@ interface State {
     selectedRowsTypes: SelectedRowType[];
     lastSelectedRow: number | undefined;
     structureMatches: number[][];
+    structureMatchesLogRows: number[];
+    currentStructureMatch: number[];
     currentStructureMatchIndex: StructureMatchId;
-    rowIndexOfCurrentStructureMatch: StructureMatchId;
 }
 
 const COLUMN_0_HEADER_STYLE = {
@@ -61,7 +62,7 @@ export default class App extends React.Component<Props, State> {
             logEntryRanges: [], logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined,
             rules: [], showStatesDialog: false, showFlagsDialog: false, showMinimapHeader: true, showStructureDialog: false, showSelectDialog: false, 
             searchColumn: 'All', searchText: '', selectedColumns: [], selectedLogRows: [], selectedRowsTypes: [], coloredTable: false, 
-            structureMatches: [], currentStructureMatchIndex: null, rowIndexOfCurrentStructureMatch: null, lastSelectedRow: undefined
+            structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined
         };
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
@@ -145,10 +146,8 @@ export default class App extends React.Component<Props, State> {
     handleStructureDialogActions(isClosing: boolean) {
 
         if (isClosing === true){
-            logHeaderColumnTypes = []; //empty headersColumnTypes array
-            const clearedSelectedRows = this.clearSelectedRows();
-
-            this.setState({selectedRowsTypes: clearedSelectedRows, showStructureDialog: false});
+            logHeaderColumnTypes = [];
+            this.handleStructureUpdate(isClosing);
         }else {
             let {logFile, selectedLogRows, selectedRowsTypes, rules, showStructureDialog} = this.state;
 
@@ -184,75 +183,84 @@ export default class App extends React.Component<Props, State> {
     }
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
+        const {structureMatchesLogRows, lastSelectedRow} = this.state;
         let newSelectedRows = this.state.selectedRowsTypes;
 
-        if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
+        if(!structureMatchesLogRows.includes(rowIndex)) {
+            if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
 
-            // Shift click higher in the event log
-            if(this.state.lastSelectedRow !== undefined && this.state.lastSelectedRow < rowIndex) {
-
-                for(let i = this.state.lastSelectedRow + 1; i < rowIndex + 1; i++){
-                    newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                // Shift click higher in the event log
+                if(lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
+    
+                    for(let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
+                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                    }
+    
                 }
-
-            }
-            // Shift click lower in the event log
-            else if(this.state.lastSelectedRow !== undefined && this.state.lastSelectedRow > rowIndex) {
-                for(let i = rowIndex; i < this.state.lastSelectedRow + 1; i++){
-                    newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                // Shift click lower in the event log
+                else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
+                    for(let i = rowIndex; i < lastSelectedRow + 1; i++){
+                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                    }
                 }
+            }else {
+                newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
             }
-        }else {
-            newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
-        }
-
-        this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
+    
+            this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
+        }        
     }
 
-    clearSelectedRows(): SelectedRowType[] {
+    clearSelectedRowsTypes(): SelectedRowType[] {
         const clearedSelectedRows = this.state.selectedRowsTypes.map(() => SelectedRowType.None);
         return clearedSelectedRows;
     }
 
-    handleStructureUpdate() {
-        const clearedSelectedRows = this.clearSelectedRows();
+    handleStructureUpdate(isClosing: boolean) {
+        const clearedSelectedRows = this.clearSelectedRowsTypes();
 
-        this.setState({selectedRowsTypes: clearedSelectedRows, structureMatches: [], currentStructureMatchIndex: null, rowIndexOfCurrentStructureMatch: null});
+        this.setState({showStructureDialog:!isClosing ,selectedRowsTypes: clearedSelectedRows, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: []});
     }
 
     handleStructureMatching(expression:string) {
-        const selectedRows = this.clearSelectedRows();
-        let {logFileAsString, logEntryRanges, rowIndexOfCurrentStructureMatch, currentStructureMatchIndex} = this.state;
+        const selectedRowsTypes = this.clearSelectedRowsTypes();
+        let {logFileAsString, logEntryRanges, currentStructureMatch, currentStructureMatchIndex} = this.state;
         const structureMatches = useStructureRegularExpressionSearch(expression, logFileAsString, logEntryRanges);
+        let structureMatchesLogRows:number[] = [];
 
         structureMatches.forEach(matchArray => {
-            matchArray.forEach(rowIndex => selectedRows[rowIndex] = SelectedRowType.QueryResult);
+            structureMatchesLogRows.push(...matchArray);
         });
 
-        if(structureMatches.length >= 1){
+        if(structureMatches.length >= 1) {
             currentStructureMatchIndex = 0;
-            rowIndexOfCurrentStructureMatch = structureMatches[0][0];
-        }else{
+            currentStructureMatch = structureMatches[0];
+        }else {
             currentStructureMatchIndex = null;
-            rowIndexOfCurrentStructureMatch = null;
+            currentStructureMatch = [];
         }
 
-        this.setState({selectedRowsTypes: selectedRows, structureMatches, rowIndexOfCurrentStructureMatch, currentStructureMatchIndex});
+        this.setState({selectedRowsTypes, structureMatches, structureMatchesLogRows, currentStructureMatch, currentStructureMatchIndex});
     }
 
     handleNavigateStructureMatches(isGoingForward: boolean) {
-        let {currentStructureMatchIndex, rowIndexOfCurrentStructureMatch, structureMatches} = this.state;
+        let {currentStructureMatch, currentStructureMatchIndex, structureMatches} = this.state;
+        let newCurrentStructureMatch = [...currentStructureMatch];
+        let newCurrentStructureMatchIndex;
 
         if(currentStructureMatchIndex !== null) {
 
             if(isGoingForward) {
-                currentStructureMatchIndex =(currentStructureMatchIndex < structureMatches.length - 1) ? currentStructureMatchIndex + 1 : currentStructureMatchIndex = 0;
+                newCurrentStructureMatchIndex = (currentStructureMatchIndex < structureMatches.length - 1) ? currentStructureMatchIndex + 1 : currentStructureMatchIndex = 0;
             }else {
-                currentStructureMatchIndex = (currentStructureMatchIndex > 0) ? currentStructureMatchIndex - 1 : structureMatches.length - 1
+                newCurrentStructureMatchIndex = (currentStructureMatchIndex > 0) ? currentStructureMatchIndex - 1 : structureMatches.length - 1
             }
 
-            rowIndexOfCurrentStructureMatch = structureMatches[currentStructureMatchIndex][0];
-            this.setState({currentStructureMatchIndex, rowIndexOfCurrentStructureMatch});
+            newCurrentStructureMatch = structureMatches[newCurrentStructureMatchIndex];
+
+            console.log(newCurrentStructureMatch);
+
+            this.setState({currentStructureMatch: newCurrentStructureMatch, currentStructureMatchIndex: newCurrentStructureMatchIndex});
         }
     }
 
@@ -317,7 +325,9 @@ export default class App extends React.Component<Props, State> {
                         forwardRef={this.child}
                         coloredTable={this.state.coloredTable}
                         selectedRows={this.state.selectedRowsTypes}
-                        rowIndexOfCurrentStructureMatch = {this.state.rowIndexOfCurrentStructureMatch}
+                        structureMatches={this.state.structureMatches}
+                        structureMatchesLogRows={this.state.structureMatchesLogRows}
+                        currentStructureMatch = {this.state.currentStructureMatch}
                         onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
                     />
                 </div>                    
@@ -373,7 +383,7 @@ export default class App extends React.Component<Props, State> {
                 currentStructureMatchIndex={this.state.currentStructureMatchIndex}
                 numberOfMatches={this.state.structureMatches.length}
                 onClose={() => this.handleStructureDialogActions(true)}
-                onStructureUpdate={() => this.handleStructureUpdate()}
+                onStructureUpdate={() => this.handleStructureUpdate(false)}
                 onMatchStructure={(expression) => this.handleStructureMatching(expression)}
                 onNavigateStructureMatches={(isGoingForward) => this.handleNavigateStructureMatches(isGoingForward)}
                 />
@@ -382,3 +392,4 @@ export default class App extends React.Component<Props, State> {
         </div>);
     }
 }
+ 

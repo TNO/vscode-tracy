@@ -1,7 +1,7 @@
 import React from 'react';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, 
          LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE,SelectedRowType } from '../constants';
-import { getHeaderColumnInnerStyle, getHeaderColumnStyle, getLogViewRowSelectionStyle } from '../hooks/useStyleManager';
+import { getHeaderColumnInnerStyle, getHeaderColumnStyle, getLogViewRowSelectionStyle, getLogViewStructureMatchStyle } from '../hooks/useStyleManager';
 import { LogViewState, StructureMatchId } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
@@ -13,7 +13,9 @@ interface Props {
     forwardRef: React.RefObject<HTMLDivElement>;
     coloredTable: boolean;
     selectedRows: SelectedRowType[];
-    rowIndexOfCurrentStructureMatch: StructureMatchId;
+    currentStructureMatch: number[];
+    structureMatches: number[][];
+    structureMatchesLogRows: number[];
 }
 interface State {
     state: LogViewState | undefined;
@@ -47,8 +49,8 @@ export default class LogView extends React.Component<Props, State> {
         if (prevProps.logFile !== this.props.logFile) {
             this.updateState();
         }
-        if (prevProps.rowIndexOfCurrentStructureMatch !== this.props.rowIndexOfCurrentStructureMatch) {
-            this.updateState(this.props.rowIndexOfCurrentStructureMatch);
+        if (prevProps.currentStructureMatch[0] !== this.props.currentStructureMatch[0]) {
+            this.updateState(this.props.currentStructureMatch[0]);
         }
         if (prevState.columnWidth !== this.state.columnWidth) {
             this.render();
@@ -88,7 +90,7 @@ export default class LogView extends React.Component<Props, State> {
         // This method only renders the rows that are visible
         if (!this.state.state) return;
         const result: any = [];
-        const {logFile} = this.props;
+        const {logFile, selectedRows, structureMatches,currentStructureMatch, structureMatchesLogRows} = this.props;
         let first_render = this.state.state.startFloor;
         let last_render = this.state.state.endCeil;
 
@@ -107,14 +109,16 @@ export default class LogView extends React.Component<Props, State> {
         }
 
         for (let r = first_render; r <= last_render; r++) {
-            const style: React.CSSProperties = {
-                position: 'absolute', height: LOG_ROW_HEIGHT, overflow: 'hidden', top: r * LOG_ROW_HEIGHT, userSelect: 'none'
-            };
-            const rowSelectionStyle = getLogViewRowSelectionStyle(this.props.selectedRows, r);
-            const finalStyle: React.CSSProperties = {...style, ...rowSelectionStyle,};
+            let rowStyle;
+
+            if(structureMatchesLogRows.includes(r)){
+                rowStyle = getLogViewStructureMatchStyle(currentStructureMatch, structureMatches, r);
+            }else{
+                rowStyle = getLogViewRowSelectionStyle(selectedRows, r);
+            }
 
             result.push(
-                <div key={r} style={finalStyle} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
+                <div key={r} style={rowStyle} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
                     {logFile.headers.map((h, c) => 
                     logFile.selectedColumns[c]== true &&
                         this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name), logFile.columnsColors[c][r]))
@@ -125,16 +129,16 @@ export default class LogView extends React.Component<Props, State> {
         return result;
     }
 
-    updateState(rowIndexOfCurrentStructureMatch: StructureMatchId = null) {
+    updateState(currentStructureMatchFirstRow: StructureMatchId = null) {
         if (!this.viewport.current) return;
         const height = this.viewport.current.clientHeight;
         const maxVisibleItems = height / LOG_ROW_HEIGHT;
         const visibleItems = Math.min(this.props.logFile.amountOfRows(), maxVisibleItems);
         let scrollTop;
 
-        if(rowIndexOfCurrentStructureMatch !== null) {
-            if(rowIndexOfCurrentStructureMatch + visibleItems < this.props.logFile.amountOfRows()) {
-                scrollTop = rowIndexOfCurrentStructureMatch * LOG_ROW_HEIGHT;
+        if(currentStructureMatchFirstRow !== null) {
+            if(currentStructureMatchFirstRow + visibleItems < this.props.logFile.amountOfRows()) {
+                scrollTop = currentStructureMatchFirstRow * LOG_ROW_HEIGHT;
             }else {
                 scrollTop = (visibleItems < this.props.logFile.amountOfRows()) ? ((this.props.logFile.amountOfRows() - 1) - visibleItems) * LOG_ROW_HEIGHT : 0;
             }
@@ -143,14 +147,12 @@ export default class LogView extends React.Component<Props, State> {
         }
 
         const scrollLeft = this.viewport.current.scrollLeft;
-
-        const start = (rowIndexOfCurrentStructureMatch !== null && rowIndexOfCurrentStructureMatch + maxVisibleItems < this.props.logFile.amountOfRows()) ? rowIndexOfCurrentStructureMatch : scrollTop / LOG_ROW_HEIGHT;
+        const start = (currentStructureMatchFirstRow !== null && currentStructureMatchFirstRow + maxVisibleItems < this.props.logFile.amountOfRows()) ? currentStructureMatchFirstRow : scrollTop / LOG_ROW_HEIGHT;
         const startFloor = Math.floor(start);
         const endCeil = Math.min(Math.ceil(start + maxVisibleItems) - 1, this.props.logFile.amountOfRows() - 1);
-
         const state = {height, scrollLeft, scrollTop, startFloor, start, endCeil, visibleItems, rowHeight: LOG_ROW_HEIGHT};
         
-        if (rowIndexOfCurrentStructureMatch !== null) {
+        if (currentStructureMatchFirstRow !== null) {
         this.viewport.current.scrollTop = scrollTop;
         }
 
