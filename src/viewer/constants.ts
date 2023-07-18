@@ -49,7 +49,7 @@ export const STRUCTURE_LINK_HEIGHT = 16;
 
 export enum StructureLinkDistance {
     None = "NONE",
-    Some = "SOME",
+    Min = "MIN",
     Max = "MAX"
 }
 

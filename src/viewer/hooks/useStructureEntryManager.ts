@@ -20,7 +20,7 @@ export const constructNewStructureEntry = (headerColumnType: StructureHeaderColu
         }
         return false;
     });
-    const defaultStructureLink = StructureLinkDistance.Some;
+    const defaultStructureLink = StructureLinkDistance.Max;
 
     const newEntry:StructureEntry = {row: row, cellSelection: allCellsSelected, structureLink: defaultStructureLink};
     
@@ -31,7 +31,7 @@ export const appendNewStructureEntries = (currentStructureEntries: StructureEntr
     const lastIndexOfStructureEntry = currentStructureEntries.length - 1;
     let finalStructureEntries: StructureEntry[] = currentStructureEntries;
 
-    finalStructureEntries[lastIndexOfStructureEntry].structureLink = StructureLinkDistance.Some;
+    finalStructureEntries[lastIndexOfStructureEntry].structureLink = StructureLinkDistance.Max;
 
     newStructureEntries.forEach(newEntry => {finalStructureEntries.push(newEntry)});
 
@@ -60,9 +60,12 @@ export const toggleStructureLink = (structureEntries: StructureEntry[], structur
 
     switch(structureLink) {
         case StructureLinkDistance.None:
-            structureLink = StructureLinkDistance.Some;
+            structureLink = StructureLinkDistance.Min;
             break;
-        case StructureLinkDistance.Some:
+        case StructureLinkDistance.Min:
+            structureLink = StructureLinkDistance.Max;
+            break;
+        case StructureLinkDistance.Max:
             structureLink = StructureLinkDistance.None;
             break;
     }

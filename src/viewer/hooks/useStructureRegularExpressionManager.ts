@@ -2,7 +2,7 @@ import { Header, StructureEntry } from '../types';
 import { StructureHeaderColumnType, StructureLinkDistance } from '../constants';
 
 const RegExpAnyCharMin = '.+?';
-const RegExpAnyCharMax = '.+!';
+const RegExpAnyCharMax = '.+';
 const RegExpLineFeed = '\\r';
 const RegExpCarriageReturn = '\\n';
 const RegExpValuePattern = "[A-Za-z0-9 ,:~`'\"_=@#%&|!$^*+<>?.{}()\\[\\]\\/\\\\-]*";
@@ -88,7 +88,7 @@ export const useStructureQueryConstructor = (logHeaders: Header[],
                 case StructureLinkDistance.None:
                     structureLinkRegExp = getRegExpExactWhiteSpace(4);
                     break;
-                case StructureLinkDistance.Some:
+                case StructureLinkDistance.Min:
                     structureLinkRegExp = RegExpAnyCharMin;
                     break;
                 case StructureLinkDistance.Max:
