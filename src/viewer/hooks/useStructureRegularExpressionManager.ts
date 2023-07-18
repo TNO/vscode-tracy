@@ -163,5 +163,5 @@ export const useStructureRegularExpressionSearch = (expression: string, logFileA
         resultingMatches.push(indexesOfEntriesInMatch);
     });
 
-        return resultingMatches;
+    return resultingMatches;
 }
