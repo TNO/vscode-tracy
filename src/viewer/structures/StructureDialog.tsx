@@ -47,7 +47,6 @@ export default class StructureDialog extends React.Component<Props, State> {
     shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
         if((this.props !== nextProps) 
             || (this.state !== nextState)) {
-                console.log("structureDialog updating");
             return true;
         }
 
@@ -56,7 +55,6 @@ export default class StructureDialog extends React.Component<Props, State> {
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
         if(this.props.logSelectedRows !== prevProps.logSelectedRows) {
-            console.log("structure will update");
             this.updateStructure();
         }
     }
