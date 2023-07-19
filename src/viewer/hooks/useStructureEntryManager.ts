@@ -20,7 +20,7 @@ export const constructNewStructureEntry = (headerColumnType: StructureHeaderColu
         }
         return false;
     });
-    const defaultStructureLink = StructureLinkDistance.Max;
+    const defaultStructureLink = StructureLinkDistance.Min;
 
     const newEntry:StructureEntry = {row: row, cellSelection: allCellsSelected, structureLink: defaultStructureLink};
     
@@ -31,7 +31,7 @@ export const appendNewStructureEntries = (currentStructureEntries: StructureEntr
     const lastIndexOfStructureEntry = currentStructureEntries.length - 1;
     let finalStructureEntries: StructureEntry[] = currentStructureEntries;
 
-    finalStructureEntries[lastIndexOfStructureEntry].structureLink = StructureLinkDistance.Max;
+    finalStructureEntries[lastIndexOfStructureEntry].structureLink = StructureLinkDistance.Min;
 
     newStructureEntries.forEach(newEntry => {finalStructureEntries.push(newEntry)});
 
