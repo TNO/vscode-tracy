@@ -104,9 +104,20 @@ export default class App extends React.Component<Props, State> {
         const message = event.data;
         
         if (message.type === 'update') {
-            const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);  
-            const logFileText = message.text;
+            const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
+
+            const parseStart = performance.now();
             let lines = JSON.parse(message.text);
+            const parseEnd = performance.now();
+            console.log(`Execution time (parse json): ${parseEnd - parseStart} ms`);
+
+
+
+            const stringifyStart = performance.now();
+            const logFileText = JSON.stringify(lines, null, 2);
+            const stringifyEnd = performance.now();
+            console.log(`Execution time (stringify with pretty print): ${stringifyEnd - stringifyStart} ms`);
+
             logFile = LogFile.create(lines, rules);
 
             if (this.state.searchText !== '') {
@@ -149,9 +160,9 @@ export default class App extends React.Component<Props, State> {
             logHeaderColumnTypes = [];
             this.handleStructureUpdate(isClosing);
         }else {
-            let {logFile, selectedLogRows, selectedRowsTypes, rules, showStructureDialog} = this.state;
+            const {logFile, selectedRowsTypes, rules, showStructureDialog} = this.state;
 
-            selectedLogRows = logFile.rows.filter((v, i) => selectedRowsTypes[i] === SelectedRowType.UserSelect);
+            const selectedLogRows = logFile.rows.filter((v, i) => selectedRowsTypes[i] === SelectedRowType.UserSelect);
             
             if(selectedLogRows.length === 0) {
                 return;
@@ -184,7 +195,7 @@ export default class App extends React.Component<Props, State> {
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
         const {structureMatchesLogRows, lastSelectedRow} = this.state;
-        let newSelectedRows = this.state.selectedRowsTypes;
+        const newSelectedRows = this.state.selectedRowsTypes;
 
         if(!structureMatchesLogRows.includes(rowIndex)) {
             if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
@@ -224,14 +235,21 @@ export default class App extends React.Component<Props, State> {
 
     handleStructureMatching(expression:string) {
         const selectedRowsTypes = this.clearSelectedRowsTypes();
-        let {logFileAsString, logEntryRanges, currentStructureMatch, currentStructureMatchIndex} = this.state;
+        const {logFileAsString, logEntryRanges} = this.state;
+        let {currentStructureMatch, currentStructureMatchIndex} = this.state;
+
         const structureMatches = useStructureRegularExpressionSearch(expression, logFileAsString, logEntryRanges);
         let structureMatchesLogRows:number[] = [];
 
+        const indexStructureMatchresultStart = performance.now();
         structureMatches.forEach(matchArray => {
-            structureMatchesLogRows.push(...matchArray);
+            structureMatchesLogRows = structureMatchesLogRows.concat(matchArray);
         });
+        const indexStructureMatchresultEnd = performance.now();
 
+        console.log(`Execution time (indexing resulting rows): ${indexStructureMatchresultEnd - indexStructureMatchresultStart} ms`);
+
+        
         if(structureMatches.length >= 1) {
             currentStructureMatchIndex = 0;
             currentStructureMatch = structureMatches[0];
@@ -244,21 +262,19 @@ export default class App extends React.Component<Props, State> {
     }
 
     handleNavigateStructureMatches(isGoingForward: boolean) {
-        let {currentStructureMatch, currentStructureMatchIndex, structureMatches} = this.state;
+        const {currentStructureMatch, currentStructureMatchIndex, structureMatches} = this.state;
         let newCurrentStructureMatch = [...currentStructureMatch];
         let newCurrentStructureMatchIndex;
 
         if(currentStructureMatchIndex !== null) {
 
             if(isGoingForward) {
-                newCurrentStructureMatchIndex = (currentStructureMatchIndex < structureMatches.length - 1) ? currentStructureMatchIndex + 1 : currentStructureMatchIndex = 0;
+                newCurrentStructureMatchIndex = (currentStructureMatchIndex < structureMatches.length - 1) ? currentStructureMatchIndex + 1 : 0;
             }else {
                 newCurrentStructureMatchIndex = (currentStructureMatchIndex > 0) ? currentStructureMatchIndex - 1 : structureMatches.length - 1
             }
 
             newCurrentStructureMatch = structureMatches[newCurrentStructureMatchIndex];
-
-            console.log(newCurrentStructureMatch);
 
             this.setState({currentStructureMatch: newCurrentStructureMatch, currentStructureMatchIndex: newCurrentStructureMatchIndex});
         }

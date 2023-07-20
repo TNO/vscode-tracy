@@ -3,43 +3,51 @@ import { StructureHeaderColumnType, StructureLinkDistance } from '../constants';
 
 const RegExpAnyCharMin = '.+?';
 const RegExpAnyCharMax = '.+';
-const RegExpLineFeed = '\\r';
-const RegExpCarriageReturn = '\\n';
-const RegExpValuePattern = "[A-Za-z0-9 ,:~`'\"_=@#%&|!$^*+<>?.{}()\\[\\]\\/\\\\-]*";
-const RegExpjsonObject = '{.+?},?\\r\\n';
+const RegExpLineFeed = '\\n';
+const RegExpTimeStampPattern = "[A-Za-z0-9 ,:_=@|*+.\\(\\)\\[\\]\\/\\-]*?";
+const RegExpValuePattern = "[A-Za-z0-9 ,:~`'\"_=@#%&|!$^*+<>?.{}()\\[\\]\\/\\\\-]*?";
+const RegExpjsonObject = '{.+?},?\\n';
 const flags = 'gs';
 
 const getRegExpExactWhiteSpace = (amountOfWhitespace: number): string => `\\s{${amountOfWhitespace}}`;
 
-const escapeBrackets = (text: string): string => {
+const escapeSpecialChars = (text: string): string => {
     let safeText = '';
 
     if(text !== undefined) {
         safeText = text.replace(/[\.\*\+\?\^\$\{\}\(\)\|\[\]\-]/g, "\\$&"); // replace special characters
         safeText = safeText.replace(/[\"]/g, "\\\\$&"); // replace special characters and double quotes
     }
-        return safeText;
+
+
+    const RegExpCarriageReturnAtEnd = /\r$/;
+
+    if(RegExpCarriageReturnAtEnd.test(text)) {
+    safeText = safeText.replace(RegExpCarriageReturnAtEnd, '\\\\r');
+    }
+
+    return safeText;
 };
 
 const getLineEndString = (amountOfWhiteSpace: number): string => {
-    return RegExpLineFeed + RegExpCarriageReturn + getRegExpExactWhiteSpace(amountOfWhiteSpace);
+    return RegExpLineFeed + getRegExpExactWhiteSpace(amountOfWhiteSpace);
 };
 
-const getCellValue = (content: string, headerColumnType: StructureHeaderColumnType, isSelected: boolean): string => {
+const getCellValue = (content: string, header: Header, headerColumnType: StructureHeaderColumnType, isSelected: boolean): string => {
     let value = '';
 
     if(isSelected && headerColumnType !== StructureHeaderColumnType.Custom) {
-        value = `"${escapeBrackets(content)}"`;
+        value = (content !== null) ? `"${escapeSpecialChars(content)}"` :  'null';
      }
      else {
-         value = `"${RegExpValuePattern}"`;
+         value = (header.name.toLowerCase() === 'timestamp') ? `"${RegExpTimeStampPattern}"` : `"${RegExpValuePattern}"`;
      }
 
      return value;
 };
 
 const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeaderColumnType[], row: string[], cellSelection: boolean[]): string => {
-    let objectString = '{' + getLineEndString(8);
+    let objectString = '{' + getLineEndString(4);
     let rowString = '';
     let hasProcessedLastUsableColumn = false;
 
@@ -50,14 +58,14 @@ const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeader
         const isCellSelected = cellSelection[c];
 
         if(headerType !== StructureHeaderColumnType.Custom && row[c] !== undefined) {
-            let valueString = getCellValue(row[c], headerType, isCellSelected);
+            let valueString = getCellValue(row[c], logHeaders[c], headerType, isCellSelected);
             let headerAndCellString = '';
 
             if(hasProcessedLastUsableColumn){
                 valueString = valueString.concat(',');
-                headerAndCellString = headerAndCellString.concat(headerString, ": ", valueString, getLineEndString(8));
-            }else {
                 headerAndCellString = headerAndCellString.concat(headerString, ": ", valueString, getLineEndString(4));
+            }else {
+                headerAndCellString = headerAndCellString.concat(headerString, ": ", valueString, getLineEndString(2));
             }
 
             rowString = headerAndCellString.concat(rowString);
@@ -66,7 +74,7 @@ const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeader
         }
     }
 
-    objectString = objectString.concat(rowString, '},?', RegExpLineFeed, RegExpCarriageReturn);
+    objectString = objectString.concat(rowString, '},?', RegExpLineFeed);
 
     return objectString;
 };
@@ -78,6 +86,7 @@ export const useStructureQueryConstructor = (logHeaders: Header[],
 
     for(let r = 0; r < structureEntries.length; r++){
         const structureEntry = structureEntries[r];
+
         const rowRegExp = getRegExpForLogEntry(logHeaders, headerColumnTypes, structureEntry.row, structureEntry.cellSelection);
         regularExp = regularExp.concat(rowRegExp);
 
@@ -86,7 +95,7 @@ export const useStructureQueryConstructor = (logHeaders: Header[],
 
             switch (structureEntry.structureLink) {
                 case StructureLinkDistance.None:
-                    structureLinkRegExp = getRegExpExactWhiteSpace(4);
+                    structureLinkRegExp = getRegExpExactWhiteSpace(2);
                     break;
                 case StructureLinkDistance.Min:
                     structureLinkRegExp = RegExpAnyCharMin;
