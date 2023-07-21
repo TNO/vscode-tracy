@@ -35,7 +35,7 @@ export default class MinimapHeader extends React.Component<Props> {
     render() {
         return (
             <div style={{flex: 1, overflow: 'hidden', display: 'flex'}}>
-                {this.props.logFile.getSelectedHeader().map((h, i) => this.renderHeader(h.name, i))}
+                {this.props.logFile.getSelectedHeaderMini().map((h, i) => this.renderHeader(h.name, i))}
             </div>
         );
     }

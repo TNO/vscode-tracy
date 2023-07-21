@@ -28,7 +28,7 @@ Files with extension `*.tracy.json` will be automatically opened in Tracy.
 
 A prominent feature is the minimap, which allows navigation and analysis of a log by representing information in the form of glyphs (colored rectangles). In the minimap, each column of the log is represented as a column of glyphs. Every value in the log column maps to a glyph, in such a way that different values map to different colors. For timestamp values, nearby timestamps map to nearby colors, so that a gradual progress of time shows as a smooth gradient in the first minimap column.
 
-The minimap can be scaled (zoomed out and in) by using the mouse wheel while the pointer is positioned over the minimap. The lines (rows) of the log that are visible, are indicated by a shaded area in the minimap. Scrolling the log is done with the scroll bar immediately to the left of the minimap, or by using the mouse wheel while the pointer is positioned over the log.
+The minimap can be scaled (zoomed out and in) by holding the Control key and at the same time turning the mouse wheel, while the pointer is positioned over the minimap. The lines (rows) of the log that are visible, are indicated by a shaded area in the minimap. Scrolling the log is done with the scroll bar immediately to the left of the minimap, or by using the mouse wheel while the pointer is positioned over the log.
 
 
 ## Developing

@@ -27,6 +27,7 @@ interface State {
     searchColumn: string;
     searchText: string;
     selectedColumns: boolean[];
+    selectedColumnsMini: boolean[];
     coloredTable: boolean;
 
     // Structure related
@@ -59,11 +60,14 @@ export default class App extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            logEntryRanges: [], logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined,
-            rules: [], showStatesDialog: false, showFlagsDialog: false, showMinimapHeader: true, showStructureDialog: false, showSelectDialog: false, 
-            searchColumn: 'All', searchText: '', selectedColumns: [], selectedLogRows: [], selectedRowsTypes: [], coloredTable: false, 
-            structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined
+            logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined, coloredTable: false, showMinimapHeader: true, 
+            rules: [], showStatesDialog: false, showFlagsDialog: false, 
+            showSelectDialog: false, selectedColumns: [], selectedColumnsMini: [],
+            searchColumn: 'All', searchText: '', 
+            selectedLogRows: [], selectedRowsTypes: [], logEntryRanges: [],
+            showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
         };
+
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
         this.vscode.postMessage({type: 'update'});
@@ -148,9 +152,9 @@ export default class App extends React.Component<Props, State> {
             this.setState({rules: newRules});
     }
 
-    handleSelectDialog(selectedCols: boolean[], is_close: boolean) {
+    handleSelectDialog(selectedCols: boolean[], selectedColsMini: boolean[], is_close: boolean) {
         if (is_close === true) {
-            this.setState({selectedColumns: selectedCols, logFile: this.state.logFile.setSelectedColumns(selectedCols) ,showSelectDialog: false});
+            this.setState({selectedColumns: selectedCols, logFile: this.state.logFile.setSelectedColumns(selectedCols, selectedColsMini) ,showSelectDialog: false});
         }
     }
 
