@@ -391,7 +391,7 @@ export default class App extends React.Component<Props, State> {
                 {this.state.showSelectDialog &&
                 <SelectColDialog
                 logFile={this.state.logFile}
-                onClose={(selectedColumns) => this.handleSelectDialog(selectedColumns, true)}/>
+                onClose={(selectedColumns, selectedColumnsMini) => this.handleSelectDialog(selectedColumns, selectedColumnsMini, true)}/>
                 }
             </div>
             <div id="StructureDialog" style={{display: 'flex', position: 'relative', boxSizing: 'border-box'}}>
