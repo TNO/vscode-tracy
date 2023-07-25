@@ -112,7 +112,7 @@ export default class StructureTable extends React.Component<Props, State> {
 
                 result.push(
                     <div key={'l' + structureLinkIndex} style={structureLinkStyle} onClick={() => this.props.onToggleStructureLink(r)}>
-                        {structureLinkDistance === StructureLinkDistance.Max && <Tooltip title={<h3>Allow rows in-between</h3>} placement="right" arrow><i className='codicon codicon-kebab-vertical' /></Tooltip>}
+                        {structureLinkDistance === StructureLinkDistance.Max && <Tooltip title={<h3>Allow maximal number of rows in-between</h3>} placement="right" arrow><i className='codicon codicon-kebab-vertical' /></Tooltip>}
                         {structureLinkDistance === StructureLinkDistance.None && <Tooltip title={<h3>Disallow rows in-between</h3>} placement="right" arrow><i className='codicon codicon-arrow-down' /></Tooltip>}
                         {structureLinkDistance === StructureLinkDistance.Min && <Tooltip title={<h3>Allow minimal number of rows in-between</h3>} placement="right" arrow><i className='codicon codicon-ellipsis' /></Tooltip>}
                     </div>

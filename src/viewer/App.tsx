@@ -121,6 +121,7 @@ export default class App extends React.Component<Props, State> {
             const logFileText = JSON.stringify(lines, null, 2);
             const stringifyEnd = performance.now();
             console.log(`Execution time (stringify with pretty print): ${stringifyEnd - stringifyStart} ms`);
+            console.log(logFileText);
 
             logFile = LogFile.create(lines, rules);
 

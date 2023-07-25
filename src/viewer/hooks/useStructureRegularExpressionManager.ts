@@ -5,7 +5,7 @@ const RegExpAnyCharMin = '.+?';
 const RegExpAnyCharMax = '.+';
 const RegExpLineFeed = '\\n';
 const RegExpTimeStampPattern = "[A-Za-z0-9 ,:_=@|*+.\\(\\)\\[\\]\\/\\-]*?";
-const RegExpValuePattern = "[A-Za-z0-9 ,:~`'\"_=@#%&|!$^*+<>?.{}()\\[\\]\\/\\\\-]*?";
+const RegExpValuePattern = "[A-Za-z0-9 ,:;~`'\"_=@#%&|!$^*+<>?.{}()\\[\\]\\/\\\\-]*?";
 const RegExpjsonObject = '{.+?},?\\n';
 const flags = 'gs';
 
@@ -15,8 +15,10 @@ const escapeSpecialChars = (text: string): string => {
     let safeText = '';
 
     if(text !== undefined) {
-        safeText = text.replace(/[\.\*\+\?\^\$\{\}\(\)\|\[\]\-]/g, "\\$&"); // replace special characters
-        safeText = safeText.replace(/[\"]/g, "\\\\$&"); // replace special characters and double quotes
+        safeText = text.replace(/[\\]/g, "\\\\\\$&"); //double escaped slashes
+        safeText = safeText.replace(/[\.\*\+\?\^\$\{\}\(\)\|\[\]\-]/g, "\\$&"); // replace special characters
+        safeText = safeText.replace(/[\"]/g, "\\\\$&"); //double quotes
+
     }
 
 
