@@ -82,14 +82,6 @@ export const toggleCellSelection = (headerColumnType: StructureHeaderColumnType[
 
     if(headerColumnType[cellIndex] !== StructureHeaderColumnType.Custom) {
         if(isKeyPressed){
-            finalStructureEntries[structureEntryIndex].cellSelection.forEach((cell, index) => {
-    
-                if(index != cellIndex && headerColumnType[index] !== StructureHeaderColumnType.Custom) {
-                    finalStructureEntries[structureEntryIndex].cellSelection[index] = !selectedCell;
-                }
-    
-            });     
-        }else{
             finalStructureEntries[structureEntryIndex].cellSelection[cellIndex] = !selectedCell;
         }
     }

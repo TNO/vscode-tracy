@@ -89,8 +89,7 @@ export const getStructureTableRowStyle= (rowIndex: number, structureLinkIndex: n
         position: 'absolute', 
         height: LOG_ROW_HEIGHT,
         top: rowIndex * LOG_ROW_HEIGHT + structureLinkIndex * STRUCTURE_LINK_HEIGHT,
-        overflow: 'hidden',
-        userSelect: 'none'
+        overflow: 'hidden'
     };
 
     return rowStyle;
@@ -134,12 +133,18 @@ export const getStructureTableCellSelectionStyle = (structureEntries: StructureE
             display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
             paddingLeft: '2px', 
             color: "var(--vscode-titleBar-inactiveForeground)",
-            background: 'repeating-linear-gradient(-55deg, #222222b3, #222222b3 10px, #333333b3 10px, #333333b3 20px)'
+            background: 'repeating-linear-gradient(-55deg, #222222b3, #222222b3 10px, #333333b3 10px, #333333b3 20px)',
+            userSelect: 'none'
         };
     }else {
         cellSelectionStyle = {
-            display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
-            paddingLeft: '2px', backgroundColor: 'transparent'
+            display: 'flex', 
+            height: LOG_ROW_HEIGHT, 
+            alignItems: 'center', 
+            justifyContent: 'left', 
+            paddingLeft: '2px', 
+            backgroundColor: 'transparent',
+            userSelect: 'text'
         };
     }
 
