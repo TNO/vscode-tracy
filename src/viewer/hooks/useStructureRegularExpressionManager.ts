@@ -135,7 +135,7 @@ export const useJsonObjectToTextRangesMap = (logFileAsString: string): number[][
 }
 
 export const useStructureRegularExpressionSearch = (expression: string, logFileAsString: string, logEntryRanges: number[][]): number[][] => {
-    console.log('Starting Structure Matching: \n', expression);
+    console.log('Starting Structure Matching');
     const perfStart = performance.now();
     const textRanges: number[][] = [];
     const resultingMatches: number[][] = [];
@@ -143,7 +143,6 @@ export const useStructureRegularExpressionSearch = (expression: string, logFileA
     let result;
 
     while ((result = structureQuery.exec(logFileAsString)) !== null) {
-        // console.log(`Range is ${result.index} - ${structureQuery.lastIndex}.`);
         textRanges.push([result.index, structureQuery.lastIndex]);
     }
 

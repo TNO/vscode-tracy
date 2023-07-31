@@ -67,7 +67,6 @@ export default class StructureDialog extends React.Component<Props, State> {
             const newStructureEntries = constructStructureEntriesArray(structureHeaderColumnsTypes, newSelectedRows);
             const finalStructureEntries = appendNewStructureEntries(structureEntries, newStructureEntries)
             this.setState({structureEntries: finalStructureEntries, isStructureMatching: false});
-            console.log(finalStructureEntries);
         }
         
         this.props.onStructureUpdate();
