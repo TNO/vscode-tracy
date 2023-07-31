@@ -109,20 +109,8 @@ export default class App extends React.Component<Props, State> {
         
         if (message.type === 'update') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
-
-            const parseStart = performance.now();
             let lines = JSON.parse(message.text);
-            const parseEnd = performance.now();
-            console.log(`Execution time (parse json): ${parseEnd - parseStart} ms`);
-
-
-
-            const stringifyStart = performance.now();
             const logFileText = JSON.stringify(lines, null, 2);
-            const stringifyEnd = performance.now();
-            console.log(`Execution time (stringify with pretty print): ${stringifyEnd - stringifyStart} ms`);
-            console.log(logFileText);
-
             logFile = LogFile.create(lines, rules);
 
             if (this.state.searchText !== '') {
@@ -246,14 +234,9 @@ export default class App extends React.Component<Props, State> {
         const structureMatches = useStructureRegularExpressionSearch(expression, logFileAsString, logEntryRanges);
         let structureMatchesLogRows:number[] = [];
 
-        const indexStructureMatchresultStart = performance.now();
         structureMatches.forEach(matchArray => {
             structureMatchesLogRows = structureMatchesLogRows.concat(matchArray);
         });
-        const indexStructureMatchresultEnd = performance.now();
-
-        console.log(`Execution time (indexing resulting rows): ${indexStructureMatchresultEnd - indexStructureMatchresultStart} ms`);
-
         
         if(structureMatches.length >= 1) {
             currentStructureMatchIndex = 0;
