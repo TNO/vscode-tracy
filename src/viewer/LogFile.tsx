@@ -1,9 +1,8 @@
 import Rule from "./rules/Rule";
 import { extent } from "d3-array"
+import { Header } from "./types";
 import { scaleSequential } from "d3-scale"
 import { interpolateTurbo } from "d3-scale-chromatic"
-
-interface Header {name: string, type: 'string' | 'number'}
 
 // TODO: determine column type automatically, not hardcoded
 const DEFAULT_HEADER_TYPE = 'string';
