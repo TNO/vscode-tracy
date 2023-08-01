@@ -1,4 +1,5 @@
 import React from 'react';
+import Tooltip from '@mui/material/Tooltip'
 import StructureTable from './StructureTable';
 import { Header, StructureEntry } from '../types';
 import { StructureHeaderColumnType } from '../constants';
@@ -39,8 +40,10 @@ export default class StructureDialog extends React.Component<Props, State> {
             isStructureMatching: false, 
             structureHeaderColumnsTypes: logHeaderColumnsTypes, 
             structureEntries: structureEntries
-        };
+        };   
+    }
 
+    componentDidMount(): void {
         this.props.onStructureUpdate(); //trigger manually, as update function isn't called for initial render.
     }
 
@@ -119,44 +122,46 @@ export default class StructureDialog extends React.Component<Props, State> {
         return (
             <div style={StructureDialogBackdropStyle}>
                 <div className = 'dialog'style={StructureDialogDialogStyle}>
-                    <div style={{display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'top'}}>
-                        <div className='title-small'>Structure Matching</div>
+                <div style={{display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'top'}}>
+                    <div className='title-small'>Structure Matching</div>
+                    <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
+                        <Tooltip title={<><h2>Help</h2><ul><li>item 1</li><li>item 2</li></ul></>} placement="right" arrow><i className='codicon codicon-question' /></Tooltip>
                         <VSCodeButton appearance='icon' onClick={() => this.props.onClose()}>
                             <i className='codicon codicon-close'/>
                         </VSCodeButton>
                     </div>
-                    <StructureTable
-                        headerColumns = {this.props.logHeaderColumns}
-                        structureEntries = {structureEntries}
-                        isRemovingStructureEntries = {isRemovingStructureEntries}
-                        onToggleIsCellSelected = {(structureEntryIndex, cellIndex, isKeyPressed) => this.toggleIsCellSelected(structureEntryIndex, cellIndex, isKeyPressed)}
-                        onToggleStructureLink = {(structureEntryIndex) => this.toggleStructureLink(structureEntryIndex)}
-                        onStructureEntryRemoved = {(structureEntryIndex) => this.removeStructureEntry(structureEntryIndex)}/>
-                    <div style={{textAlign: 'right', padding: '5px'}}>
-                        <VSCodeButton className='structure-result-element' onClick={() => {this.toggleIsRemovingStructureEntries();}}>
-                            {isRemovingStructureEntries ? 'Done' : 'Remove rows'}
-                        </VSCodeButton>
-                        <VSCodeButton className='structure-result-element' onClick={() => {this.MatchStructure();}} disabled={isRemovingStructureEntries}>
-                            Search for Structure
-                        </VSCodeButton>
-                        { isStructureMatching &&
-                            <>
-                                <div className='structure-result-element' style={{display: 'inline-block', padding: '3.75px'}}> {(this.props.currentStructureMatchIndex === null) ? 0 : this.props.currentStructureMatchIndex! + 1} of {this.props.numberOfMatches}</div>
-                                { this.props.numberOfMatches > 1 &&
-                                    <>
-                                    <VSCodeButton className='structure-result-element' appearance='icon' onClick={() => this.props.onNavigateStructureMatches(false)}>
-                                         <i className='codicon codicon-chevron-up' />
-                                    </VSCodeButton>
-                                    <VSCodeButton className='structure-result-element' appearance='icon' onClick={() => this.props.onNavigateStructureMatches(true)}>
-                                        <i className='codicon codicon-chevron-down' />
-                                    </VSCodeButton>
-                                    </>
-                                }
-                            </>
-                        }
-                    </div>
+                </div>
+                <StructureTable
+                    headerColumns = {this.props.logHeaderColumns}
+                    structureEntries = {structureEntries}
+                    isRemovingStructureEntries = {isRemovingStructureEntries}
+                    onToggleIsCellSelected = {(structureEntryIndex, cellIndex, isKeyPressed) => this.toggleIsCellSelected(structureEntryIndex, cellIndex, isKeyPressed)}
+                    onToggleStructureLink = {(structureEntryIndex) => this.toggleStructureLink(structureEntryIndex)}
+                    onStructureEntryRemoved = {(structureEntryIndex) => this.removeStructureEntry(structureEntryIndex)}/>
+                <div style={{textAlign: 'right', padding: '5px'}}>
+                    <VSCodeButton className='structure-result-element' onClick={() => {this.toggleIsRemovingStructureEntries();}}>
+                        {isRemovingStructureEntries ? 'Done' : 'Remove rows'}
+                    </VSCodeButton>
+                    <VSCodeButton className='structure-result-element' onClick={() => {this.MatchStructure();}} disabled={isRemovingStructureEntries}>
+                        Search for Structure
+                    </VSCodeButton>
+                    { isStructureMatching &&
+                        <>
+                            <div className='structure-result-element' style={{display: 'inline-block', padding: '3.75px'}}> {(this.props.currentStructureMatchIndex === null) ? 0 : this.props.currentStructureMatchIndex! + 1} of {this.props.numberOfMatches}</div>
+                            { this.props.numberOfMatches > 1 &&
+                                <>
+                                <VSCodeButton className='structure-result-element' appearance='icon' onClick={() => this.props.onNavigateStructureMatches(false)}>
+                                        <i className='codicon codicon-chevron-up' />
+                                </VSCodeButton>
+                                <VSCodeButton className='structure-result-element' appearance='icon' onClick={() => this.props.onNavigateStructureMatches(true)}>
+                                    <i className='codicon codicon-chevron-down' />
+                                </VSCodeButton>
+                                </>
+                            }
+                        </>
+                    }
                 </div>
             </div>
-    );
+        </div>);
     }
 }
