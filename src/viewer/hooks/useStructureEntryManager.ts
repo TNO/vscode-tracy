@@ -75,14 +75,21 @@ export const toggleStructureLink = (structureEntries: StructureEntry[], structur
     return finalStructureEntries;
 };
 
-export const toggleCellSelection = (headerColumnType: StructureHeaderColumnType[], structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean): StructureEntry[] => {
+export const toggleCellSelection = (headerColumnType: StructureHeaderColumnType[], structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, isShiftPressed: boolean): StructureEntry[] => {
     const finalStructureEntries = structureEntries;
-
-    const selectedCell = finalStructureEntries[structureEntryIndex].cellSelection[cellIndex];
+    let selectedCell = finalStructureEntries[structureEntryIndex].cellSelection[cellIndex];
 
     if(headerColumnType[cellIndex] !== StructureHeaderColumnType.Custom) {
-        if(isKeyPressed){
-            finalStructureEntries[structureEntryIndex].cellSelection[cellIndex] = !selectedCell;
+        finalStructureEntries[structureEntryIndex].cellSelection[cellIndex] = !selectedCell;
+        selectedCell = finalStructureEntries[structureEntryIndex].cellSelection[cellIndex];
+
+        if(isShiftPressed){ //toggle the selection of all the other cells
+            finalStructureEntries[structureEntryIndex].cellSelection.forEach((cell, index) => {
+    
+                if(index != cellIndex && headerColumnType[index] !== StructureHeaderColumnType.Custom) {
+                    finalStructureEntries[structureEntryIndex].cellSelection[index] = !selectedCell;
+                }
+            });
         }
     }
 

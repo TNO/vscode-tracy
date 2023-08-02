@@ -12,7 +12,7 @@ interface Props {
     isRemovingStructureEntries: boolean;
     onToggleStructureLink: (structureEntryIndex: number) => void;
     onStructureEntryRemoved: (structureEntryIndex: number) => void;
-    onToggleIsCellSelected: (structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean) => void;
+    onToggleIsCellSelected: (structureEntryIndex: number, cellIndex: number, isCtrlPressed: boolean, isShiftPressed: boolean) => void;
 }
 
 interface State {
@@ -78,7 +78,7 @@ export default class StructureTable extends React.Component<Props, State> {
 
         return (
             <div style={columnStyle} key={index}>
-                <div style={columnInnerStyle} onClick={(event) => this.props.onToggleIsCellSelected(rowIndex, index, event.ctrlKey)}>
+                <div style={columnInnerStyle} onClick={(event) => this.props.onToggleIsCellSelected(rowIndex, index, event.ctrlKey, event.shiftKey)}>
                     {value}
                 </div>
             </div>

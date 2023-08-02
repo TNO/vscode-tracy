@@ -92,11 +92,14 @@ export default class StructureDialog extends React.Component<Props, State> {
         this.setState({isRemovingStructureEntries: !isRemovingStructureEntries});
     }
 
-    toggleIsCellSelected(structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean) {
-        let {structureHeaderColumnsTypes, structureEntries} = this.state;
-        structureEntries = toggleCellSelection(structureHeaderColumnsTypes, structureEntries, structureEntryIndex, cellIndex, isKeyPressed);
+    toggleIsCellSelected(structureEntryIndex: number, cellIndex: number, isCtrlPressed: boolean, isShiftPressed: boolean) {
+        if(isCtrlPressed){
+            let {structureHeaderColumnsTypes, structureEntries} = this.state;
 
-        this.setState({structureEntries: structureEntries});
+            structureEntries = toggleCellSelection(structureHeaderColumnsTypes, structureEntries, structureEntryIndex, cellIndex, isShiftPressed);
+    
+            this.setState({structureEntries: structureEntries});
+        }
     }
 
     toggleStructureLink(structureEntryIndex: number) {
@@ -135,7 +138,7 @@ export default class StructureDialog extends React.Component<Props, State> {
                     headerColumns = {this.props.logHeaderColumns}
                     structureEntries = {structureEntries}
                     isRemovingStructureEntries = {isRemovingStructureEntries}
-                    onToggleIsCellSelected = {(structureEntryIndex, cellIndex, isKeyPressed) => this.toggleIsCellSelected(structureEntryIndex, cellIndex, isKeyPressed)}
+                    onToggleIsCellSelected = {(structureEntryIndex, cellIndex, isCtrlPressed, isShiftPressed) => this.toggleIsCellSelected(structureEntryIndex, cellIndex, isCtrlPressed, isShiftPressed)}
                     onToggleStructureLink = {(structureEntryIndex) => this.toggleStructureLink(structureEntryIndex)}
                     onStructureEntryRemoved = {(structureEntryIndex) => this.removeStructureEntry(structureEntryIndex)}/>
                 <div style={{textAlign: 'right', padding: '5px'}}>
