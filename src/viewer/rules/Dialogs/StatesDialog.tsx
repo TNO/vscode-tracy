@@ -167,7 +167,7 @@ export default class StatesDialog extends React.Component<Props, State> {
                 <div className='dialog' style={DIALOG_STYLE}>
                     <div style={{display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'top'}}>
                         {   !this.state.showEdit &&
-                            <div className='title-big'>Annotation Columns</div>
+                            <div className='title-big'>State-Based Annotation Columns</div>
                         }
                         {   this.state.showEdit &&
                             <div className='title-big'>Edit State-Based Annotation Column</div>
