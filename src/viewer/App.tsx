@@ -73,6 +73,12 @@ export default class App extends React.Component<Props, State> {
         this.vscode.postMessage({type: 'update'});
     }
 
+    componentDidMount(): void {
+        document.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+          });
+    }
+
     componentDidUpdate(prevProps: Props, prevState: State) {
         if (this.state.logFile !== prevState.logFile) {
             this.render();
