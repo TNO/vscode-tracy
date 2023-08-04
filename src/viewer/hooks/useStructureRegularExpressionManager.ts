@@ -135,15 +135,6 @@ export const useJsonObjectToTextRangesMap = (logFileAsString: string): number[][
 }
 
 
-export const useRegularExpressionSearch = (expression: string, text: string): boolean => {
-    const structureQuery = new RegExp(expression, flags);
-    let result = structureQuery.exec(escapeSpecialChars(text));
-    if (result === null)
-        return false;
-    else
-        return true;
-}
-
 export const useStructureRegularExpressionSearch = (expression: string, logFileAsString: string, logEntryRanges: number[][]): number[][] => {
     console.log('Starting Structure Matching');
     const perfStart = performance.now();

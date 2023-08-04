@@ -5,7 +5,8 @@ import LogFile from './LogFile';
 import { LogViewState, StructureMatchId } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
-import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch, useRegularExpressionSearch} from './hooks/useStructureRegularExpressionManager'
+import { useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch } from './hooks/useStructureRegularExpressionManager'
+import { returnSearchIndices, useRegularExpressionSearch } from './hooks/useTextOperationManager'
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
@@ -88,50 +89,6 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    findIndices(rows: string[][], columnIndex: number, searchText: string, reSearchBool: boolean, wholeSearchBool: boolean , caseSearchBool: boolean) {
-        let found: boolean;
-        let loglineText: string;
-        let indices: number[] = [];
-        if (!caseSearchBool)
-            searchText = searchText.toLowerCase();
-        let searchTerms: string[] = [searchText];
-        if (!wholeSearchBool)
-            searchTerms = searchText.split(' ');
-        if (!reSearchBool) {
-            for (let i = 0; i < rows.length; i++) {
-                if (columnIndex === -1)
-                    loglineText = rows[i].join(" ");
-                else
-                    loglineText = rows[i][columnIndex];
-                if (!caseSearchBool)
-                    loglineText = loglineText.toLowerCase(); 
-                found = true;
-                for (var term of searchTerms)
-                    if (loglineText.indexOf(term) == -1) {
-                        found = false;
-                        break;
-                    }
-                if (found)
-                    indices.push(i);
-            }
-        }
-        else {
-            if (columnIndex === -1) {
-                for (let i = 0; i < rows.length; i++) {
-                    if (useRegularExpressionSearch(searchText, rows[i].join(" ")) === true)
-                        indices.push(i);
-                }
-            }
-            else {
-                for (let i = 0; i < rows.length; i++) {
-                    if (useRegularExpressionSearch(searchText, rows[i][columnIndex]) === true)
-                        indices.push(i);
-                }
-            }
-        }
-        return indices;        
-    }
-
     onMessage(event: MessageEvent) {
         let logFile: LogFile;
         let newSelectedRowsTypes: SelectedRowType[];
@@ -145,7 +102,7 @@ export default class App extends React.Component<Props, State> {
 
             if (this.state.searchText !== '') {
                 const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
-                const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
+                const filteredIndices = returnSearchIndices(logFile.rows, col_index, this.state.searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
                 let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
 
                 if (filtered_lines.length === 0) {
