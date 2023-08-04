@@ -256,14 +256,14 @@ export default class App extends React.Component<Props, State> {
     }
 
 
-    handleCheckbox(box: string){
-        if (box === 'coloredTable')
+    switchBooleanState(name: string){
+        if (name === 'coloredTable')
             this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
-        else if (box === 'reSearch')
+        else if (name === 'reSearch')
             this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
-        else if (box === 'wholeSearch')
+        else if (name === 'wholeSearch')
             this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
-        else if (box === 'caseSearch')
+        else if (name === 'caseSearch')
             this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
     }
 
@@ -281,28 +281,18 @@ export default class App extends React.Component<Props, State> {
                         Choose Columns
                     </VSCodeButton>
                     <label>
-                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.handleCheckbox('coloredTable')}/>
+                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.switchBooleanState('coloredTable')}/>
                         Color Table
                     </label>
                 </div>
                 <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
-                    <label>
-                        Regular Expression
-                        <input type="checkbox" checked={this.state.reSearch} onChange={()=>this.handleCheckbox('reSearch')}/>
-                    </label>
-                    <label>
-                        Match Whole
-                        <input type="checkbox" checked={this.state.wholeSearch} onChange={()=>this.handleCheckbox('wholeSearch')}/>
-                    </label>
-                    <label>
-                        Case Sensitive
-                        <input type="checkbox" checked={this.state.caseSearch} onChange={()=>this.handleCheckbox('caseSearch')}/>
-                    </label>
                     <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
                     {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
                     <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.filterOnEnter(e.key)}>
-                    <span slot="end" className="codicon codicon-search"></span>
+                    <span slot="end" style={{backgroundColor: this.state.caseSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-case-sensitive" onClick={() => this.switchBooleanState('caseSearch')}></span>
+                    <span slot="end" style={{backgroundColor: this.state.wholeSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-whole-word" onClick={() => this.switchBooleanState('wholeSearch')}></span>
+                    <span slot="end" style={{backgroundColor: this.state.reSearch ? 'dodgerblue' : '', borderRadius: '20%', cursor:'pointer'}} className="codicon codicon-regex" onClick={() => this.switchBooleanState('reSearch')}></span>
                     </VSCodeTextField>
                     {this.state.showMinimapHeader &&
                     <VSCodeButton appearance='icon' onClick={() => this.setState({showMinimapHeader: false})}>
