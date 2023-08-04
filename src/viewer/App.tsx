@@ -84,12 +84,6 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    filterOnEnter(key_press: any) {
-        if (key_press === 'Enter') {
-            this.vscode.postMessage({type: 'update'});
-        }
-    }
-
     onMessage(event: MessageEvent) {
         let logFile: LogFile;
         let newSelectedRowsTypes: SelectedRowType[];
@@ -118,6 +112,16 @@ export default class App extends React.Component<Props, State> {
             const textRanges = useJsonObjectToTextRangesMap(logFileText);
             newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
             this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
+        }
+    }
+
+    actionPress(action: any) {
+        if (action === 'Clear') {
+            this.setState({searchText: ''});
+            this.vscode.postMessage({type: 'update'});
+        }
+        if (action === 'Enter') {
+            this.vscode.postMessage({type: 'update'});
         }
     }
 
@@ -290,14 +294,18 @@ export default class App extends React.Component<Props, State> {
                     <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
                     {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
-                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.filterOnEnter(e.key)}>                    
+                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" value={this.state.searchText} onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.actionPress(e.key)}>                    
+                    
                     <Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
                     <span slot="end" style={{backgroundColor: this.state.caseSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-case-sensitive" onClick={() => this.switchBooleanState('caseSearch')}></span>
                     </Tooltip><Tooltip title={<h3>Match Whole String</h3>} placement="bottom" arrow>
                     <span slot="end" style={{backgroundColor: this.state.wholeSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-whole-word" onClick={() => this.switchBooleanState('wholeSearch')}></span>
                     </Tooltip>
                     <Tooltip title={<h3>Use Regular Expression</h3>} placement="bottom" arrow>
-                        <span slot="end" style={{backgroundColor: this.state.reSearch ? 'dodgerblue' : '', borderRadius: '20%', cursor:'pointer'}} className="codicon codicon-regex" onClick={() => this.switchBooleanState('reSearch')}></span>
+                        <span slot="end" style={{backgroundColor: this.state.reSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-regex" onClick={() => this.switchBooleanState('reSearch')}></span>
+                    </Tooltip>
+                    <Tooltip title={<h3>Clear</h3>} placement="bottom" arrow>
+                        <span slot="end" style={{cursor:'pointer'}} className="codicon codicon-close" onClick={() => this.actionPress('Clear')}></span>
                     </Tooltip>
                     
                     </VSCodeTextField>
@@ -345,6 +353,9 @@ export default class App extends React.Component<Props, State> {
                         </VSCodeButton>
                         <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
                         <i className="codicon codicon-settings-gear"/>
+                        </VSCodeButton>
+                        <VSCodeButton appearance='icon' onClick={()=>this.switchBooleanState('coloredTable')}>
+                        <i className="codicon codicon-symbol-color"/>
                         </VSCodeButton>
                     </div>
                     {this.state.logViewState &&
