@@ -5,7 +5,7 @@ import LogFile from './LogFile';
 import { LogViewState, StructureMatchId } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
-import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch} from './hooks/useStructureRegularExpressionManager'
+import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch, useRegularExpressionSearch} from './hooks/useStructureRegularExpressionManager'
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
@@ -29,6 +29,9 @@ interface State {
     selectedColumns: boolean[];
     selectedColumnsMini: boolean[];
     coloredTable: boolean;
+    reSearch: boolean;
+    wholeSearch: boolean;
+    caseSearch: boolean;
 
     // Structure related
     logFileAsString: string
@@ -63,7 +66,7 @@ export default class App extends React.Component<Props, State> {
             logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined, coloredTable: false, showMinimapHeader: true, 
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showSelectDialog: false, selectedColumns: [], selectedColumnsMini: [],
-            searchColumn: 'All', searchText: '', 
+            searchColumn: 'All', searchText: '', reSearch: false, wholeSearch: false, caseSearch: false,
             selectedLogRows: [], selectedRowsTypes: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
         };
@@ -85,18 +88,45 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    findIndices(rows: string[][], col_index: number, str: string) {
+    findIndices(rows: string[][], columnIndex: number, searchText: string, reSearchBool: boolean, wholeSearchBool: boolean , caseSearchBool: boolean) {
+        let found: boolean;
+        let loglineText: string;
         let indices: number[] = [];
-        if (col_index === -1) {
+        if (!caseSearchBool)
+            searchText = searchText.toLowerCase();
+        let searchTerms: string[] = [searchText];
+        if (!wholeSearchBool)
+            searchTerms = searchText.split(' ');
+        if (!reSearchBool) {
             for (let i = 0; i < rows.length; i++) {
-                if (rows[i].join(" ").indexOf(str) != -1)
+                if (columnIndex === -1)
+                    loglineText = rows[i].join(" ");
+                else
+                    loglineText = rows[i][columnIndex];
+                if (!caseSearchBool)
+                    loglineText = loglineText.toLowerCase(); 
+                found = true;
+                for (var term of searchTerms)
+                    if (loglineText.indexOf(term) == -1) {
+                        found = false;
+                        break;
+                    }
+                if (found)
                     indices.push(i);
             }
         }
         else {
-            for (let i = 0; i < rows.length; i++) {
-                if (rows[i][col_index].indexOf(str) != -1)
-                    indices.push(i);
+            if (columnIndex === -1) {
+                for (let i = 0; i < rows.length; i++) {
+                    if (useRegularExpressionSearch(searchText, rows[i].join(" ")) === true)
+                        indices.push(i);
+                }
+            }
+            else {
+                for (let i = 0; i < rows.length; i++) {
+                    if (useRegularExpressionSearch(searchText, rows[i][columnIndex]) === true)
+                        indices.push(i);
+                }
             }
         }
         return indices;        
@@ -115,7 +145,7 @@ export default class App extends React.Component<Props, State> {
 
             if (this.state.searchText !== '') {
                 const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
-                const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText);
+                const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
                 let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
 
                 if (filtered_lines.length === 0) {
@@ -268,12 +298,16 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    handleTableCheckbox(){
-        if (this.state.coloredTable) {
-            this.setState({coloredTable:false});
-        } else {
-            this.setState({coloredTable:true});
-        }
+
+    handleCheckbox(box: string){
+        if (box === 'coloredTable')
+            this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
+        else if (box === 'reSearch')
+            this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
+        else if (box === 'wholeSearch')
+            this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
+        else if (box === 'caseSearch')
+            this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
     }
 
     render() {
@@ -290,11 +324,23 @@ export default class App extends React.Component<Props, State> {
                         Choose Columns
                     </VSCodeButton>
                     <label>
-                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.handleTableCheckbox()}/>
+                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.handleCheckbox('coloredTable')}/>
                         Color Table
                     </label>
                 </div>
                 <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
+                    <label>
+                        Regular Expression
+                        <input type="checkbox" checked={this.state.reSearch} onChange={()=>this.handleCheckbox('reSearch')}/>
+                    </label>
+                    <label>
+                        Match Whole
+                        <input type="checkbox" checked={this.state.wholeSearch} onChange={()=>this.handleCheckbox('wholeSearch')}/>
+                    </label>
+                    <label>
+                        Case Sensitive
+                        <input type="checkbox" checked={this.state.caseSearch} onChange={()=>this.handleCheckbox('caseSearch')}/>
+                    </label>
                     <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
                     {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
