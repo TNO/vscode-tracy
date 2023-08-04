@@ -1,4 +1,5 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
+import Tooltip from '@mui/material/Tooltip'
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import LogFile from './LogFile';
@@ -289,10 +290,16 @@ export default class App extends React.Component<Props, State> {
                     <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
                     {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
-                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.filterOnEnter(e.key)}>
+                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.filterOnEnter(e.key)}>                    
+                    <Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
                     <span slot="end" style={{backgroundColor: this.state.caseSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-case-sensitive" onClick={() => this.switchBooleanState('caseSearch')}></span>
+                    </Tooltip><Tooltip title={<h3>Match Whole String</h3>} placement="bottom" arrow>
                     <span slot="end" style={{backgroundColor: this.state.wholeSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-whole-word" onClick={() => this.switchBooleanState('wholeSearch')}></span>
-                    <span slot="end" style={{backgroundColor: this.state.reSearch ? 'dodgerblue' : '', borderRadius: '20%', cursor:'pointer'}} className="codicon codicon-regex" onClick={() => this.switchBooleanState('reSearch')}></span>
+                    </Tooltip>
+                    <Tooltip title={<h3>Use Regular Expression</h3>} placement="bottom" arrow>
+                        <span slot="end" style={{backgroundColor: this.state.reSearch ? 'dodgerblue' : '', borderRadius: '20%', cursor:'pointer'}} className="codicon codicon-regex" onClick={() => this.switchBooleanState('reSearch')}></span>
+                    </Tooltip>
+                    
                     </VSCodeTextField>
                     {this.state.showMinimapHeader &&
                     <VSCodeButton appearance='icon' onClick={() => this.setState({showMinimapHeader: false})}>
