@@ -6,11 +6,11 @@ export const returnSearchIndices = (rows: string[][], columnIndex: number, searc
     let indices: number[] = [];
     if (!caseSearchBool && !reSearchBool)
         searchText = searchText.toLowerCase();
-    if (!wholeSearchBool)
-        searchTerms = searchText.split(' ');
+    if ((searchText.charAt(0) === "\"") && (searchText.slice(-1) === "\""))
+        searchTerms = [searchText.slice(1,-1)];
     else
-        searchTerms = [searchText];
-    if (!reSearchBool) {
+        searchTerms = searchText.split(' ');
+    if (!reSearchBool && !wholeSearchBool) {
         if (columnIndex === -1) {
             if (!caseSearchBool) {
                 for (let i = 0; i < rows.length; i++) {
@@ -79,6 +79,9 @@ export const returnSearchIndices = (rows: string[][], columnIndex: number, searc
             flags = 'gsi';
         else
             flags = 'gs';
+        if (wholeSearchBool)
+            for (var i = 0; i < searchTerms.length; i++)
+                searchTerms[i] = '\\b' + searchTerms[i] + '\\b'
         if (columnIndex === -1) {
             for (let i = 0; i < rows.length; i++) {
                 loglineText = rows[i].join(" ")

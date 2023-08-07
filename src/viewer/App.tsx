@@ -27,7 +27,6 @@ interface State {
     showMinimapHeader: boolean;
     showSelectDialog: boolean;
     searchColumn: string;
-    searchText: string;
     selectedColumns: boolean[];
     selectedColumnsMini: boolean[];
     coloredTable: boolean;
@@ -57,6 +56,7 @@ const COLUMN_2_HEADER_STYLE = {
 }
 
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
+let searchText: string = '';
 
 export default class App extends React.Component<Props, State> {
     // @ts-ignore
@@ -68,7 +68,7 @@ export default class App extends React.Component<Props, State> {
             logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined, coloredTable: false, showMinimapHeader: true, 
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showSelectDialog: false, selectedColumns: [], selectedColumnsMini: [],
-            searchColumn: 'All', searchText: '', reSearch: false, wholeSearch: false, caseSearch: false,
+            searchColumn: 'All', reSearch: false, wholeSearch: false, caseSearch: false,
             selectedLogRows: [], selectedRowsTypes: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
         };
@@ -95,9 +95,9 @@ export default class App extends React.Component<Props, State> {
             const logFileText = JSON.stringify(lines, null, 2);
             logFile = LogFile.create(lines, rules);
 
-            if (this.state.searchText !== '') {
+            if (searchText !== '') {
                 const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
-                const filteredIndices = returnSearchIndices(logFile.rows, col_index, this.state.searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
+                const filteredIndices = returnSearchIndices(logFile.rows, col_index, searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
                 let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
 
                 if (filtered_lines.length === 0) {
@@ -117,10 +117,10 @@ export default class App extends React.Component<Props, State> {
 
     actionPress(action: any) {
         if (action === 'Clear') {
-            this.setState({searchText: ''});
+            searchText = '';
             this.vscode.postMessage({type: 'update'});
         }
-        if (action === 'Enter') {
+        else if (action === 'Enter') {
             this.vscode.postMessage({type: 'update'});
         }
     }
@@ -273,6 +273,7 @@ export default class App extends React.Component<Props, State> {
     }
 
     render() {
+        var txt = '';
         const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         const minimapHeight = this.state.showMinimapHeader ? '12%' : '5%' ;
 
@@ -294,11 +295,11 @@ export default class App extends React.Component<Props, State> {
                     <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
                     {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
-                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" value={this.state.searchText} onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.actionPress(e.key)}>                    
+                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" value={searchText} onInput={(e) => searchText = e.target.value} onKeyUp={(e) => this.actionPress(e.key)}>                    
                     
                     <Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
                     <span slot="end" style={{backgroundColor: this.state.caseSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-case-sensitive" onClick={() => this.switchBooleanState('caseSearch')}></span>
-                    </Tooltip><Tooltip title={<h3>Match Whole String</h3>} placement="bottom" arrow>
+                    </Tooltip><Tooltip title={<h3>Match Whole Word</h3>} placement="bottom" arrow>
                     <span slot="end" style={{backgroundColor: this.state.wholeSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-whole-word" onClick={() => this.switchBooleanState('wholeSearch')}></span>
                     </Tooltip>
                     <Tooltip title={<h3>Use Regular Expression</h3>} placement="bottom" arrow>
