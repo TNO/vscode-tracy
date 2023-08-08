@@ -5,6 +5,7 @@ import { Header, StructureEntry } from '../types';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, STRUCTURE_WIDTH, STRUCTURE_LINK_HEIGHT, StructureLinkDistance} from '../constants';
 import { getStructureTableColumnStyle, getStructureTableHeaderStyle, getHeaderColumnStyle, getHeaderColumnInnerStyle, 
          getStructureTableCellSelectionStyle, getStructureTableEntryIconStyle, getStructureTableRowStyle, getStructureTableLinkStyle } from '../hooks/useStyleManager';
+import isEqual from 'lodash/isEqual';         
 
 interface Props {
     headerColumns: Header[];
@@ -25,10 +26,16 @@ export default class StructureTable extends React.Component<Props, State> {
         this.state = {columnWidth: LOG_COLUMN_WIDTH_LOOKUP};
     }
 
-    componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
-        if(prevState.columnWidth !== this.state.columnWidth) {
-            this.render();
+    shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
+        const areStructureEntriesUpdating = !(isEqual(this.props.structureEntries, nextProps.structureEntries));
+        const isRemovingStructureEntriesUpdating = !(isEqual(this.props.isRemovingStructureEntries, nextProps.isRemovingStructureEntries));
+        const isColumnWidthUpdating = !(isEqual(this.state.columnWidth, nextState.columnWidth));
+
+        if(areStructureEntriesUpdating || isRemovingStructureEntriesUpdating || isColumnWidthUpdating){
+            return true;
         }
+
+        return false;
     }
 
     setColumnWidth(name: string, width: number) {

@@ -7,6 +7,8 @@ import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useStructureQueryConstructor } from '../hooks/useStructureRegularExpressionManager';
 import { constructStructureEntriesArray, appendNewStructureEntries, removeStructureEntryFromList, toggleCellSelection, toggleStructureLink, removeLastStructureLink } from '../hooks/useStructureEntryManager'; 
 import { StructureDialogBackdropStyle, StructureDialogDialogStyle } from '../hooks/useStyleManager';
+import isEqual from 'lodash/isEqual';
+import cloneDeep from 'lodash/cloneDeep';
 
 
 interface Props {
@@ -48,8 +50,21 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
-        if((this.props !== nextProps) 
-            || (this.state !== nextState)) {
+        const arelogHeaderColumnsUpdating = !(isEqual(this.props.logHeaderColumns, nextProps.logHeaderColumns));
+        const arelogHeaderColumnTypesUpdating = !(isEqual(this.props.logHeaderColumnsTypes, nextProps.logHeaderColumnsTypes));
+        const arelogSelectedRowsUpdating = !(isEqual(this.props.logSelectedRows, nextProps.logSelectedRows));
+        const isCurrentMatchIndexUpdating = !(isEqual(this.props.currentStructureMatchIndex, nextProps.currentStructureMatchIndex));
+        const isNumberOfMatchesUpdating = !(isEqual(this.props.numberOfMatches, nextProps.numberOfMatches));
+
+        const areHeaderColumnTypesUpdating = !(isEqual(this.state.structureHeaderColumnsTypes, nextState.structureHeaderColumnsTypes));
+        const areStateEntriesUpdating = !(isEqual(this.state.structureEntries, nextState.structureEntries));
+        const isRemovingStructureEntriesUpdating = !(isEqual(this.state.isRemovingStructureEntries, nextState.isRemovingStructureEntries));
+        const isStructureMatchingUpdating = !(isEqual(this.state.isStructureMatching, nextState.isStructureMatching));    
+
+        if(arelogHeaderColumnsUpdating || arelogHeaderColumnTypesUpdating ||  arelogSelectedRowsUpdating ||
+           isCurrentMatchIndexUpdating || isNumberOfMatchesUpdating || areHeaderColumnTypesUpdating ||
+           areStateEntriesUpdating || isRemovingStructureEntriesUpdating || isStructureMatchingUpdating){
+
             return true;
         }
 
@@ -64,11 +79,12 @@ export default class StructureDialog extends React.Component<Props, State> {
 
     updateStructure(){
         const {structureHeaderColumnsTypes, structureEntries} = this.state;
-        const newSelectedRows = this.props.logSelectedRows.filter( entry => structureEntries.map( value => value.row !== entry));
+        const structureEntriesCopy = cloneDeep(structureEntries);
+        const newSelectedRows = this.props.logSelectedRows.filter( entry => !structureEntriesCopy.some( value => isEqual(value.row,entry)));
 
         if(newSelectedRows.length !== 0) {
             const newStructureEntries = constructStructureEntriesArray(structureHeaderColumnsTypes, newSelectedRows);
-            const finalStructureEntries = appendNewStructureEntries(structureEntries, newStructureEntries)
+            const finalStructureEntries = appendNewStructureEntries(structureEntriesCopy, newStructureEntries)
             this.setState({structureEntries: finalStructureEntries, isStructureMatching: false});
         }
         
@@ -95,8 +111,9 @@ export default class StructureDialog extends React.Component<Props, State> {
     toggleIsCellSelected(structureEntryIndex: number, cellIndex: number, isCtrlPressed: boolean, isShiftPressed: boolean) {
         if(isCtrlPressed){
             let {structureHeaderColumnsTypes, structureEntries} = this.state;
+            const structureEntriesCopy = cloneDeep(structureEntries);
 
-            structureEntries = toggleCellSelection(structureHeaderColumnsTypes, structureEntries, structureEntryIndex, cellIndex, isShiftPressed);
+            structureEntries = toggleCellSelection(structureHeaderColumnsTypes, structureEntriesCopy, structureEntryIndex, cellIndex, isShiftPressed);
     
             this.setState({structureEntries: structureEntries});
         }
@@ -104,12 +121,13 @@ export default class StructureDialog extends React.Component<Props, State> {
 
     toggleStructureLink(structureEntryIndex: number) {
         let {structureEntries} = this.state;
-        structureEntries = toggleStructureLink(structureEntries, structureEntryIndex);
+        const structureEntriesCopy = cloneDeep(structureEntries);
+        structureEntries = toggleStructureLink(structureEntriesCopy, structureEntryIndex);
 
         this.setState({structureEntries: structureEntries});
     }
 
-    MatchStructure(){
+    matchStructure(){
         const structureRegExp = useStructureQueryConstructor(
             this.props.logHeaderColumns,
             this.state.structureHeaderColumnsTypes,
@@ -122,6 +140,8 @@ export default class StructureDialog extends React.Component<Props, State> {
 
     render() {
         const {structureEntries, isRemovingStructureEntries, isStructureMatching} = this.state;
+        const structureEntriesCopy = cloneDeep(structureEntries);
+        
         return (
             <div style={StructureDialogBackdropStyle}>
                 <div className = 'dialog'style={StructureDialogDialogStyle}>
@@ -136,7 +156,7 @@ export default class StructureDialog extends React.Component<Props, State> {
                 </div>
                 <StructureTable
                     headerColumns = {this.props.logHeaderColumns}
-                    structureEntries = {structureEntries}
+                    structureEntries = {structureEntriesCopy}
                     isRemovingStructureEntries = {isRemovingStructureEntries}
                     onToggleIsCellSelected = {(structureEntryIndex, cellIndex, isCtrlPressed, isShiftPressed) => this.toggleIsCellSelected(structureEntryIndex, cellIndex, isCtrlPressed, isShiftPressed)}
                     onToggleStructureLink = {(structureEntryIndex) => this.toggleStructureLink(structureEntryIndex)}
@@ -145,7 +165,7 @@ export default class StructureDialog extends React.Component<Props, State> {
                     <VSCodeButton className='structure-result-element' onClick={() => {this.toggleIsRemovingStructureEntries();}}>
                         {isRemovingStructureEntries ? 'Done' : 'Remove rows'}
                     </VSCodeButton>
-                    <VSCodeButton className='structure-result-element' onClick={() => {this.MatchStructure();}} disabled={isRemovingStructureEntries}>
+                    <VSCodeButton className='structure-result-element' onClick={() => {this.matchStructure();}} disabled={isRemovingStructureEntries}>
                         Search for Structure
                     </VSCodeButton>
                     { isStructureMatching &&
