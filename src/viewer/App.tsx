@@ -96,6 +96,7 @@ export default class App extends React.Component<Props, State> {
             logFile = LogFile.create(lines, rules);
 
             if (searchText !== '') {
+                const perfStart = performance.now();
                 const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
                 const filteredIndices = returnSearchIndices(logFile.rows, col_index, searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
                 let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
@@ -107,10 +108,17 @@ export default class App extends React.Component<Props, State> {
                 }
 
                 logFile = LogFile.create(filtered_lines, rules);
+                const perfEnd = performance.now();
+                console.log(`Execution time (Search): ${perfEnd - perfStart} ms`);
+                
             }
 
+            const perfStart = performance.now();    
             const textRanges = useJsonObjectToTextRangesMap(logFileText);
             newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
+            const perfEnd = performance.now();
+            console.log(`Execution time (After Search()): ${perfEnd - perfStart} ms`);
+            
             this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
         }
     }
