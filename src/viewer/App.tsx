@@ -2,8 +2,8 @@ import React, { ChangeEvent } from 'react';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import LogFile from './LogFile';
-import { LogViewState, StructureMatchId } from './types';
-import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
+import { LogViewState, StructureMatchId, RowProperty } from './types';
+import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, RowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch} from './hooks/useStructureRegularExpressionManager'
 import StructureDialog from './structures/StructureDialog';
@@ -12,7 +12,7 @@ import FlagsDialog from './rules/Dialogs/FlagsDialog';
 import Rule from './rules/Rule';
 import MinimapHeader from './minimap/MinimapHeader';
 import SelectColDialog from './log/SelectColDialog';
-
+import { constructNewRowProperty } from './hooks/useRowProperty';
 interface Props {
 }
 interface State {
@@ -34,12 +34,16 @@ interface State {
     logFileAsString: string
     logEntryRanges: number[][];
     selectedLogRows: string[][];
-    selectedRowsTypes: SelectedRowType[];
+    //selectedRowsTypes: RowType[];
+    rowProperties: RowProperty[];
     lastSelectedRow: number | undefined;
     structureMatches: number[][];
     structureMatchesLogRows: number[];
     currentStructureMatch: number[];
     currentStructureMatchIndex: StructureMatchId;
+
+    //Collapsible Table
+    collapsibleRows: { [key: number]: number };
 }
 
 const COLUMN_0_HEADER_STYLE = {
@@ -64,8 +68,10 @@ export default class App extends React.Component<Props, State> {
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showSelectDialog: false, selectedColumns: [], selectedColumnsMini: [],
             searchColumn: 'All', searchText: '', 
-            selectedLogRows: [], selectedRowsTypes: [], logEntryRanges: [],
+            selectedLogRows: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
+            rowProperties: [],
+            collapsibleRows: { 1: 7, 8: 10 },
         };
 
         this.onMessage = this.onMessage.bind(this);
@@ -104,7 +110,7 @@ export default class App extends React.Component<Props, State> {
 
     onMessage(event: MessageEvent) {
         let logFile: LogFile;
-        let newSelectedRowsTypes: SelectedRowType[];
+        let newRowsProps: RowProperty[];
         const message = event.data;
         
         if (message.type === 'update') {
@@ -128,8 +134,8 @@ export default class App extends React.Component<Props, State> {
             }
 
             const textRanges = useJsonObjectToTextRangesMap(logFileText);
-            newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
-            this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
+            newRowsProps = logFile.rows.map(() => constructNewRowProperty(true, RowType.None));
+            this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, rowProperties: newRowsProps});
         }
     }
 
@@ -153,9 +159,9 @@ export default class App extends React.Component<Props, State> {
             logHeaderColumnTypes = [];
             this.handleStructureUpdate(isClosing);
         }else {
-            const {logFile, selectedRowsTypes, rules, showStructureDialog} = this.state;
+            const {logFile, rowProperties, rules, showStructureDialog} = this.state;
 
-            const selectedLogRows = logFile.rows.filter((v, i) => selectedRowsTypes[i] === SelectedRowType.UserSelect);
+            const selectedLogRows = logFile.rows.filter((v, i) => rowProperties[i].rowType === RowType.UserSelect);
             
             if(selectedLogRows.length === 0) {
                 return;
@@ -186,9 +192,15 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
+    handleRowCollapse(rowIndex: number, isRendered: boolean){
+        const newRowProps = this.state.rowProperties;
+        newRowProps[rowIndex].isRendered = isRendered;
+        this.setState({rowProperties: newRowProps});
+    }
+
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
         const {structureMatchesLogRows, lastSelectedRow} = this.state;
-        const newSelectedRows = this.state.selectedRowsTypes;
+        const newRowProps = this.state.rowProperties;
 
         if(!structureMatchesLogRows.includes(rowIndex)) {
             if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
@@ -197,37 +209,37 @@ export default class App extends React.Component<Props, State> {
                 if(lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
     
                     for(let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
-                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        newRowProps[i].rowType = (newRowProps[i].rowType === RowType.None) ? RowType.UserSelect : RowType.None;
                     }
     
                 }
                 // Shift click lower in the event log
                 else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
                     for(let i = rowIndex; i < lastSelectedRow + 1; i++){
-                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        newRowProps[i].rowType = (newRowProps[i].rowType === RowType.None) ? RowType.UserSelect : RowType.None;
                     }
                 }
             }else {
-                newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                newRowProps[rowIndex].rowType = (newRowProps[rowIndex].rowType === RowType.None) ? RowType.UserSelect : RowType.None;
             }
     
-            this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
+            this.setState({rowProperties: newRowProps, lastSelectedRow: rowIndex});
         }        
     }
 
-    clearSelectedRowsTypes(): SelectedRowType[] {
-        const clearedSelectedRows = this.state.selectedRowsTypes.map(() => SelectedRowType.None);
+    clearSelectedRowsTypes(): RowProperty[] {
+        const clearedSelectedRows = this.state.rowProperties.map(() =>constructNewRowProperty(true, RowType.None));
         return clearedSelectedRows;
     }
 
     handleStructureUpdate(isClosing: boolean) {
         const clearedSelectedRows = this.clearSelectedRowsTypes();
 
-        this.setState({showStructureDialog:!isClosing ,selectedRowsTypes: clearedSelectedRows, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: []});
+        this.setState({showStructureDialog:!isClosing , rowProperties: clearedSelectedRows, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: []});
     }
 
     handleStructureMatching(expression:string) {
-        const selectedRowsTypes = this.clearSelectedRowsTypes();
+        const rowProperties = this.clearSelectedRowsTypes();
         const {logFileAsString, logEntryRanges} = this.state;
         let {currentStructureMatch, currentStructureMatchIndex} = this.state;
 
@@ -246,7 +258,7 @@ export default class App extends React.Component<Props, State> {
             currentStructureMatch = [];
         }
 
-        this.setState({selectedRowsTypes, structureMatches, structureMatchesLogRows, currentStructureMatch, currentStructureMatchIndex});
+        this.setState({rowProperties, structureMatches, structureMatchesLogRows, currentStructureMatch, currentStructureMatchIndex});
     }
 
     handleNavigateStructureMatches(isGoingForward: boolean) {
@@ -328,11 +340,13 @@ export default class App extends React.Component<Props, State> {
                         onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
                         forwardRef={this.child}
                         coloredTable={this.state.coloredTable}
-                        selectedRows={this.state.selectedRowsTypes}
+                        rowProperties={this.state.rowProperties}
                         structureMatches={this.state.structureMatches}
                         structureMatchesLogRows={this.state.structureMatchesLogRows}
                         currentStructureMatch = {this.state.currentStructureMatch}
                         onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
+                        onRowPropsChanged={(index, isRendered) => this.handleRowCollapse(index, isRendered)}
+                        collapsibleRows={this.state.collapsibleRows}
                     />
                 </div>                    
                 <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth, boxSizing: 'border-box'}}>
@@ -353,6 +367,7 @@ export default class App extends React.Component<Props, State> {
                     logViewState={this.state.logViewState}
                     onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
                     forwardRef={this.child}
+                    rowProperties={this.state.rowProperties}
                     />
                     }
                 </div>

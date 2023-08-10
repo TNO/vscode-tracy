@@ -1,26 +1,30 @@
 import React from 'react';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, 
-         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE,SelectedRowType } from '../constants';
+         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, RGB_Annotation1 } from '../constants';
 import { getHeaderColumnInnerStyle, getHeaderColumnStyle, getLogViewRowSelectionStyle, getLogViewStructureMatchStyle } from '../hooks/useStyleManager';
-import { LogViewState, StructureMatchId } from '../types';
+import { LogViewState, RowProperty, StructureMatchId } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
+import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 
 interface Props {
     logFile: LogFile;
     onLogViewStateChanged: (value: LogViewState) => void;
     onSelectedRowsChanged: (index: number, event: React.MouseEvent) => void;
+    onRowPropsChanged: (index: number, isRendered: boolean) => void;
     forwardRef: React.RefObject<HTMLDivElement>;
     coloredTable: boolean;
-    selectedRows: SelectedRowType[];
+    rowProperties: RowProperty[];
     currentStructureMatch: number[];
     structureMatches: number[][];
     structureMatchesLogRows: number[];
+    collapsibleRows: { [key: number]: number };
 }
 interface State {
     state: LogViewState | undefined;
     columnWidth: { [id: string]: number };
     logFile: LogFile;
+    collapsed: { [key: number]: boolean };
 }
 
 const HEADER_STYLE: React.CSSProperties = {
@@ -37,7 +41,8 @@ export default class LogView extends React.Component<Props, State> {
         super(props);
         this.viewport = this.props.forwardRef;
         this.updateState = this.updateState.bind(this);
-        this.state = {state: undefined, columnWidth: LOG_COLUMN_WIDTH_LOOKUP, logFile: this.props.logFile};
+        this.state = {state: undefined, columnWidth: LOG_COLUMN_WIDTH_LOOKUP, logFile: this.props.logFile, 
+            collapsed: [],};
     }
 
     componentDidMount(): void {
@@ -59,7 +64,7 @@ export default class LogView extends React.Component<Props, State> {
 
     renderColumn(value: string, columnIndex: number, isHeader: boolean, width: number, colorMap: string) {
         const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
-        const widthNew = columnIndex !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const widthNew = width + BORDER_SIZE; //increase width with 1px, because the border is 1px
         let color = 'transparent';
         let fontColor = ''
 
@@ -90,43 +95,148 @@ export default class LogView extends React.Component<Props, State> {
         // This method only renders the rows that are visible
         if (!this.state.state) return;
         const result: any = [];
-        const {logFile, selectedRows, structureMatches,currentStructureMatch, structureMatchesLogRows} = this.props;
+        const {logFile, rowProperties, structureMatches,currentStructureMatch, structureMatchesLogRows} = this.props;
         let first_render = this.state.state.startFloor;
         let last_render = this.state.state.endCeil;
-
-        if (last_render > logFile.rows.length){
+        let visibleRows = logFile.rows.filter((v, i) => rowProperties[i].isRendered);
+        if (last_render > visibleRows.length){
             if (!this.viewport.current) return;
             const height = this.viewport.current.clientHeight;
             const maxVisibleItems = height / LOG_ROW_HEIGHT;
-            last_render = logFile.rows.length - 1;
+            last_render = visibleRows.length - 1;
             first_render = Math.max(0, Math.ceil(last_render - maxVisibleItems) - 1);
         }
 
         // Hide LogFile if search did not return any rows
-        if ((logFile.rows.length === 1) && (logFile.rows[0][0] === '')) {
+        if ((visibleRows.length === 1) && (visibleRows[0][0] === '')) {
             first_render = 0;
             last_render = -1;
         }
 
-        for (let r = first_render; r <= last_render; r++) {
-            let rowStyle;
+        let counter = first_render;
+        for (let r = first_render; counter <= last_render; r++){
+            if (rowProperties[r].isRendered){
+                let rowStyle;
 
-            if(structureMatchesLogRows.includes(r)){
-                rowStyle = getLogViewStructureMatchStyle(currentStructureMatch, structureMatches, r);
-            }else{
-                rowStyle = getLogViewRowSelectionStyle(selectedRows, r);
+                if(structureMatchesLogRows.includes(r)){
+                    rowStyle = getLogViewStructureMatchStyle(currentStructureMatch, structureMatches, r);
+                }else{
+                    rowStyle = getLogViewRowSelectionStyle(rowProperties, r, counter);
+                }
+
+                result.push(
+                    <div key={r} style={rowStyle} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
+                        {logFile.headers.map((h, c) => 
+                        logFile.selectedColumns[c]== true &&
+                            this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name), logFile.columnsColors[c][r]))
+                        }
+                    </div>
+                );
+                counter++;
             }
-
-            result.push(
-                <div key={r} style={rowStyle} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
-                    {logFile.headers.map((h, c) => 
-                    logFile.selectedColumns[c]== true &&
-                        this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name), logFile.columnsColors[c][r]))
-                    }
-                </div>
-            );
         }
         return result;
+    }
+
+    renderSegmentAnnotation() {
+        // This method only renders the annotations that are visible
+        if (!this.state.state) return;
+        const result: any = [];
+        const { logFile, collapsibleRows, rowProperties } = this.props;
+        let first_render = this.state.state.startFloor;
+        let last_render = this.state.state.endCeil;
+        let visibleRows = logFile.rows.filter((v, i) => rowProperties[i].isRendered);
+
+        if (last_render > visibleRows.length) {
+          if (!this.viewport.current) return;
+          const height = this.viewport.current.clientHeight;
+          const maxVisibleItems = height / LOG_ROW_HEIGHT;
+          last_render = visibleRows.length - 1;
+          first_render = Math.max(0, Math.ceil(last_render - maxVisibleItems) - 1);
+        }
+    
+        // Hide LogFile if search did not return any rows
+        if (visibleRows.length === 1 && visibleRows[0][0] === "") {
+          first_render = 0;
+          last_render = -1;
+        }
+        const style: React.CSSProperties = {
+          textAlign: "center",
+          alignContent: "center",
+          justifyContent: "center",
+          height: LOG_ROW_HEIGHT,
+          color: RGB_Annotation1
+        };
+        let start = 0;
+        let end = 0;
+        let counter = first_render;
+        for (let r = first_render; counter < last_render; r++){
+            if(rowProperties[r].isRendered){
+                if (collapsibleRows[r]) {
+                    console.log("button "+ r);
+                    start = r;
+                    end = collapsibleRows[r];
+                    result.push(
+                    <VSCodeButton
+                        style={style}
+                        key={r}
+                        appearance="icon"
+                        onClick={() => this.collapseRows(r)}
+                    >
+                        {this.state.collapsed[r] ? (
+                        <i className="codicon codicon-chevron-right" key={r} />
+                        ) : (
+                        <i className="codicon codicon-chevron-down" key={r} />
+                        )}
+                    </VSCodeButton>
+                    );
+                } else {
+                    console.log(r + " " +start);
+                    if ( r > start && !this.state.collapsed[r]) {
+                        result.push(
+                            <div style={{ paddingTop: "3px", ...style }} key={r}>
+                            |r
+                            </div>
+                        );
+                    } else {
+                        <div style={{ paddingTop: "3px", ...style }} key={r}>
+                            .
+                        </div>
+                    }
+                }
+                counter++;
+            }
+        }
+        return result;
+    }
+    
+    collapseRows(index: number) {
+        if (this.state.collapsed[index]) {
+            //expand
+            for (let r = index + 1; r <= this.props.collapsibleRows[index]; r++) {
+                this.props.onRowPropsChanged(r, true);
+            }
+            const end = this.props.collapsibleRows[index];
+            this.setState((prevState) => {
+                const collapsed = { ...prevState.collapsed };
+                collapsed[index] = false;
+                collapsed[end] = false;
+                return { collapsed };
+            });
+        } else {
+            //collapse
+            for (let r = index + 1; r <= this.props.collapsibleRows[index]; r++) {
+                this.props.onRowPropsChanged(r, false);
+            }
+            const end = this.props.collapsibleRows[index];
+            this.setState((prevState) => {
+                const collapsed = { ...prevState.collapsed };
+                collapsed[index] = true;
+                collapsed[end] = true;
+                return { collapsed };
+            });
+        }
+        this.renderSegmentAnnotation();
     }
 
     updateState(currentStructureMatchFirstRow: StructureMatchId = null) {
@@ -199,10 +309,10 @@ export default class LogView extends React.Component<Props, State> {
 
     renderHeaderColumn(value: string, columnIndex: number, isHeader: boolean, width: number) {
         const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
-        const widthNew = columnIndex !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const widthNew = width + BORDER_SIZE; //increase width with 1px, because the border is 1px
         const columnHeaderStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
         const columnHeaderInnerStyle = getHeaderColumnInnerStyle(height, isHeader);
-
+ 
         return (
             <ReactResizeDetector handleWidth key={columnIndex} onResize={(width)=>this.setColumnWidth(value, width!)}>
             <div className="resizable-content" style={columnHeaderStyle} key={columnIndex}>
@@ -217,14 +327,22 @@ export default class LogView extends React.Component<Props, State> {
     render() {
         const {logFile} = this.props;
         const containerHeight = logFile.amountOfRows() * LOG_ROW_HEIGHT;
-        const containerWidth = ((logFile.amountOfColumns() - 1) * BORDER_SIZE) +
+        const containerWidth = (logFile.amountOfColumns() * BORDER_SIZE) +
             logFile.headers.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
         return (
-            <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
-                {this.renderHeader(containerWidth)}
-                <div style={VIEWPORT_STYLE} ref={this.viewport} onScroll={() => this.updateState()}>
-                    <div style={{width: containerWidth, height: containerHeight, position: 'absolute'}}>
-                        {this.renderRows()}
+            <div style={{ flex: 2, display: "flex", flexDirection: "row", overflow: 'hidden' }}>
+                <div className="segment">
+                    <div>
+                        <div style={HEADER_STYLE} className="header-background"></div>
+                    </div>
+                    <div>{this.renderSegmentAnnotation()}</div>
+                </div>
+                <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
+                    {this.renderHeader(containerWidth)}
+                    <div style={VIEWPORT_STYLE} ref={this.viewport} onScroll={() => this.updateState()}>
+                        <div style={{width: containerWidth, height: containerHeight, position: 'absolute'}}>
+                            {this.renderRows()}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -45,7 +45,7 @@ export default class StructureTable extends React.Component<Props, State> {
 
     renderHeaderColumn(value: string, columnIndex: number, width: number) {
         const height = LOG_HEADER_HEIGHT;
-        const widthNew = columnIndex !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const widthNew = width + BORDER_SIZE; //increase width with 1px, because the border is 1px
         const headerColumnStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
         const headerColumnInnerStyle = getHeaderColumnInnerStyle(height, true);
         return (
@@ -72,7 +72,7 @@ export default class StructureTable extends React.Component<Props, State> {
     }
 
     renderColumn(value: string, rowIndex: number, index: number, width: number) {
-        const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const widthNew = width + BORDER_SIZE; //increase width with 1px, because the border is 1px
         const columnStyle = getStructureTableColumnStyle(widthNew, index);
         const columnInnerStyle = getStructureTableCellSelectionStyle(this.props.structureEntries, rowIndex, index);
 
@@ -132,7 +132,7 @@ export default class StructureTable extends React.Component<Props, State> {
         const {headerColumns, structureEntries} = this.props;
         const numberOfRows = structureEntries.length;
         const containerHeight = numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * STRUCTURE_LINK_HEIGHT;
-        const containerWidth = ((headerColumns.length - 1) * BORDER_SIZE) +
+        const containerWidth = (headerColumns.length * BORDER_SIZE) +
         headerColumns.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
         
         return (

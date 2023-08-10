@@ -26,19 +26,19 @@
 }
 
 body {
-    padding: 0px; 
-    width: 100%; 
+    padding: 0px;
+    width: 100%;
     height: 100%;
 }
 
 
 html {
-    height: 100%; 
+    height: 100%;
     width: 100%;
 }
 
 #root {
-    width: 100%; 
+    width: 100%;
     height: 100%;
     margin: 0;
 }
@@ -57,7 +57,12 @@ div.resizable-content {
 }
 
 .structure-result-element {
-    margin-left: 5px; 
-    height: 25px; 
+    margin-left: 5px;
+    height: 25px;
     vertical-align: middle;
+}
+
+.segment {
+    width: 30px;
+    border: lpx;
 }

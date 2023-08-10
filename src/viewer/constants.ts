@@ -31,14 +31,20 @@ export const BACKGROUND_COLOR_MATCHED_ROW_CURRENT = `rgba(${RGB_LIME_GREEN}, 0.5
 export const BORDER_STRUCTURE_MATCH_OTHER = `${STRUCUTURE_MATCH_BORDER_SIZE}px solid rgb(${RGB_OFFICE_GREEN})`;
 
 export const BACKGROUND_COLOR_MATCHED_ROW_OTHER = `rgba(${RGB_OFFICE_GREEN}, 0.5)`;
- 
+
 export const BORDER_SELECTED_ROW_RADIUS = `5px`;
+
+export const RGB_Annotation1 = '255, 153, 51';
+
+export const RGB_Annotation2 = '';
+
+export const RGB_Annotation3 = '';
 
 // TODO: determine column width automatically, not hardcoded
 export const LOG_COLUMN_WIDTH_LOOKUP = {
-    timestamp: 180, 
-    level: 50, 
-    threadID: 80, 
+    timestamp: 180,
+    level: 50,
+    threadID: 80,
     location: 200,
     message: 400,
 };
@@ -59,7 +65,7 @@ export enum StructureHeaderColumnType {
     Custom = "CUSTOM"
 }
 
-export enum SelectedRowType {
+export enum RowType {
     None = "NONE",
     UserSelect = "SELECTED",
     QueryResult = "QUERY_RESULT"
