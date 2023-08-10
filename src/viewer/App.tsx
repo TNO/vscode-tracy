@@ -1,12 +1,13 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
+import LogFile from './LogFile';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
-import LogFile from './LogFile';
 import Tooltip from '@mui/material/Tooltip'
 import { LogViewState, StructureMatchId } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
-import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch} from './hooks/useStructureRegularExpressionManager'
+import { useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch } from './hooks/useStructureRegularExpressionManager'
+import { returnSearchIndices, useRegularExpressionSearch } from './hooks/useTextOperationManager'
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
@@ -26,10 +27,12 @@ interface State {
     showMinimapHeader: boolean;
     showSelectDialog: boolean;
     searchColumn: string;
-    searchText: string;
     selectedColumns: boolean[];
     selectedColumnsMini: boolean[];
     coloredTable: boolean;
+    reSearch: boolean;
+    wholeSearch: boolean;
+    caseSearch: boolean;
 
     // Structure related
     logFileAsString: string
@@ -53,6 +56,7 @@ const COLUMN_2_HEADER_STYLE = {
 }
 
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
+let searchText: string = '';
 
 export default class App extends React.Component<Props, State> {
     // @ts-ignore
@@ -64,7 +68,7 @@ export default class App extends React.Component<Props, State> {
             logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined, coloredTable: false, showMinimapHeader: true, 
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showSelectDialog: false, selectedColumns: [], selectedColumnsMini: [],
-            searchColumn: 'All', searchText: '', 
+            searchColumn: 'All', reSearch: false, wholeSearch: false, caseSearch: false,
             selectedLogRows: [], selectedRowsTypes: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
         };
@@ -86,50 +90,6 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    filterOnEnter(key_press: any) {
-        if (key_press === 'Enter') {
-            const rules = this.state.rules;
-            let lines = JSON.parse(this.state.logFileAsString);
-            let logFile = this.state.logFile;
-            let logFileText = this.state.logFileAsString;
-
-            if (this.state.searchText !== '') {
-                const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
-                const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText);
-                let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
-
-                if (filtered_lines.length === 0) {
-                    filtered_lines = [lines[0]]
-                    for (let k of Object.keys(lines[0]))
-                        filtered_lines[0][k] = ''
-                }
-
-                logFile = LogFile.create(filtered_lines, rules);
-            }
-
-            const textRanges = useJsonObjectToTextRangesMap(logFileText);
-            let newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
-            this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
-        }
-    }
-
-    findIndices(rows: string[][], col_index: number, str: string) {
-        let indices: number[] = [];
-        if (col_index === -1) {
-            for (let i = 0; i < rows.length; i++) {
-                if (rows[i].join(" ").indexOf(str) != -1)
-                    indices.push(i);
-            }
-        }
-        else {
-            for (let i = 0; i < rows.length; i++) {
-                if (rows[i][col_index].indexOf(str) != -1)
-                    indices.push(i);
-            }
-        }
-        return indices;        
-    }
-
     onMessage(event: MessageEvent) {
         const message = event.data;
         if (message.type === 'update') {
@@ -140,6 +100,37 @@ export default class App extends React.Component<Props, State> {
             let logFile = LogFile.create(lines, rules);
             let newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
             this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
+        }
+    }
+
+    filterLog(action: any) {
+        if (action === 'Clear') {
+            searchText = '';
+            this.vscode.postMessage({type: 'update'});
+        }
+        else if (action === 'Enter') {
+                const rules = this.state.rules;
+                let lines = JSON.parse(this.state.logFileAsString);
+                let logFile = this.state.logFile;
+                let logFileText = this.state.logFileAsString;
+
+                if (searchText !== '') {
+                    const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
+                    const filteredIndices = returnSearchIndices(logFile.rows, col_index, searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
+                    let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
+    
+                    if (filtered_lines.length === 0) {
+                        filtered_lines = [lines[0]]
+                        for (let k of Object.keys(lines[0]))
+                            filtered_lines[0][k] = ''
+                    }
+    
+                    logFile = LogFile.create(filtered_lines, rules);
+                }
+    
+                const textRanges = useJsonObjectToTextRangesMap(logFileText);
+                let newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
+                this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
         }
     }
 
@@ -278,15 +269,20 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    handleTableCheckbox(){
-        if (this.state.coloredTable) {
-            this.setState({coloredTable:false});
-        } else {
-            this.setState({coloredTable:true});
-        }
+
+    switchBooleanState(name: string){
+        if (name === 'coloredTable')
+            this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
+        else if (name === 'reSearch')
+            this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
+        else if (name === 'wholeSearch')
+            this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
+        else if (name === 'caseSearch')
+            this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
     }
 
     render() {
+        var txt = '';
         const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         const minimapHeight = this.state.showMinimapHeader ? '12%' : '5%' ;
 
@@ -299,17 +295,29 @@ export default class App extends React.Component<Props, State> {
                         onClick={() => this.setState({showSelectDialog: true})}>
                         Choose Columns
                     </VSCodeButton>
-                    <label>
-                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.handleTableCheckbox()}/>
+                    {/* <label>
+                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.switchBooleanState('coloredTable')}/>
                         Color Table
-                    </label>
+                    </label> */}
                 </div>
                 <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
                     <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
                     {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
-                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.filterOnEnter(e.key)}>
-                    <span slot="end" className="codicon codicon-search"></span>
+                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" value={searchText} onInput={(e) => searchText = e.target.value} onKeyUp={(e) => this.filterLog(e.key)}>                    
+                    
+                    <Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
+                    <span slot="end" style={{backgroundColor: this.state.caseSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-case-sensitive" onClick={() => this.switchBooleanState('caseSearch')}></span>
+                    </Tooltip><Tooltip title={<h3>Match Whole Word</h3>} placement="bottom" arrow>
+                    <span slot="end" style={{backgroundColor: this.state.wholeSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-whole-word" onClick={() => this.switchBooleanState('wholeSearch')}></span>
+                    </Tooltip>
+                    <Tooltip title={<h3>Use Regular Expression</h3>} placement="bottom" arrow>
+                        <span slot="end" style={{backgroundColor: this.state.reSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-regex" onClick={() => this.switchBooleanState('reSearch')}></span>
+                    </Tooltip>
+                    <Tooltip title={<h3>Clear</h3>} placement="bottom" arrow>
+                        <span slot="end" style={{cursor:'pointer'}} className="codicon codicon-close" onClick={() => this.filterLog('Clear')}></span>
+                    </Tooltip>
+                    
                     </VSCodeTextField>
                     {this.state.showMinimapHeader &&
                     <VSCodeButton appearance='icon' onClick={() => this.setState({showMinimapHeader: false})}>
@@ -361,7 +369,10 @@ export default class App extends React.Component<Props, State> {
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
                                 <i className="codicon codicon-settings-gear"/>
                             </VSCodeButton>
-                        </Tooltip>    
+                        </Tooltip>
+                        <VSCodeButton appearance='icon' onClick={()=>this.switchBooleanState('coloredTable')}>
+                        <i className="codicon codicon-symbol-color"/>
+                        </VSCodeButton>
                     </div>
                     {this.state.logViewState &&
                     <MinimapView
