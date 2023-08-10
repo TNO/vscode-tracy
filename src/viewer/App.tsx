@@ -88,7 +88,28 @@ export default class App extends React.Component<Props, State> {
 
     filterOnEnter(key_press: any) {
         if (key_press === 'Enter') {
-            this.vscode.postMessage({type: 'update'});
+            const rules = this.state.rules;
+            let lines = JSON.parse(this.state.logFileAsString);
+            let logFile = this.state.logFile;
+            let logFileText = this.state.logFileAsString;
+
+            if (this.state.searchText !== '') {
+                const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
+                const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText);
+                let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
+
+                if (filtered_lines.length === 0) {
+                    filtered_lines = [lines[0]]
+                    for (let k of Object.keys(lines[0]))
+                        filtered_lines[0][k] = ''
+                }
+
+                logFile = LogFile.create(filtered_lines, rules);
+            }
+
+            const textRanges = useJsonObjectToTextRangesMap(logFileText);
+            let newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
+            this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
         }
     }
 
@@ -110,32 +131,14 @@ export default class App extends React.Component<Props, State> {
     }
 
     onMessage(event: MessageEvent) {
-        let logFile: LogFile;
-        let newSelectedRowsTypes: SelectedRowType[];
         const message = event.data;
-        
         if (message.type === 'update') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
             let lines = JSON.parse(message.text);
             const logFileText = JSON.stringify(lines, null, 2);
-            logFile = LogFile.create(lines, rules);
-
-            if (this.state.searchText !== '') {
-                const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
-                const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText);
-                let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
-
-                if (filtered_lines.length === 0) {
-                    filtered_lines = [lines[0]]
-                    for (let k of Object.keys(lines[0]))
-                        filtered_lines[0][k] = ''
-                }
-
-                logFile = LogFile.create(filtered_lines, rules);
-            }
-
             const textRanges = useJsonObjectToTextRangesMap(logFileText);
-            newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
+            let logFile = LogFile.create(lines, rules);
+            let newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
             this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
         }
     }

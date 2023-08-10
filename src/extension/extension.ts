@@ -63,6 +63,7 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 				updateWebview();
 			} else if (e.type === 'save_rules') {
 				fs.writeFileSync(rulesFile, JSON.stringify(e.rules));
+				updateWebview();
 			}
 		});
 	}
