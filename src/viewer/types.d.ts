@@ -23,4 +23,9 @@ export interface StructureEntry {
     structureLink: StructureLinkDistance | undefined
 }
 
+export interface ContextMenuItem {
+    text: string,
+    callback: () => void
+}
+
 export type StructureMatchId = number | null;

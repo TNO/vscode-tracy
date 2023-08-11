@@ -64,7 +64,8 @@ export const getHeaderColumnInnerStyle = (height: number, isHeader: boolean): Re
         height,
         alignItems: 'center',
         justifyContent: isHeader ? 'center' : 'left',  
-        paddingLeft: '2px'
+        paddingLeft: '2px',
+        userSelect: 'none'
     };
 
     return headerColumnInnerStyle;
@@ -232,3 +233,33 @@ export const getLogViewStructureMatchStyle = (currentStructureMatch: number[], s
     
     return structureMatchRowStyle;
 };
+
+export const getContextMenuStyle = (isRenderedAbove: boolean, dialogHeight: number, xPos: number, yPos: number): React.CSSProperties => {
+    let contextMenuItemStyle: React.CSSProperties;
+
+    const contextMenuStyle: React.CSSProperties = {
+        top: isRenderedAbove ? yPos - dialogHeight : yPos,
+        left: xPos,
+        position: 'fixed',
+        userSelect: 'none'
+        };
+
+    return contextMenuStyle;
+}
+
+
+export const getContextMenuItemStyle = (isSelected: boolean): React.CSSProperties => {
+    let contextMenuItemStyle: React.CSSProperties;
+
+    contextMenuItemStyle = {
+        height: '28px', 
+        lineHeight: '28px',
+        paddingLeft: '5px',
+        paddingRight: '5px',
+        borderRadius: '4px',
+        background: isSelected ? 'var(--vscode-menu-selectionBackground)': '',
+        color: isSelected ? 'var(--vscode-menu-selectionForeground)': ''
+    };
+
+    return contextMenuItemStyle;
+}
