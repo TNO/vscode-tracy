@@ -1,6 +1,7 @@
 import React from "react";
 import { ContextMenuItem } from "../types";
 import { getContextMenuItemStyle, getContextMenuStyle } from "../hooks/useStyleManager";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
     parentDivId: string
@@ -92,12 +93,19 @@ render() {
 
     if (showMenu)
         return (
-            <div className="dialog" style={contextMenuStyle} onMouseLeave={() => this.clearSelectedOptionIndex()}>
-                <div style={{margin: '4px'}}>
-                {this.renderMenuOptions()}
-                </div>
-
+            <div style={contextMenuStyle} onMouseLeave={() => this.clearSelectedOptionIndex()}>
+                <motion.div  
+                className="dialog"
+                style={{ left: xPos, top: yPos}}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}>
+                    <div style={{margin: '4px'}}>
+                    {this.renderMenuOptions()}
+                    </div>
+                </motion.div>
             </div>
+
         );
     else return null;
   }
