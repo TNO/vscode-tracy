@@ -10,5 +10,5 @@ function onRender(id:string, phase: string, actualDuration: number, baseDuration
 }
 const container = document.getElementById('root');
 const root = createRoot(container!);
-root.render(<App/>);
-// root.render(<Profiler id='App' onRender={onRender}><App/></Profiler>);
+// root.render(<App/>);
+root.render(<Profiler id='App' onRender={onRender}><App/></Profiler>);
