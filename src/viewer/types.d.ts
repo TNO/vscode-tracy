@@ -1,5 +1,5 @@
 import { type } from "os"
-import { StructureLinkDistance } from "./constants"
+import { RowType, StructureLinkDistance } from "./constants"
 
 export interface LogViewState {
     height: number,
@@ -21,6 +21,12 @@ export interface StructureEntry {
     row: string[], 
     cellSelection: boolean[],
     structureLink: StructureLinkDistance | undefined
+}
+
+export interface RowProperty {
+    isSearchResult: boolean,
+    isRendered: boolean,
+    rowType: RowType
 }
 
 export type StructureMatchId = number | null;

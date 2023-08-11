@@ -3,11 +3,12 @@ import LogFile from './LogFile';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import Tooltip from '@mui/material/Tooltip'
-import { LogViewState, StructureMatchId } from './types';
-import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
+import { LogViewState, StructureMatchId, RowProperty } from './types';
+import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, RowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import { useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch } from './hooks/useStructureRegularExpressionManager'
 import { returnSearchIndices, useRegularExpressionSearch } from './hooks/useTextOperationManager'
+import { constructNewRowProperty } from './hooks/useRowProperty';
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
@@ -29,12 +30,16 @@ interface State {
     selectedColumns: boolean[];
     selectedColumnsMini: boolean[];
     coloredTable: boolean;
+    reSearch: boolean;
+    wholeSearch: boolean;
+    caseSearch: boolean;
 
     // Structure related
     logFileAsString: string
     logEntryRanges: number[][];
     selectedLogRows: string[][];
-    selectedRowsTypes: SelectedRowType[];
+    // selectedRowsTypes: RowType[];
+    rowProperties: RowProperty[];
     lastSelectedRow: number | undefined;
     structureMatches: number[][];
     structureMatchesLogRows: number[];
@@ -53,9 +58,6 @@ const COLUMN_2_HEADER_STYLE = {
 
 let searchText: string = '';
 let searchColumn: string = 'All';
-let reSearch: boolean = false;
-let wholeSearch: boolean = false;
-let caseSearch: boolean = false;
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
@@ -68,7 +70,8 @@ export default class App extends React.Component<Props, State> {
             logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined, coloredTable: false, showMinimapHeader: true, 
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showSelectDialog: false, selectedColumns: [], selectedColumnsMini: [],
-            selectedLogRows: [], selectedRowsTypes: [], logEntryRanges: [],
+            reSearch: false, wholeSearch: false, caseSearch: false,
+            selectedLogRows: [], rowProperties: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
         };
 
@@ -97,40 +100,39 @@ export default class App extends React.Component<Props, State> {
             const logFileText = JSON.stringify(lines, null, 2);
             const textRanges = useJsonObjectToTextRangesMap(logFileText);
             let logFile = LogFile.create(lines, rules);
-            let newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
-            this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
+            let newRowsProps = logFile.rows.map(() => constructNewRowProperty(true, true, RowType.None));
+            this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, rowProperties: newRowsProps});
         }
     }
 
     filterLog(action: any) {
+        let newRowsProps;
         if (action === 'Clear') {
             searchText = '';
-            this.vscode.postMessage({type: 'update'});
+            newRowsProps = this.state.logFile.rows.map(() => constructNewRowProperty(true, true, RowType.None));
+            this.setState({rowProperties: newRowsProps});
         }
         else if (action === 'Enter') {
-            if (searchText === '')
-                this.vscode.postMessage({type: 'update'});
+            if (searchText === '') {
+                newRowsProps = this.state.logFile.rows.map(() => constructNewRowProperty(true, true, RowType.None));
+                this.setState({rowProperties: newRowsProps});
+            }
             else {
                 const rules = this.state.rules;
                 let lines = JSON.parse(this.state.logFileAsString);
                 let logFile = this.state.logFile;
                 let logFileText = this.state.logFileAsString;
-                console.log(searchColumn)
                 const col_index = this.state.logFile.headers.findIndex(h => h.name === searchColumn)
-                const filteredIndices = returnSearchIndices(logFile.rows, col_index, searchText, reSearch, wholeSearch, caseSearch);
-                let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
-
-                if (filtered_lines.length === 0) {
-                    filtered_lines = [lines[0]]
-                    for (let k of Object.keys(lines[0]))
-                        filtered_lines[0][k] = ''
-                }
-
-                logFile = LogFile.create(filtered_lines, rules);
-    
+                const filteredIndices = returnSearchIndices(logFile.rows, col_index, searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
+                
+                newRowsProps = this.state.logFile.rows.map((row, index) => {
+                    if (filteredIndices.includes(index))
+                        return constructNewRowProperty(true, true, RowType.None);
+                    else
+                        return constructNewRowProperty(false, true, RowType.None);
+                });    
                 const textRanges = useJsonObjectToTextRangesMap(logFileText);
-                let newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
-                this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
+                this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, rowProperties: newRowsProps});
             }
         }
     }
@@ -155,9 +157,9 @@ export default class App extends React.Component<Props, State> {
             logHeaderColumnTypes = [];
             this.handleStructureUpdate(isClosing);
         }else {
-            const {logFile, selectedRowsTypes, rules, showStructureDialog} = this.state;
+            const {logFile, rowProperties, rules, showStructureDialog} = this.state;
 
-            const selectedLogRows = logFile.rows.filter((v, i) => selectedRowsTypes[i] === SelectedRowType.UserSelect);
+            const selectedLogRows = logFile.rows.filter((v, i) => rowProperties[i].rowType === RowType.UserSelect);
             
             if(selectedLogRows.length === 0) {
                 return;
@@ -188,9 +190,15 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
+    handleRowCollapse(rowIndex: number, isRendered: boolean){
+        const newRowProps = this.state.rowProperties;
+        newRowProps[rowIndex].isRendered = isRendered;
+        this.setState({rowProperties: newRowProps});
+    }
+
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
         const {structureMatchesLogRows, lastSelectedRow} = this.state;
-        const newSelectedRows = this.state.selectedRowsTypes;
+        const newRowProps = this.state.rowProperties;
 
         if(!structureMatchesLogRows.includes(rowIndex)) {
             if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
@@ -199,37 +207,37 @@ export default class App extends React.Component<Props, State> {
                 if(lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
     
                     for(let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
-                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        newRowProps[i].rowType = (newRowProps[i].rowType === RowType.None) ? RowType.UserSelect : RowType.None;
                     }
     
                 }
                 // Shift click lower in the event log
                 else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
                     for(let i = rowIndex; i < lastSelectedRow + 1; i++){
-                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        newRowProps[i].rowType = (newRowProps[i].rowType === RowType.None) ? RowType.UserSelect : RowType.None;
                     }
                 }
             }else {
-                newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                newRowProps[rowIndex].rowType = (newRowProps[rowIndex].rowType === RowType.None) ? RowType.UserSelect : RowType.None;
             }
     
-            this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
+            this.setState({rowProperties: newRowProps, lastSelectedRow: rowIndex});
         }        
     }
 
-    clearSelectedRowsTypes(): SelectedRowType[] {
-        const clearedSelectedRows = this.state.selectedRowsTypes.map(() => SelectedRowType.None);
+    clearSelectedRowsTypes(): RowProperty[] {
+        const clearedSelectedRows = this.state.rowProperties.map(() =>constructNewRowProperty(true, true, RowType.None));
         return clearedSelectedRows;
     }
 
     handleStructureUpdate(isClosing: boolean) {
         const clearedSelectedRows = this.clearSelectedRowsTypes();
 
-        this.setState({showStructureDialog:!isClosing ,selectedRowsTypes: clearedSelectedRows, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: []});
+        this.setState({showStructureDialog:!isClosing , rowProperties: clearedSelectedRows, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: []});
     }
 
     handleStructureMatching(expression:string) {
-        const selectedRowsTypes = this.clearSelectedRowsTypes();
+        const rowProperties = this.clearSelectedRowsTypes();
         const {logFileAsString, logEntryRanges} = this.state;
         let {currentStructureMatch, currentStructureMatchIndex} = this.state;
 
@@ -248,7 +256,7 @@ export default class App extends React.Component<Props, State> {
             currentStructureMatch = [];
         }
 
-        this.setState({selectedRowsTypes, structureMatches, structureMatchesLogRows, currentStructureMatch, currentStructureMatchIndex});
+        this.setState({rowProperties, structureMatches, structureMatchesLogRows, currentStructureMatch, currentStructureMatchIndex});
     }
 
     handleNavigateStructureMatches(isGoingForward: boolean) {
@@ -275,11 +283,11 @@ export default class App extends React.Component<Props, State> {
         if (name === 'coloredTable')
             this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
         else if (name === 'reSearch')
-            reSearch = !reSearch;
+            this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
         else if (name === 'wholeSearch')
-            wholeSearch = !wholeSearch;
+            this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
         else if (name === 'caseSearch')
-            caseSearch = !caseSearch;
+            this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
     }
 
     render() {
@@ -308,12 +316,13 @@ export default class App extends React.Component<Props, State> {
                     <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" value={searchText} onInput={(e) => searchText = e.target.value} onKeyUp={(e) => this.filterLog(e.key)}>                    
                     
                     <Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
-                    <span slot="end" style={{backgroundColor: caseSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-case-sensitive" onClick={() => this.switchBooleanState('caseSearch')}></span>
-                    </Tooltip><Tooltip title={<h3>Match Whole Word</h3>} placement="bottom" arrow>
-                    <span slot="end" style={{backgroundColor: wholeSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-whole-word" onClick={() => this.switchBooleanState('wholeSearch')}></span>
+                        <span slot="end" style={{backgroundColor: this.state.caseSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-case-sensitive" onClick={() => this.switchBooleanState('caseSearch')}></span>
+                    </Tooltip>
+                    <Tooltip title={<h3>Match Whole Word</h3>} placement="bottom" arrow>
+                        <span slot="end" style={{backgroundColor: this.state.wholeSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-whole-word" onClick={() => this.switchBooleanState('wholeSearch')}></span>
                     </Tooltip>
                     <Tooltip title={<h3>Use Regular Expression</h3>} placement="bottom" arrow>
-                        <span slot="end" style={{backgroundColor: reSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-regex" onClick={() => this.switchBooleanState('reSearch')}></span>
+                        <span slot="end" style={{backgroundColor: this.state.reSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-regex" onClick={() => this.switchBooleanState('reSearch')}></span>
                     </Tooltip>
                     <Tooltip title={<h3>Clear</h3>} placement="bottom" arrow>
                         <span slot="end" style={{cursor:'pointer'}} className="codicon codicon-close" onClick={() => this.filterLog('Clear')}></span>
@@ -347,7 +356,7 @@ export default class App extends React.Component<Props, State> {
                         onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
                         forwardRef={this.child}
                         coloredTable={this.state.coloredTable}
-                        selectedRows={this.state.selectedRowsTypes}
+                        rowProperties={this.state.rowProperties}
                         structureMatches={this.state.structureMatches}
                         structureMatchesLogRows={this.state.structureMatchesLogRows}
                         currentStructureMatch = {this.state.currentStructureMatch}

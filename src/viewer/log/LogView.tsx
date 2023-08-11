@@ -1,8 +1,8 @@
 import React from 'react';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, 
-         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE,SelectedRowType } from '../constants';
+         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, RowType } from '../constants';
 import { getHeaderColumnInnerStyle, getHeaderColumnStyle, getLogViewRowSelectionStyle, getLogViewStructureMatchStyle } from '../hooks/useStyleManager';
-import { LogViewState, StructureMatchId } from '../types';
+import { LogViewState, RowProperty, StructureMatchId } from '../types';
 import LogFile from '../LogFile';
 import ReactResizeDetector from 'react-resize-detector';
 
@@ -12,7 +12,7 @@ interface Props {
     onSelectedRowsChanged: (index: number, event: React.MouseEvent) => void;
     forwardRef: React.RefObject<HTMLDivElement>;
     coloredTable: boolean;
-    selectedRows: SelectedRowType[];
+    rowProperties: RowProperty[];
     currentStructureMatch: number[];
     structureMatches: number[][];
     structureMatchesLogRows: number[];
@@ -90,10 +90,10 @@ export default class LogView extends React.Component<Props, State> {
         // This method only renders the rows that are visible
         if (!this.state.state) return;
         const result: any = [];
-        const {logFile, selectedRows, structureMatches,currentStructureMatch, structureMatchesLogRows} = this.props;
+        const {logFile, rowProperties, structureMatches,currentStructureMatch, structureMatchesLogRows} = this.props;
         let first_render = this.state.state.startFloor;
         let last_render = this.state.state.endCeil;
-
+        let searchRows = logFile.rows.filter((v, i) => rowProperties[i].isSearchResult);
         if (last_render > logFile.rows.length){
             if (!this.viewport.current) return;
             const height = this.viewport.current.clientHeight;
@@ -109,22 +109,24 @@ export default class LogView extends React.Component<Props, State> {
         }
 
         for (let r = first_render; r <= last_render; r++) {
-            let rowStyle;
+            if (rowProperties[r].isSearchResult) {
+                let rowStyle;
 
-            if(structureMatchesLogRows.includes(r)){
-                rowStyle = getLogViewStructureMatchStyle(currentStructureMatch, structureMatches, r);
-            }else{
-                rowStyle = getLogViewRowSelectionStyle(selectedRows, r);
+                if(structureMatchesLogRows.includes(r)){
+                    rowStyle = getLogViewStructureMatchStyle(currentStructureMatch, structureMatches, r);
+                } else{
+                    rowStyle = getLogViewRowSelectionStyle(rowProperties, r);
+                }
+
+                result.push(
+                    <div key={r} style={rowStyle} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
+                        {logFile.headers.map((h, c) => 
+                        logFile.selectedColumns[c]== true &&
+                            this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name), logFile.columnsColors[c][r]))
+                        }
+                    </div>
+                );
             }
-
-            result.push(
-                <div key={r} style={rowStyle} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
-                    {logFile.headers.map((h, c) => 
-                    logFile.selectedColumns[c]== true &&
-                        this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name), logFile.columnsColors[c][r]))
-                    }
-                </div>
-            );
         }
         return result;
     }

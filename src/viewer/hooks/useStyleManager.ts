@@ -1,5 +1,5 @@
-import { SelectedRowType, LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, STRUCTURE_LINK_HEIGHT, STRUCTURE_WIDTH, BORDER, BORDER_SELECTED_ROW, BORDER_STRUCTURE_MATCH_CURRENT, BORDER_STRUCTURE_MATCH_OTHER, BACKGROUND_COLOR_MATCHED_ROW_CURRENT, BACKGROUND_COLOR_MATCHED_ROW_OTHER, BACKGROUND_COLOR_SELECTED_ROW } from '../constants';
-import { StructureEntry } from '../types';
+import { RowType, LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, STRUCTURE_LINK_HEIGHT, STRUCTURE_WIDTH, BORDER, BORDER_SELECTED_ROW, BORDER_STRUCTURE_MATCH_CURRENT, BORDER_STRUCTURE_MATCH_OTHER, BACKGROUND_COLOR_MATCHED_ROW_CURRENT, BACKGROUND_COLOR_MATCHED_ROW_OTHER, BACKGROUND_COLOR_SELECTED_ROW } from '../constants';
+import { RowProperty, StructureEntry } from '../types';
 
 const getLogViewRowStyle = (rowIndex: number): React.CSSProperties => {
     const rowStyle: React.CSSProperties = {
@@ -151,18 +151,18 @@ export const getStructureTableCellSelectionStyle = (structureEntries: StructureE
     return cellSelectionStyle;
 }
 
-export const getLogViewRowSelectionStyle = (selectedRows: string[], rowIndex: number): React.CSSProperties => {
+export const getLogViewRowSelectionStyle = (selectedRows: RowProperty[], rowIndex: number): React.CSSProperties => {
     let rowSelectionStyle: React.CSSProperties = {};
 
-    switch(selectedRows[rowIndex]) {
-        case SelectedRowType.UserSelect:
+    switch(selectedRows[rowIndex].rowType) {
+        case RowType.UserSelect:
             rowSelectionStyle = {
                 borderBottom: BORDER_SELECTED_ROW,
                 borderTop: BORDER_SELECTED_ROW,
                 backgroundColor: BACKGROUND_COLOR_SELECTED_ROW
             };
             break;
-        case SelectedRowType.None: 
+        case RowType.None: 
             rowSelectionStyle = {
                     borderBottom: BORDER,
             };
