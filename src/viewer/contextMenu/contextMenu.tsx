@@ -22,9 +22,7 @@ parentDiv: HTMLElement | null;
 
 constructor(props: Props) {
     super(props);
-    console.log(this.props.parentDivId);
     this.parentDiv = document.getElementById(this.props.parentDivId);
-    console.log(this.parentDiv);
     this.state = {xPos: 0, yPos: 0, showMenu: false, selectedItemIndex: null};
 }
 
@@ -69,6 +67,7 @@ clearSelectedOptionIndex(){
 }
 
 renderMenuOptions(){
+    const { items, parentDivId} = this.props;
     const result: any = [];
 
     for(let o=0; o < this.props.items.length; o++){
@@ -76,8 +75,8 @@ renderMenuOptions(){
         const contextMenuItemStyle = getContextMenuItemStyle(isSelected);
 
         result.push(
-        <div style={contextMenuItemStyle} onMouseEnter={() => this.toggleSelectedOptionIndex(o)}>
-            {this.props.items[o].text}
+        <div key={`${parentDivId}-context-menu-${o}`} style={contextMenuItemStyle} onMouseEnter={() => this.toggleSelectedOptionIndex(o)}>
+            {items[o].text}
         </div>)
     }
 
