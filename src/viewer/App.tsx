@@ -129,7 +129,7 @@ export default class App extends React.Component<Props, State> {
                     if (filteredIndices.includes(index))
                         return constructNewRowProperty(true, true, RowType.None);
                     else
-                        return constructNewRowProperty(false, true, RowType.None);
+                        return constructNewRowProperty(false, false, RowType.None);
                 });    
                 const textRanges = useJsonObjectToTextRangesMap(logFileText);
                 this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, rowProperties: newRowsProps});
@@ -365,21 +365,21 @@ export default class App extends React.Component<Props, State> {
                 </div>                    
                 <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth, boxSizing: 'border-box'}}>
                     <div className='header-background' style={COLUMN_0_HEADER_STYLE}>
-                        <Tooltip title={<h3>Create a structure from selected rows</h3>} placement="bottom" arrow>
+                        {/* <Tooltip title={<h3>Create a structure from selected rows</h3>} placement="bottom" arrow> */}
                             <VSCodeButton appearance='icon' onClick={() => this.handleStructureDialogActions(false)}>
                                 <i className="codicon codicon-three-bars"/>
                             </VSCodeButton>
-                        </Tooltip>
-                        <Tooltip title={<h3>Create/Modify Flag Annotations Columns</h3>} placement="bottom" arrow>
+                        {/* </Tooltip> */}
+                        {/* <Tooltip title={<h3>Create/Modify Flag Annotations Columns</h3>} placement="bottom" arrow> */}
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
                                 <i className="codicon codicon-tag"/>
                             </VSCodeButton>
-                        </Tooltip>
-                        <Tooltip title={<h3>Create/Modify State-Based Annotation Columns</h3>} placement="bottom" arrow>
+                        {/* </Tooltip> */}
+                        {/* <Tooltip title={<h3>Create/Modify State-Based Annotation Columns</h3>} placement="bottom" arrow> */}
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
                                 <i className="codicon codicon-settings-gear"/>
                             </VSCodeButton>
-                        </Tooltip>
+                        {/* </Tooltip> */}
                         <VSCodeButton appearance='icon' onClick={()=>this.switchBooleanState('coloredTable')}>
                         <i className="codicon codicon-symbol-color"/>
                         </VSCodeButton>
@@ -390,6 +390,7 @@ export default class App extends React.Component<Props, State> {
                     logViewState={this.state.logViewState}
                     onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
                     forwardRef={this.child}
+                    rowProperties={this.state.rowProperties}
                     />
                     }
                 </div>

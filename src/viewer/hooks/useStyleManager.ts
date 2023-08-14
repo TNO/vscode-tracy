@@ -151,7 +151,7 @@ export const getStructureTableCellSelectionStyle = (structureEntries: StructureE
     return cellSelectionStyle;
 }
 
-export const getLogViewRowSelectionStyle = (selectedRows: RowProperty[], rowIndex: number): React.CSSProperties => {
+export const getLogViewRowSelectionStyle = (selectedRows: RowProperty[], rowIndex: number, index: number): React.CSSProperties => {
     let rowSelectionStyle: React.CSSProperties = {};
 
     switch(selectedRows[rowIndex].rowType) {
@@ -169,7 +169,7 @@ export const getLogViewRowSelectionStyle = (selectedRows: RowProperty[], rowInde
             break;
     }
 
-    rowSelectionStyle = {...getLogViewRowStyle(rowIndex), ...rowSelectionStyle};
+    rowSelectionStyle = {...getLogViewRowStyle(index), ...rowSelectionStyle};
 
     return rowSelectionStyle;
 }

@@ -1,14 +1,14 @@
 import React from 'react';
-import { LogViewState } from '../types';
-import { MINIMAP_COLUMN_WIDTH } from '../constants';
 import LogFile from '../LogFile';
-import { log } from 'console';
+import { LogViewState, RowProperty } from '../types';
+import { MINIMAP_COLUMN_WIDTH } from '../constants';
 
 interface Props {
     logFile: LogFile;
     logViewState: LogViewState;
     onLogViewStateChanged: (value: LogViewState) => void;
     forwardRef: React.RefObject<HTMLDivElement>;
+    rowProperties: RowProperty[];
 }
 interface State {
     state: LogViewState | undefined;
@@ -86,11 +86,15 @@ export default class MinimapView extends React.Component<Props, State> {
         for (let columnIndex = 0; columnIndex < logFile.selectedColumnsMini.length; columnIndex++) {
             if (logFile.selectedColumnsMini[columnIndex]) {
                 const colors = logFile.columnsColors[columnIndex];
+                let counter = 0; //increase only when row is rendered
                 for (let i = 0; i < colors.length; i++) {
-                    ctx.beginPath();
-                    ctx.fillStyle = colors[i];
-                    ctx.fillRect(index * MINIMAP_COLUMN_WIDTH, i * logRowHeight, MINIMAP_COLUMN_WIDTH, logRowHeight);
-                    ctx.stroke();
+                    if (this.props.rowProperties[i].isSearchResult && this.props.rowProperties[i].isRendered) {
+                        ctx.beginPath();
+                        ctx.fillStyle = colors[i];
+                        ctx.fillRect(index * MINIMAP_COLUMN_WIDTH, counter * logRowHeight, MINIMAP_COLUMN_WIDTH, logRowHeight);
+                        ctx.stroke();
+                        counter++;
+                    }
                 }
                 index++;
             }
@@ -137,6 +141,9 @@ export default class MinimapView extends React.Component<Props, State> {
             nrOfRows =  (y - scrollTopBox*scaleItem)/(height/visibleItems);//number of rows to move, can be positive or negative
             scrollTop = (logStart + nrOfRows)*ROW_HEIGHT;
         }
+
+        // const maximumScrollTop = (maxVisibleItems - logVisibleItems)*ROW_HEIGHT;
+        // scrollTop = Math.min(maximumScrollTop, scrollTop);
 
         //set scrollTop of the log to the new value
         if (!this.props.forwardRef.current) return;

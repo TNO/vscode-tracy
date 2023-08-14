@@ -108,14 +108,15 @@ export default class LogView extends React.Component<Props, State> {
             last_render = -1;
         }
 
-        for (let r = first_render; r <= last_render; r++) {
-            if (rowProperties[r].isSearchResult) {
+        let counter = first_render;
+        for (let r = first_render; counter <= last_render; r++){
+            if (rowProperties[r].isSearchResult && rowProperties[r].isRendered) {
                 let rowStyle;
 
                 if(structureMatchesLogRows.includes(r)){
                     rowStyle = getLogViewStructureMatchStyle(currentStructureMatch, structureMatches, r);
                 } else{
-                    rowStyle = getLogViewRowSelectionStyle(rowProperties, r);
+                    rowStyle = getLogViewRowSelectionStyle(rowProperties, r, counter);
                 }
 
                 result.push(
@@ -126,6 +127,7 @@ export default class LogView extends React.Component<Props, State> {
                         }
                     </div>
                 );
+                counter++;
             }
         }
         return result;
