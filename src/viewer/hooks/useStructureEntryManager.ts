@@ -62,26 +62,26 @@ export const removeStructureEntryFromList = (structureEntries: StructureEntry[],
 };
 
 export const updateStructureEntriesAfterWildcardDeletion = (structureEntries: StructureEntry[], wildcards: Wildcard[], deletedWildcardIndex: number): StructureEntry[] => {
-    const modifiedStructureEntries = structureEntries;
+    let modifiedStructureEntries = structureEntries;
 
-    modifiedStructureEntries.forEach(entry => {
+    for(let e = 0; e < modifiedStructureEntries.length; e++) {
 
-        entry.wildcardsIndices.forEach(cell => {
-            cell.forEach(index =>{
-                if(index > deletedWildcardIndex){
-                    index = index - 1;
+        for(let c = 0; c < modifiedStructureEntries[e].row.length; c++) {
+            
+            for(let w = 0; w < modifiedStructureEntries[e].wildcardsIndices[c].length; w++){
+                if(modifiedStructureEntries[e].wildcardsIndices[c][w] > deletedWildcardIndex){
+                    modifiedStructureEntries[e].wildcardsIndices[c][w] -= 1;
                 }
-            });
-        });
+            }
 
-        entry.row.forEach(cell => {
-            cell.forEach(cellContents => {
-                if(cellContents.wildcardIndex && cellContents.wildcardIndex > deletedWildcardIndex){
-                    cellContents.wildcardIndex = cellContents.wildcardIndex - 1;
+            for(let cc = 0; cc < modifiedStructureEntries[e].row[c].length; cc++){
+                
+                if(modifiedStructureEntries[e].row[c][cc].wildcardIndex && modifiedStructureEntries[e].row[c][cc].wildcardIndex! > deletedWildcardIndex){
+                    modifiedStructureEntries[e].row[c][cc].wildcardIndex! -= 1;
                 }
-            });
-        });
-    });
+            }
+        }
+    }
 
     return modifiedStructureEntries;
 }

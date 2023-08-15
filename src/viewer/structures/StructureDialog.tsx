@@ -290,6 +290,9 @@ export default class StructureDialog extends React.Component<Props, State> {
             if(wildcardsUpdateResult.isWildcardDeleted) {
                 modifiedStructureEntries = updateStructureEntriesAfterWildcardDeletion(modifiedStructureEntries, wildcardsCopy, wildcardIndex);
             }
+
+            // console.log(modifiedStructureEntries);
+            // console.log(wildcardsCopy);
             
             this.setState({structureEntries: modifiedStructureEntries, wildcards: wildcardsCopy});
         } else{

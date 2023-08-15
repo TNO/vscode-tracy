@@ -163,8 +163,7 @@ export const removeWildcardFromCellContent = (cellContents: CellContents[], wild
     let finalCellContents: CellContents[] = [];
     let contentsToBeRemoved = cellContents[contentsIndex];
     let nrOfSteps = 1;
-    
-    console.log(contentsIndex);
+
     if(contentsIndex === 0) {
         let contentsAfterCurrent = cellContents.slice(contentsIndex + 1);
         contentsAfterCurrent[0].textValue = contentsToBeRemoved.textValue + contentsAfterCurrent[0].textValue;
@@ -186,6 +185,7 @@ export const removeWildcardFromCellContent = (cellContents: CellContents[], wild
         
         //both are wildcards
         if(contentsBeforeCurrent[contentsBeforeCurrent.length - 1].wildcardIndex !== null && contentsAfterCurrent[0].wildcardIndex !== null){
+            //console.log("both are wildcards");
             contentsToBeRemoved.wildcardIndex = null;
 
             newCellContents.push.apply(contentsBeforeCurrent);
@@ -196,47 +196,50 @@ export const removeWildcardFromCellContent = (cellContents: CellContents[], wild
         }
         //both are text
         else if(contentsBeforeCurrent[contentsBeforeCurrent.length - 1].wildcardIndex === null && contentsAfterCurrent[0].wildcardIndex === null){
+            //console.log("both are text");
             const newContentsTextValue = contentsBeforeCurrent[contentsBeforeCurrent.length - 1].textValue + contentsToBeRemoved.textValue + contentsAfterCurrent[0].textValue;
             let newContents: CellContents = {contentsIndex: contentsBeforeCurrent.length - 1, textValue: newContentsTextValue, wildcardIndex: null};
 
             contentsBeforeCurrent = cellContents.slice(0, newContents.contentsIndex);
-            contentsAfterCurrent = cellContents.slice(newContents.contentsIndex);
+            contentsAfterCurrent = cellContents.slice(newContents.contentsIndex + 3, cellContents.length);
 
             if(contentsBeforeCurrent.length !== 0)
-                newCellContents.push.apply(contentsBeforeCurrent);
+                newCellContents = newCellContents.concat(contentsBeforeCurrent);
 
             newCellContents.push(newContents);
                 
             if(contentsAfterCurrent.length !== 0)
-                newCellContents.push.apply(contentsAfterCurrent);
+                newCellContents = newCellContents.concat(contentsAfterCurrent);
 
             nrOfSteps = 2;
         }
         // before is text, after is wildcard
         else if(contentsBeforeCurrent[contentsBeforeCurrent.length - 1].wildcardIndex === null && contentsAfterCurrent[0].wildcardIndex !== null){
+            //console.log("before is text, after is wildcard");
             const newContentsTextValue = contentsBeforeCurrent[contentsBeforeCurrent.length - 1] + contentsToBeRemoved.textValue;
             let newContents: CellContents = {contentsIndex: contentsBeforeCurrent.length - 1, textValue: newContentsTextValue, wildcardIndex: null};
 
             contentsBeforeCurrent = cellContents.slice(0, newContents.contentsIndex);
 
             if(contentsBeforeCurrent.length !== 0)
-                newCellContents.push.apply(contentsBeforeCurrent);
+            newCellContents = newCellContents.concat(contentsBeforeCurrent);
 
             newCellContents.push(newContents);
-            newCellContents.push.apply(contentsAfterCurrent);
+            newCellContents = newCellContents.concat(contentsAfterCurrent);
         }
         // before is wildcard, after is text
         else{
+            //console.log("before is wildcard, after is text");
             const newContentsTextValue = contentsToBeRemoved.textValue + contentsAfterCurrent[0].textValue;
             let newContents: CellContents = {contentsIndex: contentsIndex, textValue: newContentsTextValue, wildcardIndex: null};
 
             contentsAfterCurrent = cellContents.slice(newContents.contentsIndex);
 
-            newCellContents.push.apply(contentsBeforeCurrent);
+            newCellContents = newCellContents.concat(contentsBeforeCurrent);
             newCellContents.push(newContents);
                 
             if(contentsAfterCurrent.length !== 0)
-                newCellContents.push.apply(contentsAfterCurrent);
+                newCellContents = newCellContents.concat(contentsAfterCurrent);
         }
 
         newCellContents = updateCellContentsIndices(newCellContents, 0);
