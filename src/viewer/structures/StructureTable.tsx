@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import ReactResizeDetector from 'react-resize-detector'
 import Tooltip from '@mui/material/Tooltip'
-import { Header, StructureEntry } from '../types';
+import { CellContents, Header, StructureEntry, Wildcard } from '../types';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, STRUCTURE_WIDTH, STRUCTURE_LINK_HEIGHT, StructureLinkDistance} from '../constants';
 import { getStructureTableColumnStyle, getStructureTableHeaderStyle, getHeaderColumnStyle, getHeaderColumnInnerStyle, 
          getStructureTableCellSelectionStyle, getStructureTableEntryIconStyle, getStructureTableRowStyle, getStructureTableLinkStyle } from '../hooks/useStyleManager';
-import isEqual from 'lodash/isEqual';         
+import { getReactElementsFromCellContents } from '../hooks/useWildcardManager'; 
+import isEqual from 'lodash/isEqual'; 
+       
 
 interface Props {
     headerColumns: Header[];
     structureEntries: StructureEntry[]; 
+    wildcards: Wildcard[];
     isRemovingStructureEntries: boolean;
     onToggleStructureLink: (structureEntryIndex: number) => void;
     onStructureEntryRemoved: (structureEntryIndex: number) => void;
@@ -28,10 +31,11 @@ export default class StructureTable extends React.Component<Props, State> {
 
     shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
         const areStructureEntriesUpdating = !(isEqual(this.props.structureEntries, nextProps.structureEntries));
+        const areWildcardsUpdating = !(isEqual(this.props.wildcards, nextProps.wildcards));
         const isRemovingStructureEntriesUpdating = !(isEqual(this.props.isRemovingStructureEntries, nextProps.isRemovingStructureEntries));
         const isColumnWidthUpdating = !(isEqual(this.state.columnWidth, nextState.columnWidth));
 
-        if(areStructureEntriesUpdating || isRemovingStructureEntriesUpdating || isColumnWidthUpdating){
+        if(areStructureEntriesUpdating || areWildcardsUpdating || isRemovingStructureEntriesUpdating || isColumnWidthUpdating){
             return true;
         }
 
@@ -52,7 +56,7 @@ export default class StructureTable extends React.Component<Props, State> {
 
     renderHeaderColumn(value: string, columnIndex: number, width: number) {
         const height = LOG_HEADER_HEIGHT;
-        const widthNew = columnIndex !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
+        const widthNew = columnIndex !== 0 ? width + BORDER_SIZE : width;
         const headerColumnStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
         const headerColumnInnerStyle = getHeaderColumnInnerStyle(height, true);
         return (
@@ -78,15 +82,22 @@ export default class StructureTable extends React.Component<Props, State> {
         );
     }
 
-    renderColumn(value: string, rowIndex: number, index: number, width: number) {
-        const widthNew = index !== 0 ? width + BORDER_SIZE : width; //increase width with 1px, because the border is 1px
-        const columnStyle = getStructureTableColumnStyle(widthNew, index);
-        const columnInnerStyle = getStructureTableCellSelectionStyle(this.props.structureEntries, rowIndex, index);
+    renderColumn(rowIndex: number, cellIndex: number, width: number) {
+        const {structureEntries} = this.props;
+        const widthNew = cellIndex !== 0 ? width + BORDER_SIZE : width;
+        const columnStyle = getStructureTableColumnStyle(widthNew, cellIndex);
+        const columnInnerStyle = getStructureTableCellSelectionStyle(structureEntries, rowIndex, cellIndex);
+
+        let cellWithWildcards:ReactNode[] = [];
+        structureEntries[rowIndex].row[cellIndex].forEach(contentsPart => {
+            const contentPartDiv = getReactElementsFromCellContents(rowIndex, cellIndex,contentsPart.contentsIndex, contentsPart.wildcardIndex, contentsPart.textValue);
+            cellWithWildcards.push(contentPartDiv);
+        });
 
         return (
-            <div style={columnStyle} key={index}>
-                <div style={columnInnerStyle} onClick={(event) => this.props.onToggleIsCellSelected(rowIndex, index, event.ctrlKey, event.shiftKey)}>
-                    {value}
+            <div style={columnStyle} key={cellIndex}>
+                <div id={`${rowIndex}-${cellIndex}`} style={columnInnerStyle} onClick={(event) => this.props.onToggleIsCellSelected(rowIndex, cellIndex, event.ctrlKey, event.shiftKey)}>
+                    {cellWithWildcards.map(value => value)}
                 </div>
             </div>
         );
@@ -105,9 +116,9 @@ export default class StructureTable extends React.Component<Props, State> {
             result.push(
                 <div key={r} style={rowStyle}>
                     {!isRemovingStructureEntries && <div style={structureEntryIconStyle}><i style={{padding: '6px'}}className='codicon codicon-circle-filled'/></div>}
-                    {isRemovingStructureEntries && <div style={structureEntryIconStyle} onClick={() => {onStructureEntryRemoved(r)}}><i style={{padding: '6px'}} className='codicon codicon-close'/></div>}
+                    {isRemovingStructureEntries && <div style={structureEntryIconStyle} onClick={() => {onStructureEntryRemoved(r)}}><i style={{padding: '6px', cursor:'pointer'}} className='codicon codicon-close'/></div>}
                     {headerColumns.map((h, c) => 
-                        this.renderColumn(structureEntries[r].row[c], r, c, this.columnWidth(h.name)))
+                        this.renderColumn(r, c, this.columnWidth(h.name)))
                     }
                 </div>
             );

@@ -1,7 +1,7 @@
 import React from "react";
 import { ContextMenuItem } from "../types";
 import { getContextMenuItemStyle, getContextMenuStyle } from "../hooks/useStyleManager";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface Props {
     parentDivId: string
@@ -15,6 +15,7 @@ interface State {
     yPos: number,
     showMenu: boolean,
     selectedItemIndex: number | null;
+    anchorDivId: string;
 }
 
 export default class ContextMenu extends React.PureComponent<Props, State> {
@@ -23,7 +24,7 @@ parentDiv: HTMLElement | null;
 constructor(props: Props) {
     super(props);
     this.parentDiv = document.getElementById(this.props.parentDivId);
-    this.state = {xPos: 0, yPos: 0, showMenu: false, selectedItemIndex: null};
+    this.state = {xPos: 0, yPos: 0, showMenu: false, selectedItemIndex: null, anchorDivId: ''};
 }
 
 componentDidMount(): void {
@@ -42,7 +43,7 @@ componentWillUnmount(): void {
 
 handleClick = () => {
     if(this.state.selectedItemIndex !== null){
-        this.props.items[this.state.selectedItemIndex].callback();
+        this.props.items[this.state.selectedItemIndex].callback(this.state.anchorDivId);
     }
 
     if (this.state.showMenu) this.setState({ showMenu: false, selectedItemIndex: null });
@@ -55,6 +56,7 @@ handleContextMenu = (e) => {
         xPos: e.pageX,
         yPos: e.pageY,
         showMenu: true,
+        anchorDivId: e.path[0].id
     });
 }
 
@@ -70,14 +72,14 @@ renderMenuOptions(){
     const { items, parentDivId} = this.props;
     const result: any = [];
 
-    for(let o=0; o < this.props.items.length; o++){
+    for(let o=0; o < items.length; o++){
         const isSelected = o === this.state.selectedItemIndex;
         const contextMenuItemStyle = getContextMenuItemStyle(isSelected);
 
         result.push(
-        <div key={`${parentDivId}-context-menu-${o}`} style={contextMenuItemStyle} onMouseEnter={() => this.toggleSelectedOptionIndex(o)}>
-            {items[o].text}
-        </div>)
+            <div key={`${parentDivId}-context-menu-${o}`} style={contextMenuItemStyle} onMouseEnter={() => this.toggleSelectedOptionIndex(o)}>
+                {items[o].text}
+            </div>)
     }
 
     return result;

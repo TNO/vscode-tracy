@@ -32,6 +32,12 @@ export const StructureDialogDialogStyle: React.CSSProperties = {
     overflow:'scroll'
 };
 
+export const WildcardStyle: React.CSSProperties = {
+    border:'1px solid',
+    borderRadius: '2px',
+    userSelect: 'none'
+}
+
 export const getStructureTableHeaderStyle = (containerWidth: number): React.CSSProperties => {
     const headerStyle: React.CSSProperties = {    
         width: containerWidth, 
@@ -235,8 +241,6 @@ export const getLogViewStructureMatchStyle = (currentStructureMatch: number[], s
 };
 
 export const getContextMenuStyle = (isRenderedAbove: boolean, dialogHeight: number, xPos: number, yPos: number): React.CSSProperties => {
-    let contextMenuItemStyle: React.CSSProperties;
-
     const contextMenuStyle: React.CSSProperties = {
         top: isRenderedAbove ? yPos - dialogHeight : yPos,
         left: xPos,
@@ -249,14 +253,13 @@ export const getContextMenuStyle = (isRenderedAbove: boolean, dialogHeight: numb
 
 
 export const getContextMenuItemStyle = (isSelected: boolean): React.CSSProperties => {
-    let contextMenuItemStyle: React.CSSProperties;
-
-    contextMenuItemStyle = {
+    const contextMenuItemStyle: React.CSSProperties = {
         height: '28px', 
         lineHeight: '28px',
         paddingLeft: '5px',
         paddingRight: '5px',
         borderRadius: '4px',
+        cursor:'pointer',
         background: isSelected ? 'var(--vscode-menu-selectionBackground)': '',
         color: isSelected ? 'var(--vscode-menu-selectionForeground)': ''
     };
