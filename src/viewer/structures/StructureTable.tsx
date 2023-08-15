@@ -1,7 +1,7 @@
-import React, { ReactElement, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import ReactResizeDetector from 'react-resize-detector'
 import Tooltip from '@mui/material/Tooltip'
-import { CellContents, Header, StructureEntry, Wildcard } from '../types';
+import { Header, StructureEntry, Wildcard } from '../types';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, BORDER_SIZE, LOG_COLUMN_WIDTH_LOOKUP, LOG_DEFAULT_COLUMN_WIDTH, STRUCTURE_WIDTH, STRUCTURE_LINK_HEIGHT, StructureLinkDistance} from '../constants';
 import { getStructureTableColumnStyle, getStructureTableHeaderStyle, getHeaderColumnStyle, getHeaderColumnInnerStyle, 
          getStructureTableCellSelectionStyle, getStructureTableEntryIconStyle, getStructureTableRowStyle, getStructureTableLinkStyle } from '../hooks/useStyleManager';
@@ -29,7 +29,7 @@ export default class StructureTable extends React.Component<Props, State> {
         this.state = {columnWidth: LOG_COLUMN_WIDTH_LOOKUP};
     }
 
-    shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
+    shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, _nextContext: any): boolean {
         const areStructureEntriesUpdating = !(isEqual(this.props.structureEntries, nextProps.structureEntries));
         const areWildcardsUpdating = !(isEqual(this.props.wildcards, nextProps.wildcards));
         const isRemovingStructureEntriesUpdating = !(isEqual(this.props.isRemovingStructureEntries, nextProps.isRemovingStructureEntries));
@@ -88,16 +88,17 @@ export default class StructureTable extends React.Component<Props, State> {
         const columnStyle = getStructureTableColumnStyle(widthNew, cellIndex);
         const columnInnerStyle = getStructureTableCellSelectionStyle(structureEntries, rowIndex, cellIndex);
 
-        let cellWithWildcards:ReactNode[] = [];
+        const allCellContents:ReactNode[] = [];
+
         structureEntries[rowIndex].row[cellIndex].forEach(contentsPart => {
             const contentPartDiv = getReactElementsFromCellContents(rowIndex, cellIndex,contentsPart.contentsIndex, contentsPart.wildcardIndex, contentsPart.textValue);
-            cellWithWildcards.push(contentPartDiv);
+            allCellContents.push(contentPartDiv);
         });
 
         return (
             <div style={columnStyle} key={cellIndex}>
                 <div id={`${rowIndex}-${cellIndex}`} style={columnInnerStyle} onClick={(event) => this.props.onToggleIsCellSelected(rowIndex, cellIndex, event.ctrlKey, event.shiftKey)}>
-                    {cellWithWildcards.map(value => value)}
+                    {allCellContents.map(value => value)}
                 </div>
             </div>
         );
@@ -105,7 +106,7 @@ export default class StructureTable extends React.Component<Props, State> {
 
     renderRows(containerWidth: number, containerHeight: number) {
         const newContainerWidth = containerWidth + STRUCTURE_WIDTH;
-        const result: any = [];
+        const result: ReactNode[] = [];
         const {structureEntries, isRemovingStructureEntries, headerColumns, onStructureEntryRemoved} = this.props;
         const structureEntryIconStyle = getStructureTableEntryIconStyle(isRemovingStructureEntries);
         let structureLinkIndex = 0;

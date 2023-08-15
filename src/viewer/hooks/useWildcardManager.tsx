@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
 import { WildcardStyle } from "./useStyleManager";
-import { Wildcard, CellContents, WildcardSubstitution } from "../types";
+import { Wildcard, CellContents } from "../types";
 
 export const createWildcard = (structureEntryIndex: number, cellIndex: number, contentsIndex: number) => {
-    let newWildcard: Wildcard = {
+    const newWildcard: Wildcard = {
         wildcardSubstitutions: [{
             entryIndex: structureEntryIndex,
             cellIndex: cellIndex,
@@ -74,13 +74,13 @@ export const insertWildcardIntoCellsContents = (cellContents: CellContents[], wi
     const modifiedCellContents = getCellContentsFromTextValue(contentsToBeModifiedText, wildcardIndex, contentsIndex, startIndex, endIndex);
 
     if(!isFirst) {
-        finalCellContents.push.apply(finalCellContents, contentsBeforeCurrent);
+        finalCellContents.push(...contentsBeforeCurrent);
     }
 
-    finalCellContents.push.apply(finalCellContents, modifiedCellContents);
+    finalCellContents.push(...modifiedCellContents);
 
     if(!isLast) {
-        finalCellContents.push.apply(finalCellContents, contentsAfterCurrent);
+        finalCellContents.push(...contentsAfterCurrent);
     }
 
     wildcards.forEach(wildcard => {
@@ -102,7 +102,7 @@ export const insertWildcardIntoCellsContents = (cellContents: CellContents[], wi
 
 const getCellContentsFromTextValue = (textValue: string, wildcardIndex: number, contentsIndex: number, startIndex: number, endIndex: number) => {
     const cellContents: CellContents[] = [];
-    let chars = [...textValue]
+    const chars = [...textValue]
 
     const stringBeforeWildcard = chars.slice(0, startIndex);
 
@@ -161,7 +161,7 @@ export const removeWildcardSubstitutionForEntry= (wildcards: Wildcard[], entryIn
 
 export const removeWildcardFromCellContent = (cellContents: CellContents[], wildcards: Wildcard[], entryIndex: number, cellIndex: number, contentsIndex: number): {wildcards: Wildcard[], cellContents: CellContents[]} => {
     let finalCellContents: CellContents[] = [];
-    let contentsToBeRemoved = cellContents[contentsIndex];
+    const contentsToBeRemoved = cellContents[contentsIndex];
     let nrOfSteps = 1;
 
     if(contentsIndex === 0) {
@@ -172,7 +172,7 @@ export const removeWildcardFromCellContent = (cellContents: CellContents[], wild
 
         finalCellContents = contentsAfterCurrent;
     } else if(contentsIndex === cellContents.length - 1) {
-        let contentsBeforeCurrent = cellContents.slice(0, contentsIndex);
+        const contentsBeforeCurrent = cellContents.slice(0, contentsIndex);
         contentsBeforeCurrent[contentsIndex - 1].textValue = contentsBeforeCurrent[contentsIndex - 1].textValue + contentsToBeRemoved.textValue;
 
         finalCellContents = contentsBeforeCurrent;
@@ -183,22 +183,20 @@ export const removeWildcardFromCellContent = (cellContents: CellContents[], wild
         let contentsAfterCurrent = cellContents.slice(contentsIndex + 1);
         let newCellContents: CellContents[] = [];
         
-        //both are wildcards
         if(contentsBeforeCurrent[contentsBeforeCurrent.length - 1].wildcardIndex !== null && contentsAfterCurrent[0].wildcardIndex !== null){
             //console.log("both are wildcards");
             contentsToBeRemoved.wildcardIndex = null;
 
-            newCellContents.push.apply(contentsBeforeCurrent);
+            newCellContents.push(...contentsBeforeCurrent);
             newCellContents.push(contentsToBeRemoved);
-            newCellContents.push.apply(contentsAfterCurrent);
+            newCellContents.push(...contentsAfterCurrent);
 
             nrOfSteps = 0;
         }
-        //both are text
         else if(contentsBeforeCurrent[contentsBeforeCurrent.length - 1].wildcardIndex === null && contentsAfterCurrent[0].wildcardIndex === null){
             //console.log("both are text");
             const newContentsTextValue = contentsBeforeCurrent[contentsBeforeCurrent.length - 1].textValue + contentsToBeRemoved.textValue + contentsAfterCurrent[0].textValue;
-            let newContents: CellContents = {contentsIndex: contentsBeforeCurrent.length - 1, textValue: newContentsTextValue, wildcardIndex: null};
+            const newContents: CellContents = {contentsIndex: contentsBeforeCurrent.length - 1, textValue: newContentsTextValue, wildcardIndex: null};
 
             contentsBeforeCurrent = cellContents.slice(0, newContents.contentsIndex);
             contentsAfterCurrent = cellContents.slice(newContents.contentsIndex + 3, cellContents.length);
@@ -213,11 +211,10 @@ export const removeWildcardFromCellContent = (cellContents: CellContents[], wild
 
             nrOfSteps = 2;
         }
-        // before is text, after is wildcard
         else if(contentsBeforeCurrent[contentsBeforeCurrent.length - 1].wildcardIndex === null && contentsAfterCurrent[0].wildcardIndex !== null){
             //console.log("before is text, after is wildcard");
             const newContentsTextValue = contentsBeforeCurrent[contentsBeforeCurrent.length - 1] + contentsToBeRemoved.textValue;
-            let newContents: CellContents = {contentsIndex: contentsBeforeCurrent.length - 1, textValue: newContentsTextValue, wildcardIndex: null};
+            const newContents: CellContents = {contentsIndex: contentsBeforeCurrent.length - 1, textValue: newContentsTextValue, wildcardIndex: null};
 
             contentsBeforeCurrent = cellContents.slice(0, newContents.contentsIndex);
 
@@ -227,11 +224,10 @@ export const removeWildcardFromCellContent = (cellContents: CellContents[], wild
             newCellContents.push(newContents);
             newCellContents = newCellContents.concat(contentsAfterCurrent);
         }
-        // before is wildcard, after is text
         else{
             //console.log("before is wildcard, after is text");
             const newContentsTextValue = contentsToBeRemoved.textValue + contentsAfterCurrent[0].textValue;
-            let newContents: CellContents = {contentsIndex: contentsIndex, textValue: newContentsTextValue, wildcardIndex: null};
+            const newContents: CellContents = {contentsIndex: contentsIndex, textValue: newContentsTextValue, wildcardIndex: null};
 
             contentsAfterCurrent = cellContents.slice(newContents.contentsIndex);
 
@@ -297,5 +293,32 @@ export const getWildcardIndex = (wildcards: Wildcard[], structureEntryIndex: num
     }
 
     return wildcardIndex;
+}
+
+export const isSubstitutionFirstForWildcard = (wildcard: Wildcard, structureEntryIndex: number, cellIndex: number, contentsIndex: number):boolean => {
+    let isSubstitutionFirst = false;
+    let smallestStructureEntry, smallestcellIndex, smallestContentsIndex: number | null = null; 
+
+    wildcard.wildcardSubstitutions.forEach(substitution =>{
+        if(smallestStructureEntry == null || smallestStructureEntry > substitution.entryIndex)
+            smallestStructureEntry = substitution.entryIndex;
+    })
+
+    wildcard.wildcardSubstitutions.forEach(substitution =>{
+        if(smallestcellIndex == null || (smallestStructureEntry === structureEntryIndex && smallestcellIndex > substitution.cellIndex))
+            smallestcellIndex = substitution.cellIndex;
+    })
+
+    wildcard.wildcardSubstitutions.forEach(substitution =>{
+        if(smallestContentsIndex == null || (smallestStructureEntry === structureEntryIndex && smallestcellIndex === substitution.cellIndex && smallestContentsIndex > substitution.contentsIndex))
+            smallestContentsIndex = substitution.contentsIndex;
+    })
+
+    // console.log(smallestStructureEntry, smallestcellIndex, smallestContentsIndex);
+
+    if(structureEntryIndex === smallestStructureEntry && cellIndex === smallestcellIndex && contentsIndex === smallestContentsIndex)
+        isSubstitutionFirst = true;
+
+    return isSubstitutionFirst;
 }
 

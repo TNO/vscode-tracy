@@ -6,7 +6,7 @@ import { StructureHeaderColumnType } from '../constants';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useStructureQueryConstructor } from '../hooks/useStructureRegularExpressionManager';
 import { constructStructureEntriesArray, appendNewStructureEntries, removeStructureEntryFromList, toggleCellSelection, toggleStructureLink, removeLastStructureLink, addWildcardToStructureEntry, removeWildcardFromStructureEntry, updateStructureEntriesAfterWildcardDeletion } from '../hooks/useStructureEntryManager'; 
-import { createWildcard, getIndicesForWildcardFromDivId, insertWildcardIntoCellsContents, getContentsIndexOfNewWildcard, removeWildcardSubstitution, removeWildcardSubstitutionForEntry, getWildcardIndex, removeWildcardFromCellContent} from '../hooks/useWildcardManager';
+import { createWildcard, getIndicesForWildcardFromDivId, insertWildcardIntoCellsContents, getContentsIndexOfNewWildcard, removeWildcardSubstitution, removeWildcardSubstitutionForEntry, getWildcardIndex, removeWildcardFromCellContent } from '../hooks/useWildcardManager';
 import { StructureDialogBackdropStyle, StructureDialogDialogStyle } from '../hooks/useStyleManager';
 import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
@@ -56,7 +56,7 @@ export default class StructureDialog extends React.Component<Props, State> {
         this.props.onStructureUpdate(); //trigger manually, as update function isn't called for initial render.
     }
 
-    shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, nextContext: any): boolean {
+    shouldComponentUpdate(nextProps: Readonly<Props>, nextState: Readonly<State>, _nextContext: any): boolean {
         const arelogHeaderColumnsUpdating = !(isEqual(this.props.logHeaderColumns, nextProps.logHeaderColumns));
         const arelogHeaderColumnTypesUpdating = !(isEqual(this.props.logHeaderColumnsTypes, nextProps.logHeaderColumnsTypes));
         const arelogSelectedRowsUpdating = !(isEqual(this.props.logSelectedRows, nextProps.logSelectedRows));
@@ -80,7 +80,7 @@ export default class StructureDialog extends React.Component<Props, State> {
         return false;
     }
 
-    componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
+    componentDidUpdate(prevProps: Readonly<Props>, _prevState: Readonly<State>): void {
         if(this.props.logSelectedRows !== prevProps.logSelectedRows) {
             this.updateStructure();
         }
@@ -151,12 +151,12 @@ export default class StructureDialog extends React.Component<Props, State> {
 
     toggleIsCellSelected(structureEntryIndex: number, cellIndex: number, isCtrlPressed: boolean, isShiftPressed: boolean) {
         if(isCtrlPressed){
-            let {structureHeaderColumnsTypes, structureEntries} = this.state;
-            const structureEntriesCopy = cloneDeep(structureEntries);
+            const {structureHeaderColumnsTypes, structureEntries} = this.state;
+            let structureEntriesCopy = cloneDeep(structureEntries);
 
-            structureEntries = toggleCellSelection(structureHeaderColumnsTypes, structureEntriesCopy, structureEntryIndex, cellIndex, isShiftPressed);
+            structureEntriesCopy = toggleCellSelection(structureHeaderColumnsTypes, structureEntriesCopy, structureEntryIndex, cellIndex, isShiftPressed);
     
-            this.setState({structureEntries: structureEntries});
+            this.setState({structureEntries: structureEntriesCopy});
         }
     }
 
@@ -173,7 +173,8 @@ export default class StructureDialog extends React.Component<Props, State> {
         const structureRegExp = useStructureQueryConstructor(
             this.props.logHeaderColumns,
             this.state.structureHeaderColumnsTypes,
-            this.state.structureEntries
+            this.state.structureEntries,
+            this.state.wildcards
             );
 
         this.props.onMatchStructure(structureRegExp);
@@ -195,13 +196,10 @@ export default class StructureDialog extends React.Component<Props, State> {
             let wildcardsCopy: Wildcard[] = cloneDeep(wildcards);
 
             const indicesForWildcard = getIndicesForWildcardFromDivId(parentDivId);
-            let entryIndex, cellIndex: number;
-            let contentsIndex: number;
             
-            entryIndex = +indicesForWildcard[1];
-            cellIndex = +indicesForWildcard[2];
-            contentsIndex = +indicesForWildcard[3];
-
+            const entryIndex = +indicesForWildcard[1];
+            const cellIndex = +indicesForWildcard[2];
+            const contentsIndex = +indicesForWildcard[3];
 
             //create new wildcard
             const newWildcard = createWildcard(entryIndex, cellIndex, contentsIndex);
@@ -239,12 +237,10 @@ export default class StructureDialog extends React.Component<Props, State> {
             let wildcardsCopy: Wildcard[] = cloneDeep(wildcards);
 
             const indicesForWildcard = getIndicesForWildcardFromDivId(parentDivId);
-            let entryIndex, cellIndex: number;
-            let contentsIndex: number;
             
-            entryIndex = +indicesForWildcard[1];
-            cellIndex = +indicesForWildcard[2];
-            contentsIndex = +indicesForWildcard[3];
+            const entryIndex = +indicesForWildcard[1];
+            const cellIndex = +indicesForWildcard[2];
+            const contentsIndex = +indicesForWildcard[3];
 
             //update Structure Entry
             const modifiedStructureEntries = addWildcardToStructureEntry(structureEntriesCopy, entryIndex, cellIndex, wildcardIndex);
@@ -257,6 +253,7 @@ export default class StructureDialog extends React.Component<Props, State> {
             const newWildcardSubstitution = {entryIndex: entryIndex, cellIndex: cellIndex, contentsIndex: updatedContentsIndex};
             wildcardsCopy[wildcardIndex].wildcardSubstitutions.push(newWildcardSubstitution);
 
+            // console.log(wildcardsCopy);
             this.setState({structureEntries: modifiedStructureEntries, wildcards: wildcardsCopy});
         }
     }
@@ -295,8 +292,6 @@ export default class StructureDialog extends React.Component<Props, State> {
             // console.log(wildcardsCopy);
             
             this.setState({structureEntries: modifiedStructureEntries, wildcards: wildcardsCopy});
-        } else{
-        
         }
     }
 

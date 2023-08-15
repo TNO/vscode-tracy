@@ -14,9 +14,9 @@ export const constructStructureEntriesArray = (headerColumnTypes: StructureHeade
 };
 
 export const constructNewStructureEntry = (headerColumnType: StructureHeaderColumnType[], row:string[]):StructureEntry => {
-    const rowCellContents = row.map((v, i) => {return [{contentsIndex: 0, textValue: v, wildcardIndex: null}];});
+    const rowCellContents = row.map((v, _i) => {return [{contentsIndex: 0, textValue: v, wildcardIndex: null}];});
 
-    const allCellsSelected = row.map((v, i) => {
+    const allCellsSelected = row.map((_v, i) => {
         if(headerColumnType[i] === StructureHeaderColumnType.Selected){
             return true;
         }
@@ -26,7 +26,7 @@ export const constructNewStructureEntry = (headerColumnType: StructureHeaderColu
     const defaultStructureLink = StructureLinkDistance.Min;
 
     const arraysForWilcardIndexes:number[][] = [];
-    row.map((v, i) => {
+    row.map(() => {
         arraysForWilcardIndexes.push([]);
     });
 
@@ -52,7 +52,7 @@ export const appendNewStructureEntries = (currentStructureEntries: StructureEntr
 
 export const removeStructureEntryFromList = (structureEntries: StructureEntry[], indexOfRowToBeRemoved: number): StructureEntry[] => {
     const lastIndexOfStructureEntry = structureEntries.length - 1;
-    const modifiedStructureEntries = structureEntries.filter((v, i) => i !== indexOfRowToBeRemoved);
+    const modifiedStructureEntries = structureEntries.filter((_v, i) => i !== indexOfRowToBeRemoved);
 
     if(indexOfRowToBeRemoved === lastIndexOfStructureEntry && modifiedStructureEntries.length != 0) {
         modifiedStructureEntries[lastIndexOfStructureEntry - 1].structureLink = undefined;
@@ -62,7 +62,7 @@ export const removeStructureEntryFromList = (structureEntries: StructureEntry[],
 };
 
 export const updateStructureEntriesAfterWildcardDeletion = (structureEntries: StructureEntry[], wildcards: Wildcard[], deletedWildcardIndex: number): StructureEntry[] => {
-    let modifiedStructureEntries = structureEntries;
+    const modifiedStructureEntries = structureEntries;
 
     for(let e = 0; e < modifiedStructureEntries.length; e++) {
 
@@ -146,8 +146,8 @@ export const addWildcardToStructureEntry = (structureEntries: StructureEntry[], 
 
 export const removeWildcardFromStructureEntry = (structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, wildcardIndex: number): StructureEntry[] => {
     const modifiedStructureEntries = structureEntries;
-    console.log('entryIndex:',structureEntryIndex);
-    console.log('cellIndex:',cellIndex);
+    // console.log('entryIndex:',structureEntryIndex);
+    // console.log('cellIndex:',cellIndex);
     let wildcardsInCell = modifiedStructureEntries[structureEntryIndex].wildcardsIndices[cellIndex];
 
     wildcardsInCell = wildcardsInCell.filter(value => value !== wildcardIndex);

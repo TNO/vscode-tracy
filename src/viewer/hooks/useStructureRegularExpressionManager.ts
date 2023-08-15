@@ -1,5 +1,6 @@
-import { Header, StructureEntry } from '../types';
+import { CellContents, Header, StructureEntry, Wildcard } from '../types';
 import { StructureHeaderColumnType, StructureLinkDistance } from '../constants';
+import { isSubstitutionFirstForWildcard } from './useWildcardManager';
 
 const RegExpAnyCharMin = '.+?';
 const RegExpAnyCharMax = '.+';
@@ -18,9 +19,7 @@ const escapeSpecialChars = (text: string): string => {
         safeText = text.replace(/[\\]/g, "\\\\\\$&"); //double escaped slashes
         safeText = safeText.replace(/[\.\*\+\?\^\$\{\}\(\)\|\[\]\-]/g, "\\$&"); // replace special characters
         safeText = safeText.replace(/[\"]/g, "\\\\$&"); //double quotes
-
     }
-
 
     const RegExpCarriageReturnAtEnd = /\r$/;
 
@@ -35,20 +34,41 @@ const getLineEndString = (amountOfWhiteSpace: number): string => {
     return RegExpLineFeed + getRegExpExactWhiteSpace(amountOfWhiteSpace);
 };
 
-const getCellValue = (content: string, header: Header, headerColumnType: StructureHeaderColumnType, isSelected: boolean): string => {
-    let value = '';
+const getCellValue = (content: CellContents[], rowIndex: number, cellIndex: number, header: Header, headerColumnType: StructureHeaderColumnType, isSelected: boolean, wildcards: Wildcard[]): string => {
+    let value: string;
 
     if(isSelected && headerColumnType !== StructureHeaderColumnType.Custom) {
-        value = (content !== null) ? `"${escapeSpecialChars(content)}"` :  'null';
-     }
-     else {
-         value = (header.name.toLowerCase() === 'timestamp') ? `"${RegExpTimeStampPattern}"` : `"${RegExpValuePattern}"`;
-     }
+
+        if(content == null) 
+            value ="null";
+        else{
+            const valueParts: string[] = [];
+            for(let i=0; i < content.length; i++) {
+
+                if(content[i].wildcardIndex == null){
+                    valueParts.push(`${escapeSpecialChars(content[i].textValue)}`)
+                }else{
+                    const isFirstSubstitution = isSubstitutionFirstForWildcard(wildcards[content[i].wildcardIndex!], rowIndex, cellIndex, i);
+
+                    if(isFirstSubstitution){
+                        valueParts.push(`(?<c${content[i].wildcardIndex!}>${RegExpValuePattern})`);
+                    }else{
+                        valueParts.push(`\\k<c${content[i].wildcardIndex!}>`);
+                    }
+                }
+            }
+
+            value = '"' + valueParts.join("") + '"';
+        }         
+    }
+    else {
+        value = (header.name.toLowerCase() === 'timestamp') ? `"${RegExpTimeStampPattern}"` : `"${RegExpValuePattern}"`;
+    }
 
      return value;
 };
 
-const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeaderColumnType[], row: string[], cellSelection: boolean[]): string => {
+const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeaderColumnType[], row: CellContents[][], rowIndex: number, cellSelection: boolean[], wildcards: Wildcard[]): string => {
     let objectString = '{' + getLineEndString(4);
     let rowString = '';
     let hasProcessedLastUsableColumn = false;
@@ -60,7 +80,7 @@ const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeader
         const isCellSelected = cellSelection[c];
 
         if(headerType !== StructureHeaderColumnType.Custom && row[c] !== undefined) {
-            let valueString = getCellValue(row[c], logHeaders[c], headerType, isCellSelected);
+            let valueString = getCellValue(row[c], rowIndex, c, logHeaders[c], headerType, isCellSelected, wildcards);
             let headerAndCellString = '';
 
             if(hasProcessedLastUsableColumn){
@@ -81,15 +101,13 @@ const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeader
     return objectString;
 };
 
-export const useStructureQueryConstructor = (logHeaders: Header[],
-                                       headerColumnTypes: StructureHeaderColumnType[],
-                                       structureEntries: StructureEntry[]):string => {
+export const useStructureQueryConstructor = (logHeaders: Header[], headerColumnTypes: StructureHeaderColumnType[], structureEntries: StructureEntry[], wildcards: Wildcard[]):string => {
     let regularExp = '';
 
     for(let r = 0; r < structureEntries.length; r++){
         const structureEntry = structureEntries[r];
 
-        const rowRegExp = getRegExpForLogEntry(logHeaders, headerColumnTypes, structureEntry.row, structureEntry.cellSelection);
+        const rowRegExp = getRegExpForLogEntry(logHeaders, headerColumnTypes, structureEntry.row, r, structureEntry.cellSelection, wildcards);
         regularExp = regularExp.concat(rowRegExp);
 
         if(structureEntry.structureLink !== undefined) {
@@ -110,6 +128,8 @@ export const useStructureQueryConstructor = (logHeaders: Header[],
             regularExp = regularExp.concat(structureLinkRegExp);
         }
     }
+
+    console.log(regularExp);
 
     return regularExp;
 }
