@@ -6,8 +6,6 @@ import { motion } from "framer-motion";
 interface Props {
     parentDivId: string
     items: ContextMenuItem[],
-    isRenderedAbove: boolean;
-
 }
 
 interface State {
@@ -86,11 +84,12 @@ renderMenuOptions(){
 }
 
 render() {
-    const { isRenderedAbove, items} = this.props;
+    const {items} = this.props;
     const { showMenu, xPos, yPos } = this.state;
-    const dialogHeight = items.length * 28;
+    const contextMenuHeight = items.length * 28;
+    const contextMenuWidth = 120;
 
-    const contextMenuStyle = getContextMenuStyle(isRenderedAbove, dialogHeight, xPos, yPos);
+    const contextMenuStyle = getContextMenuStyle(contextMenuHeight, contextMenuWidth, xPos, yPos);
 
     if (showMenu)
         return (

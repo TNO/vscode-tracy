@@ -240,13 +240,22 @@ export const getLogViewStructureMatchStyle = (currentStructureMatch: number[], s
     return structureMatchRowStyle;
 };
 
-export const getContextMenuStyle = (isRenderedAbove: boolean, dialogHeight: number, xPos: number, yPos: number): React.CSSProperties => {
+export const getContextMenuStyle = (contextMenuHeight: number, contextMenuWidth: number, xPos: number, yPos: number): React.CSSProperties => {
     const contextMenuStyle: React.CSSProperties = {
-        top: isRenderedAbove ? yPos - dialogHeight : yPos,
+        height: contextMenuHeight,
+        width: contextMenuWidth,
+        top:yPos,
         left: xPos,
         position: 'fixed',
         userSelect: 'none'
         };
+
+        const vw = document.documentElement.clientWidth;
+        const vh = document.documentElement.clientHeight;
+
+        if (xPos + contextMenuWidth > vw) contextMenuStyle.left = vw - contextMenuWidth;
+
+        if (yPos + contextMenuHeight > vh) contextMenuStyle.top = vh - contextMenuHeight;
 
     return contextMenuStyle;
 }
@@ -260,6 +269,7 @@ export const getContextMenuItemStyle = (isSelected: boolean): React.CSSPropertie
         paddingRight: '5px',
         borderRadius: '4px',
         cursor:'pointer',
+        textOverflow: 'ellipsis',
         background: isSelected ? 'var(--vscode-menu-selectionBackground)': '',
         color: isSelected ? 'var(--vscode-menu-selectionForeground)': ''
     };
