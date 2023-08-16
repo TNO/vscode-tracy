@@ -323,7 +323,6 @@ export default class StructureDialog extends React.Component<Props, State> {
                     onStructureEntryRemoved = {(structureEntryIndex) => this.removeStructureEntry(structureEntryIndex)}/>
                     <ContextMenu 
                         items={contextMenuItems}
-                        isRenderedAbove = {true}
                         parentDivId='StructureDialog'/>
                 <div style={{textAlign: 'right', padding: '5px'}}>
                     <VSCodeButton className='structure-result-element' onClick={() => {this.toggleIsRemovingStructureEntries();}}>
