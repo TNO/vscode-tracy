@@ -166,11 +166,17 @@ export const removeWildcardFromCellContent = (cellContents: CellContents[], wild
 
     if(contentsIndex === 0) {
         let contentsAfterCurrent = cellContents.slice(contentsIndex + 1);
-        contentsAfterCurrent[0].textValue = contentsToBeRemoved.textValue + contentsAfterCurrent[0].textValue;
 
-        contentsAfterCurrent = updateCellContentsIndices(contentsAfterCurrent, 0);
+        if (contentsAfterCurrent.length !== 0){
+            contentsAfterCurrent[0].textValue =  contentsToBeRemoved.textValue + contentsAfterCurrent[0].textValue;
 
-        finalCellContents = contentsAfterCurrent;
+            contentsAfterCurrent = updateCellContentsIndices(contentsAfterCurrent, 0);
+    
+            finalCellContents = contentsAfterCurrent;
+        }else{
+            finalCellContents.push({contentsIndex: 0, textValue: contentsToBeRemoved.textValue, wildcardIndex: null});
+        }
+
     } else if(contentsIndex === cellContents.length - 1) {
         const contentsBeforeCurrent = cellContents.slice(0, contentsIndex);
         contentsBeforeCurrent[contentsIndex - 1].textValue = contentsBeforeCurrent[contentsIndex - 1].textValue + contentsToBeRemoved.textValue;
