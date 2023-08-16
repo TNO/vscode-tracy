@@ -38,11 +38,11 @@ const getCellValue = (content: CellContents[], rowIndex: number, cellIndex: numb
     let value: string;
 
     if(isSelected && headerColumnType !== StructureHeaderColumnType.Custom) {
-
-        if(content == null) 
-            value ="null";
+        if(content[0].textValue == null) 
+            value = "null";
         else{
             const valueParts: string[] = [];
+            
             for(let i=0; i < content.length; i++) {
 
                 if(content[i].wildcardIndex == null){
@@ -65,7 +65,7 @@ const getCellValue = (content: CellContents[], rowIndex: number, cellIndex: numb
         value = (header.name.toLowerCase() === 'timestamp') ? `"${RegExpTimeStampPattern}"` : `"${RegExpValuePattern}"`;
     }
 
-     return value;
+    return value;
 };
 
 const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeaderColumnType[], row: CellContents[][], rowIndex: number, cellSelection: boolean[], wildcards: Wildcard[]): string => {
