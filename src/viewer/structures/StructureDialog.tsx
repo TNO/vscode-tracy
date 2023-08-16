@@ -307,7 +307,7 @@ export default class StructureDialog extends React.Component<Props, State> {
                 <div style={{display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'top'}}>
                     <div className='title-small'>Structure Matching</div>
                     <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
-                        <Tooltip title={<><h2>Help</h2><ul><li>item 1</li><li>item 2</li></ul></>} placement="right" arrow><i className='codicon codicon-question' /></Tooltip>
+                        {false && <Tooltip title={<><h2>Help</h2><ul><li>item 1</li><li>item 2</li></ul></>} placement="right" arrow><i className='codicon codicon-question' /></Tooltip>}
                         <VSCodeButton appearance='icon' onClick={() => this.props.onClose()}>
                             <i className='codicon codicon-close'/>
                         </VSCodeButton>
