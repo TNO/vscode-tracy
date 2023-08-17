@@ -495,6 +495,8 @@ export default class StructureDialog extends React.Component<Props, State> {
 					);
 			}
 
+            this.props.onStructureUpdate();
+            
 			this.setState({
 				structureEntries: modifiedStructureEntries,
 				wildcards: wildcardsCopy,
