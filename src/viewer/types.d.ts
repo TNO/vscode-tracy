@@ -1,6 +1,4 @@
-import { type } from "os"
 import { StructureLinkDistance } from "./constants"
-import { ReactElement } from "react"
 
 export interface LogViewState {
     height: number,
