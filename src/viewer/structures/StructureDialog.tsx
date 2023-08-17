@@ -6,7 +6,7 @@ import { StructureHeaderColumnType } from '../constants';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useStructureQueryConstructor } from '../hooks/useStructureRegularExpressionManager';
 import { constructStructureEntriesArray, appendNewStructureEntries, removeStructureEntryFromList, toggleCellSelection, toggleStructureLink, removeLastStructureLink, addWildcardToStructureEntry, removeWildcardFromStructureEntry, updateStructureEntriesAfterWildcardDeletion } from '../hooks/useStructureEntryManager'; 
-import { createWildcard, getIndicesForWildcardFromDivId, insertWildcardIntoCellsContents, getContentsIndexOfNewWildcard, removeWildcardSubstitution, removeWildcardSubstitutionForEntry, getWildcardIndex, removeWildcardFromCellContent } from '../hooks/useWildcardManager';
+import { createWildcard, getIndicesForWildcardFromDivId, insertWildcardIntoCellsContents, removeWildcardSubstitution, removeWildcardSubstitutionsForStructureEntry, getWildcardIndex, removeWildcardFromCellContent } from '../hooks/useWildcardManager';
 import { StructureDialogBackdropStyle, StructureDialogDialogStyle } from '../hooks/useStyleManager';
 import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
@@ -132,9 +132,14 @@ export default class StructureDialog extends React.Component<Props, State> {
         const {structureEntries, wildcards} = this.state;
         const wildcardsCopy = cloneDeep(wildcards);
 
-        const modifiedWildcards = removeWildcardSubstitutionForEntry(wildcardsCopy, rowIndex);
+        const wildcardRemovalResults = removeWildcardSubstitutionsForStructureEntry(wildcardsCopy, rowIndex);
+        const modifiedWildcards = wildcardRemovalResults.modifiedWildcards;
 
         const remainingEntries = removeStructureEntryFromList(structureEntries, rowIndex);
+
+        wildcardRemovalResults.indicesOfWildcardsToBeRemoved.forEach(index =>{
+            updateStructureEntriesAfterWildcardDeletion(remainingEntries, modifiedWildcards, index );
+        });
         
         if(remainingEntries.length === 0) {
             this.props.onClose();
@@ -163,6 +168,7 @@ export default class StructureDialog extends React.Component<Props, State> {
     toggleStructureLink(structureEntryIndex: number) {
         let {structureEntries} = this.state;
         const structureEntriesCopy = cloneDeep(structureEntries);
+        
         structureEntries = toggleStructureLink(structureEntriesCopy, structureEntryIndex);
 
         this.setState({structureEntries: structureEntries});
@@ -201,22 +207,18 @@ export default class StructureDialog extends React.Component<Props, State> {
             const cellIndex = +indicesForWildcard[2];
             const contentsIndex = +indicesForWildcard[3];
 
-            //create new wildcard
             const newWildcard = createWildcard(entryIndex, cellIndex, contentsIndex);
 
-            //update wildcards list
             wildcardsCopy.push(newWildcard);
 
-            //update Structure Entry
             const wildcardIndex = wildcardsCopy.length - 1;
             const modifiedStructureEntries = addWildcardToStructureEntry(structureEntriesCopy, entryIndex, cellIndex, wildcardIndex);
 
-            //update cellsWithWildcards
             const insertionResults = insertWildcardIntoCellsContents(structureEntriesCopy[entryIndex].row[cellIndex], wildcardsCopy, entryIndex, cellIndex, wildcardIndex, contentsIndex, startOffset, endOffset);
             structureEntriesCopy[entryIndex].row[cellIndex] = insertionResults.cellContents;
             wildcardsCopy = insertionResults.wildcards;
 
-            wildcardsCopy[wildcardIndex].wildcardSubstitutions[0].contentsIndex = getContentsIndexOfNewWildcard(insertionResults.cellContents, wildcardIndex);
+            wildcardsCopy[wildcardIndex].wildcardSubstitutions[0].contentsIndex = insertionResults.insertedWildcardContentsIndex;
 
             this.setState({structureEntries: modifiedStructureEntries, wildcards: wildcardsCopy});
         }
@@ -242,18 +244,15 @@ export default class StructureDialog extends React.Component<Props, State> {
             const cellIndex = +indicesForWildcard[2];
             const contentsIndex = +indicesForWildcard[3];
 
-            //update Structure Entry
             const modifiedStructureEntries = addWildcardToStructureEntry(structureEntriesCopy, entryIndex, cellIndex, wildcardIndex);
 
             const insertionResults = insertWildcardIntoCellsContents(structureEntriesCopy[entryIndex].row[cellIndex], wildcardsCopy, entryIndex, cellIndex, wildcardIndex, contentsIndex, startOffset, endOffset);
             structureEntriesCopy[entryIndex].row[cellIndex] = insertionResults.cellContents;
             wildcardsCopy = insertionResults.wildcards;
 
-            const updatedContentsIndex = getContentsIndexOfNewWildcard(insertionResults.cellContents, wildcardIndex);
-            const newWildcardSubstitution = {entryIndex: entryIndex, cellIndex: cellIndex, contentsIndex: updatedContentsIndex};
+            const newWildcardSubstitution = {entryIndex: entryIndex, cellIndex: cellIndex, contentsIndex: insertionResults.insertedWildcardContentsIndex};
             wildcardsCopy[wildcardIndex].wildcardSubstitutions.push(newWildcardSubstitution);
 
-            // console.log(wildcardsCopy);
             this.setState({structureEntries: modifiedStructureEntries, wildcards: wildcardsCopy});
         }
     }
@@ -273,24 +272,20 @@ export default class StructureDialog extends React.Component<Props, State> {
 
             const wildcardIndex = getWildcardIndex(wildcardsCopy, entryIndex, cellIndex, contentsIndex);
 
-            //update Structure Entry
-            let modifiedStructureEntries = removeWildcardFromStructureEntry(structureEntriesCopy, entryIndex, cellIndex, wildcardIndex);
-
-            //update cellsWithWildcards
-            const removalResults = removeWildcardFromCellContent(structureEntriesCopy[entryIndex].row[cellIndex], wildcardsCopy, entryIndex, cellIndex, contentsIndex);
-            structureEntriesCopy[entryIndex].row[cellIndex] = removalResults.cellContents;
-            wildcardsCopy = removalResults.wildcards;
-
             const wildcardsUpdateResult = removeWildcardSubstitution(wildcardsCopy, wildcardIndex, entryIndex, cellIndex, contentsIndex);
             wildcardsCopy = wildcardsUpdateResult.wildcards;
+
+            let modifiedStructureEntries = removeWildcardFromStructureEntry(structureEntriesCopy, entryIndex, cellIndex, wildcardIndex);
+
+            const removalResults = removeWildcardFromCellContent(structureEntriesCopy[entryIndex].row[cellIndex], wildcardsCopy, entryIndex, cellIndex, contentsIndex);
+            structureEntriesCopy[entryIndex].row[cellIndex] = removalResults.cellContents;
+
+            wildcardsCopy = removalResults.wildcards;
 
             if(wildcardsUpdateResult.isWildcardDeleted) {
                 modifiedStructureEntries = updateStructureEntriesAfterWildcardDeletion(modifiedStructureEntries, wildcardsCopy, wildcardIndex);
             }
-
-            // console.log(modifiedStructureEntries);
-            // console.log(wildcardsCopy);
-            
+   
             this.setState({structureEntries: modifiedStructureEntries, wildcards: wildcardsCopy});
         }
     }

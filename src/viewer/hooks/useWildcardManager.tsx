@@ -25,30 +25,6 @@ export const updateCellContentsIndices = (cellContents: CellContents[], starting
     return modifiedContents;
 };
 
-export const getContentsIndexOfNewWildcard = (cellContents: CellContents[], wildcardIndex: number): number => {
-    let contentsIndex = -1;
-
-    cellContents.forEach(contents => {
-        if(contents.wildcardIndex === wildcardIndex){
-            contentsIndex = contents.contentsIndex;
-        }
-    });
-
-    return contentsIndex;
-};
-
-export const getContentsIndexOfExistingWildcard = (cellContents: CellContents[], wildcardIndex: number, previousContentsIndex: number): number => {
-    let contentsIndex = -1;
-
-    cellContents.forEach((contents, ind) => {
-        if(ind === previousContentsIndex && contents.wildcardIndex === wildcardIndex){
-            contentsIndex = contents.contentsIndex;
-        }
-    });
-
-    return contentsIndex;
-};
-
 export const getIndicesForWildcardFromDivId = (divId: string):string[] => {
     const indicesForWildcard: string[] = [];
     const chars = divId.split('-');
@@ -58,7 +34,7 @@ export const getIndicesForWildcardFromDivId = (divId: string):string[] => {
     return indicesForWildcard;
 }
 
-export const insertWildcardIntoCellsContents = (cellContents: CellContents[], wildcards: Wildcard[], structureEntryIndex: number, cellIndex: number, wildcardIndex: number, contentsIndex: number, startIndex: number, endIndex: number): {wildcards: Wildcard[], cellContents: CellContents[]} => {
+export const insertWildcardIntoCellsContents = (cellContents: CellContents[], wildcards: Wildcard[], structureEntryIndex: number, cellIndex: number, wildcardIndex: number, contentsIndex: number, startIndex: number, endIndex: number): {wildcards: Wildcard[], insertedWildcardContentsIndex: number, cellContents: CellContents[]} => {
     let finalCellContents: CellContents[] = [];
 
     const contentsBeforeCurrent = cellContents.slice(0, contentsIndex);
@@ -70,21 +46,16 @@ export const insertWildcardIntoCellsContents = (cellContents: CellContents[], wi
     const isFirst = contentsBeforeCurrent.length === 0;
     const isLast = contentsAfterCurrent.length === 0;
 
+    const cellContentsSplitResults = getCellContentsFromTextValue(contentsToBeModifiedText, wildcardIndex, contentsIndex, startIndex, endIndex);
 
-    const modifiedCellContents = getCellContentsFromTextValue(contentsToBeModifiedText, wildcardIndex, contentsIndex, startIndex, endIndex);
+    if(!isFirst) finalCellContents.push(...contentsBeforeCurrent);
 
-    if(!isFirst) {
-        finalCellContents.push(...contentsBeforeCurrent);
-    }
+    finalCellContents.push(...cellContentsSplitResults.cellContents);
 
-    finalCellContents.push(...modifiedCellContents);
-
-    if(!isLast) {
-        finalCellContents.push(...contentsAfterCurrent);
-    }
+    if(!isLast) finalCellContents.push(...contentsAfterCurrent);
 
     wildcards.forEach(wildcard => {
-        const nrOfSteps = modifiedCellContents.length -1;
+        const nrOfSteps = cellContentsSplitResults.cellContents.length - 1;
 
         for( let s=0; s < wildcard.wildcardSubstitutions.length; s++){
             if(wildcard.wildcardSubstitutions[s].entryIndex === structureEntryIndex && wildcard.wildcardSubstitutions[s].cellIndex === cellIndex){
@@ -97,66 +68,70 @@ export const insertWildcardIntoCellsContents = (cellContents: CellContents[], wi
 
     finalCellContents = updateCellContentsIndices(finalCellContents, 0);
 
-    return {wildcards: wildcards, cellContents: finalCellContents};
+    return {wildcards: wildcards, insertedWildcardContentsIndex: cellContentsSplitResults.wildcardContentsIndex, cellContents: finalCellContents};
 }
 
-const getCellContentsFromTextValue = (textValue: string, wildcardIndex: number, contentsIndex: number, startIndex: number, endIndex: number) => {
+const getCellContentsFromTextValue = (textValue: string, wildcardIndex: number, contentsIndex: number, startIndex: number, endIndex: number): {wildcardContentsIndex: number, cellContents: CellContents[]} => {
     const cellContents: CellContents[] = [];
     const chars = [...textValue]
 
     const stringBeforeWildcard = chars.slice(0, startIndex);
-
-    if(stringBeforeWildcard.length > 0){
-        const textContentsBeforeWildcard = getCellContents(contentsIndex, stringBeforeWildcard.join(""), null);
-        cellContents.push(textContentsBeforeWildcard);
-    }
-
     const textToBeSubstitutedByWildcard = chars.slice(startIndex, endIndex);
-    const wildcardContents = getCellContents(contentsIndex + 1,textToBeSubstitutedByWildcard.join(""), wildcardIndex);
-    cellContents.push(wildcardContents);
-
     const stringAfterWildcard = chars.slice(endIndex);
 
-    if(stringAfterWildcard.length > 0){
+    let wildcardContents, textContentsAfterWildcard: CellContents;
+    let newWildcardContentsIndex: number;
 
-        const textContentsAfterWildcard = getCellContents(contentsIndex + 2, stringAfterWildcard.join(""), null);
+    if(stringBeforeWildcard.length > 0){
+        const textContentsBeforeWildcard = createCellContents(contentsIndex, stringBeforeWildcard.join(""), null);
+        cellContents.push(textContentsBeforeWildcard);
+
+        newWildcardContentsIndex = contentsIndex + 1;        
+    }else{
+        newWildcardContentsIndex = contentsIndex;
+    }
+
+    wildcardContents = createCellContents(newWildcardContentsIndex ,textToBeSubstitutedByWildcard.join(""), wildcardIndex);
+    cellContents.push(wildcardContents);
+
+    if(stringAfterWildcard.length > 0){
+        textContentsAfterWildcard = createCellContents(newWildcardContentsIndex + 1, stringAfterWildcard.join(""), null);
         cellContents.push(textContentsAfterWildcard);
     }
 
-    return cellContents;
+    return {wildcardContentsIndex: newWildcardContentsIndex, cellContents: cellContents};
 }
 
 export const removeWildcardSubstitution= (wildcards: Wildcard[], wildcardIndex: number, entryIndex: number, cellIndex: number, contentsIndex: number): {wildcards: Wildcard[], isWildcardDeleted: boolean} => {
     let modifiedWildcards = wildcards;
     let isDeleted;
-    const wildcard = modifiedWildcards[wildcardIndex];
 
-    const filteredSubstitutions = wildcard.wildcardSubstitutions.filter(value => entryIndex !== value.entryIndex || cellIndex !== value.cellIndex || contentsIndex !== value.contentsIndex)
+    const filteredSubstitutions = modifiedWildcards[wildcardIndex].wildcardSubstitutions.filter(value => entryIndex !== value.entryIndex || cellIndex !== value.cellIndex || contentsIndex !== value.contentsIndex);
+
+    modifiedWildcards[wildcardIndex].wildcardSubstitutions = filteredSubstitutions;
+
     if(filteredSubstitutions.length === 0){
-        modifiedWildcards = modifiedWildcards.filter((val, ind) => ind !== wildcardIndex);
+        modifiedWildcards = modifiedWildcards.filter((_val, ind) => ind !== wildcardIndex);
         isDeleted = true;
     }
 
     return {wildcards: modifiedWildcards, isWildcardDeleted: isDeleted};    
 }
 
-export const removeWildcardSubstitutionForEntry= (wildcards: Wildcard[], entryIndex: number) => {
-    let modifiedWildcards = wildcards;
+export const removeWildcardSubstitutionsForStructureEntry= (wildcards: Wildcard[], entryIndex: number):{modifiedWildcards: Wildcard[], indicesOfWildcardsToBeRemoved: number[]} => {
+    let modifiedWildcards: Wildcard[] = [];
     const indicesOfWildcardsToBeRemoved: number[] = [];
 
-    modifiedWildcards.forEach((wildcard, ind) => {
-        const filteredSubstitutions =  wildcard.wildcardSubstitutions.filter(substitution => substitution.entryIndex !== entryIndex);
+    wildcards.forEach((wildcard, ind) => {
+        const wildcardSubstitutionsInOtherEntries =  wildcard.wildcardSubstitutions.filter(substitution => substitution.entryIndex !== entryIndex);
 
-        if(filteredSubstitutions.length == 0){
-            indicesOfWildcardsToBeRemoved.push(ind)
+        if(wildcardSubstitutionsInOtherEntries.length !== 0){
+            modifiedWildcards.push({wildcardSubstitutions: wildcardSubstitutionsInOtherEntries});
         }else{
-            wildcard.wildcardSubstitutions = filteredSubstitutions;
+            indicesOfWildcardsToBeRemoved.push(ind)
         }
     });
-
-    modifiedWildcards = modifiedWildcards.filter((wildcard, ind) => !indicesOfWildcardsToBeRemoved.some( value => value === ind));
-
-    return modifiedWildcards;
+    return {modifiedWildcards, indicesOfWildcardsToBeRemoved};
 }
 
 export const removeWildcardFromCellContent = (cellContents: CellContents[], wildcards: Wildcard[], entryIndex: number, cellIndex: number, contentsIndex: number): {wildcards: Wildcard[], cellContents: CellContents[]} => {
@@ -262,7 +237,7 @@ export const removeWildcardFromCellContent = (cellContents: CellContents[], wild
     return {wildcards: wildcards, cellContents: finalCellContents};
 }
 
-export const getCellContents = (contentsIndex: number, textValue: string, wildcardIndex: number | null): CellContents => {
+export const createCellContents = (contentsIndex: number, textValue: string, wildcardIndex: number | null): CellContents => {
     const newCellContent: CellContents = {
         contentsIndex: contentsIndex,
         textValue: textValue,
@@ -319,8 +294,6 @@ export const isSubstitutionFirstForWildcard = (wildcard: Wildcard, structureEntr
         if(smallestContentsIndex == null || (smallestStructureEntry === structureEntryIndex && smallestcellIndex === substitution.cellIndex && smallestContentsIndex > substitution.contentsIndex))
             smallestContentsIndex = substitution.contentsIndex;
     })
-
-    // console.log(smallestStructureEntry, smallestcellIndex, smallestContentsIndex);
 
     if(structureEntryIndex === smallestStructureEntry && cellIndex === smallestcellIndex && contentsIndex === smallestContentsIndex)
         isSubstitutionFirst = true;
