@@ -6,8 +6,7 @@ const getLogViewRowStyle = (rowIndex: number): React.CSSProperties => {
         position: 'absolute', 
         height: LOG_ROW_HEIGHT, 
         overflow: 'hidden', 
-        top: rowIndex * LOG_ROW_HEIGHT, 
-        userSelect: 'none',
+        top: rowIndex * LOG_ROW_HEIGHT,
         borderRadius: '5px'
     };
 
@@ -70,8 +69,7 @@ export const getHeaderColumnInnerStyle = (height: number, isHeader: boolean): Re
         height,
         alignItems: 'center',
         justifyContent: isHeader ? 'center' : 'left',  
-        paddingLeft: '2px',
-        userSelect: 'none'
+        paddingLeft: '2px'
     };
 
     return headerColumnInnerStyle;

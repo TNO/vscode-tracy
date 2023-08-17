@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import LogFile from './LogFile';
@@ -72,12 +72,6 @@ export default class App extends React.Component<Props, State> {
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
         this.vscode.postMessage({type: 'update'});
-    }
-
-    componentDidMount(): void {
-        document.addEventListener("contextmenu", (event) => {
-            event.preventDefault();
-          });
     }
 
     componentDidUpdate(prevProps: Props, prevState: State) {
@@ -194,32 +188,36 @@ export default class App extends React.Component<Props, State> {
     }
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
-        const {structureMatchesLogRows, lastSelectedRow} = this.state;
-        const newSelectedRows = this.state.selectedRowsTypes;
+        if(event.ctrlKey) {
 
-        if(!structureMatchesLogRows.includes(rowIndex)) {
-            if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
+            const {structureMatchesLogRows, lastSelectedRow} = this.state;
+            const newSelectedRows = this.state.selectedRowsTypes;
 
-                // Shift click higher in the event log
-                if(lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
+            if(!structureMatchesLogRows.includes(rowIndex)) {
+                
+                if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
     
-                    for(let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
-                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                    // Shift click higher in the event log
+                    if(lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
+        
+                        for(let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
+                            newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        }
+        
                     }
-    
-                }
-                // Shift click lower in the event log
-                else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
-                    for(let i = rowIndex; i < lastSelectedRow + 1; i++){
-                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                    // Shift click lower in the event log
+                    else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
+                        for(let i = rowIndex; i < lastSelectedRow + 1; i++){
+                            newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        }
                     }
+                }else {
+                    newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
                 }
-            }else {
-                newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+        
+                this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
             }
-    
-            this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
-        }        
+        }
     }
 
     clearSelectedRowsTypes(): SelectedRowType[] {
