@@ -1,5 +1,5 @@
 import React from "react";
-import Tooltip from "@mui/material/Tooltip";
+import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
 import StructureTable from "./StructureTable";
 import { ContextMenuItem, Header, StructureEntry, Wildcard } from "../types";
 import { StructureHeaderColumnType } from "../constants";
@@ -32,6 +32,8 @@ import {
 import isEqual from "lodash/isEqual";
 import cloneDeep from "lodash/cloneDeep";
 import ContextMenu from "../contextMenu/contextMenu";
+import { width } from "@mui/system";
+import { styled } from "@mui/material/styles";
 
 interface Props {
 	logHeaderColumns: Header[];
@@ -500,6 +502,8 @@ export default class StructureDialog extends React.Component<Props, State> {
 		}
 	}
 
+
+
 	render() {
 		const {
 			structureEntries,
@@ -510,6 +514,14 @@ export default class StructureDialog extends React.Component<Props, State> {
 		const structureEntriesCopy = cloneDeep(structureEntries);
 		const wildcardsCopy = cloneDeep(wildcards);
 		const contextMenuItems = this.getContextMenuItems();
+
+        const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
+            <Tooltip {...props} classes={{ popper: className }} />
+          ))({
+            [`& .${tooltipClasses.tooltip}`]: {
+              maxWidth: 900,
+            },
+          });
 
 		return (
 			<div style={StructureDialogBackdropStyle}>
@@ -530,23 +542,26 @@ export default class StructureDialog extends React.Component<Props, State> {
 								alignItems: "center",
 							}}
 						>
-							{false && (
-								<Tooltip
+								<CustomWidthTooltip
 									title={
 										<>
-											<h2>Help</h2>
-											<ul>
-												<li>item 1</li>
-												<li>item 2</li>
-											</ul>
+                                            <h2 style={{fontSize: '32px', fontWeight: 'bold'}}>Help</h2>
+                                            <ul>
+                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Ignoring cells</b>: Hold <b>CTRL</b> and click on a cell to ignore it or stop ignoring it. Hold <b>SHIFT+CTRL</b> to ignore the cell and stop ignoring all others, or ignore all other cells instead. </li>
+                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Constraining distance between structure rows</b>: Change the constraint on the distance between two rows by clicking on the link icon between them. This icon is three horizontal dots by default.</li>
+                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Creating wildcards</b>: Selecting a part of the text in a cell, right click and select "<i>Create wildcard</i>" to create a new wildcard. A wildcard can be used to abstract away any specific data.</li>
+                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Using wildcards</b>: Selecting a part of the text in a cell, right click and select "<i>Use wildcard wildcard id</i>". Any value could be abstracted by the wildcard, but the value has to be the same in all places where this wildcard is used.</li>
+                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Removing wildcards</b>: Hover over a wildcard, right click and select "<i>Remove wildcard</i>". If the wildcard is used in multiple places, only the selected one will be removed.</li>
+                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Removing rows</b>: Click on the <b>Remove rows</b> button on the bottom right of the dialogue. A red cross will appear to the left of every row in the structure, by clicking on a cross, the row will be removed from the structure. Click the<b>Done</b> button afterwards.</li>
+                                            </ul>
 										</>
 									}
+                                    sx={{m: 1}}
 									placement="right"
 									arrow
 								>
 									<i className="codicon codicon-question" />
-								</Tooltip>
-							)}
+								</CustomWidthTooltip>
 							<VSCodeButton
 								appearance="icon"
 								onClick={() => this.props.onClose()}
