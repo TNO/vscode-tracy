@@ -79,7 +79,7 @@ const getCellContentsFromTextValue = (textValue: string, wildcardIndex: number, 
     const textToBeSubstitutedByWildcard = chars.slice(startIndex, endIndex);
     const stringAfterWildcard = chars.slice(endIndex);
 
-    let wildcardContents, textContentsAfterWildcard: CellContents;
+    let textContentsAfterWildcard: CellContents;
     let newWildcardContentsIndex: number;
 
     if(stringBeforeWildcard.length > 0){
@@ -91,7 +91,7 @@ const getCellContentsFromTextValue = (textValue: string, wildcardIndex: number, 
         newWildcardContentsIndex = contentsIndex;
     }
 
-    wildcardContents = createCellContents(newWildcardContentsIndex ,textToBeSubstitutedByWildcard.join(""), wildcardIndex);
+    const wildcardContents = createCellContents(newWildcardContentsIndex ,textToBeSubstitutedByWildcard.join(""), wildcardIndex);
     cellContents.push(wildcardContents);
 
     if(stringAfterWildcard.length > 0){
@@ -119,7 +119,7 @@ export const removeWildcardSubstitution= (wildcards: Wildcard[], wildcardIndex: 
 }
 
 export const removeWildcardSubstitutionsForStructureEntry= (wildcards: Wildcard[], entryIndex: number):{modifiedWildcards: Wildcard[], indicesOfWildcardsToBeRemoved: number[]} => {
-    let modifiedWildcards: Wildcard[] = [];
+    const modifiedWildcards: Wildcard[] = [];
     const indicesOfWildcardsToBeRemoved: number[] = [];
 
     wildcards.forEach((wildcard, ind) => {

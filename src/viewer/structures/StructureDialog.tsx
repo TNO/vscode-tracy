@@ -32,7 +32,6 @@ import {
 import isEqual from "lodash/isEqual";
 import cloneDeep from "lodash/cloneDeep";
 import ContextMenu from "../contextMenu/contextMenu";
-import { width } from "@mui/system";
 import { styled } from "@mui/material/styles";
 
 interface Props {
@@ -496,10 +495,11 @@ export default class StructureDialog extends React.Component<Props, State> {
 			}
 
             this.props.onStructureUpdate();
-            
+
 			this.setState({
 				structureEntries: modifiedStructureEntries,
 				wildcards: wildcardsCopy,
+                isStructureMatching: false
 			});
 		}
 	}
