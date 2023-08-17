@@ -1,5 +1,5 @@
 import { StructureHeaderColumnType, StructureLinkDistance} from "../constants";
-import { StructureEntry } from "../types";
+import { StructureEntry, Wildcard } from "../types";
 
 export const constructStructureEntriesArray = (headerColumnTypes: StructureHeaderColumnType[], selectedRows: string[][]): StructureEntry[] => {
     const structureEntries:StructureEntry[] = [];
@@ -14,49 +14,82 @@ export const constructStructureEntriesArray = (headerColumnTypes: StructureHeade
 };
 
 export const constructNewStructureEntry = (headerColumnType: StructureHeaderColumnType[], row:string[]):StructureEntry => {
-    const allCellsSelected = row.map((v, i) => {
+    const rowCellContents = row.map((v, _i) => {return [{contentsIndex: 0, textValue: v, wildcardIndex: null}];});
+
+    const allCellsSelected = row.map((_v, i) => {
         if(headerColumnType[i] === StructureHeaderColumnType.Selected){
             return true;
         }
         return false;
     });
+
     const defaultStructureLink = StructureLinkDistance.Min;
 
-    const newEntry:StructureEntry = {row: row, cellSelection: allCellsSelected, structureLink: defaultStructureLink};
+    const arraysForWilcardIndexes:number[][] = [];
+    row.map(() => {
+        arraysForWilcardIndexes.push([]);
+    });
+
+    const newEntry:StructureEntry = {row: rowCellContents, cellSelection: allCellsSelected, structureLink: defaultStructureLink, wildcardsIndices: arraysForWilcardIndexes};
     
     return newEntry;
 };
 
 export const appendNewStructureEntries = (currentStructureEntries: StructureEntry[], newStructureEntries: StructureEntry[]): StructureEntry[] => {
     const lastIndexOfStructureEntry = currentStructureEntries.length - 1;
-    let finalStructureEntries: StructureEntry[] = currentStructureEntries;
+    let modifiedStructureEntries: StructureEntry[] = currentStructureEntries;
 
-    finalStructureEntries[lastIndexOfStructureEntry].structureLink = StructureLinkDistance.Min;
+    modifiedStructureEntries[lastIndexOfStructureEntry].structureLink = StructureLinkDistance.Min;
 
-    newStructureEntries.forEach(newEntry => {finalStructureEntries.push(newEntry)});
+    newStructureEntries.forEach(newEntry => {modifiedStructureEntries.push(newEntry)});
 
-    finalStructureEntries.sort((a,b) => a.row[0].localeCompare(b.row[0]));
+    modifiedStructureEntries.sort((a,b) => a.row[0][0].textValue.localeCompare(b.row[0][0].textValue));
 
-    finalStructureEntries = removeLastStructureLink(finalStructureEntries);
+    modifiedStructureEntries = removeLastStructureLink(modifiedStructureEntries);
 
-    return finalStructureEntries;
+    return modifiedStructureEntries;
 };
 
 export const removeStructureEntryFromList = (structureEntries: StructureEntry[], indexOfRowToBeRemoved: number): StructureEntry[] => {
     const lastIndexOfStructureEntry = structureEntries.length - 1;
-    const finalStructureEntries = structureEntries.filter((v, i) => i !== indexOfRowToBeRemoved);
+    const modifiedStructureEntries = structureEntries.filter((_v, i) => i !== indexOfRowToBeRemoved);
 
-    if(indexOfRowToBeRemoved === lastIndexOfStructureEntry && finalStructureEntries.length != 0) {
-        finalStructureEntries[lastIndexOfStructureEntry - 1].structureLink = undefined;
+    if(indexOfRowToBeRemoved === lastIndexOfStructureEntry && modifiedStructureEntries.length != 0) {
+        modifiedStructureEntries[lastIndexOfStructureEntry - 1].structureLink = undefined;
     }
 
-    return finalStructureEntries;
+    return modifiedStructureEntries;
 };
 
-export const toggleStructureLink = (structureEntries: StructureEntry[], structureEntryIndex: number): StructureEntry[] => {
-    const finalStructureEntries = structureEntries;
+export const updateStructureEntriesAfterWildcardDeletion = (structureEntries: StructureEntry[], wildcards: Wildcard[], deletedWildcardIndex: number): StructureEntry[] => {
+    const modifiedStructureEntries = structureEntries;
 
-    let structureLink = finalStructureEntries[structureEntryIndex].structureLink;
+    for(let e = 0; e < modifiedStructureEntries.length; e++) {
+
+        for(let c = 0; c < modifiedStructureEntries[e].row.length; c++) {
+            
+            for(let w = 0; w < modifiedStructureEntries[e].wildcardsIndices[c].length; w++){
+                if(modifiedStructureEntries[e].wildcardsIndices[c][w] > deletedWildcardIndex){
+                    modifiedStructureEntries[e].wildcardsIndices[c][w] -= 1;
+                }
+            }
+
+            for(let cc = 0; cc < modifiedStructureEntries[e].row[c].length; cc++){
+                
+                if(modifiedStructureEntries[e].row[c][cc].wildcardIndex && modifiedStructureEntries[e].row[c][cc].wildcardIndex! > deletedWildcardIndex){
+                    modifiedStructureEntries[e].row[c][cc].wildcardIndex! -= 1;
+                }
+            }
+        }
+    }
+
+    return modifiedStructureEntries;
+}
+
+export const toggleStructureLink = (structureEntries: StructureEntry[], structureEntryIndex: number): StructureEntry[] => {
+    const modifiedStructureEntries = structureEntries;
+
+    let structureLink = modifiedStructureEntries[structureEntryIndex].structureLink;
 
     switch(structureLink) {
         case StructureLinkDistance.None:
@@ -70,37 +103,56 @@ export const toggleStructureLink = (structureEntries: StructureEntry[], structur
             break;
     }
 
-    finalStructureEntries[structureEntryIndex].structureLink = structureLink;
+    modifiedStructureEntries[structureEntryIndex].structureLink = structureLink;
 
-    return finalStructureEntries;
+    return modifiedStructureEntries;
 };
 
-export const toggleCellSelection = (headerColumnType: StructureHeaderColumnType[], structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, isKeyPressed: boolean): StructureEntry[] => {
-    const finalStructureEntries = structureEntries;
-
-    const selectedCell = finalStructureEntries[structureEntryIndex].cellSelection[cellIndex];
+export const toggleCellSelection = (headerColumnType: StructureHeaderColumnType[], structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, isShiftPressed: boolean): StructureEntry[] => {
+    const modifiedStructureEntries = structureEntries;
+    let selectedCell = modifiedStructureEntries[structureEntryIndex].cellSelection[cellIndex];
 
     if(headerColumnType[cellIndex] !== StructureHeaderColumnType.Custom) {
-        if(isKeyPressed){
-            finalStructureEntries[structureEntryIndex].cellSelection.forEach((cell, index) => {
+        modifiedStructureEntries[structureEntryIndex].cellSelection[cellIndex] = !selectedCell;
+        selectedCell = modifiedStructureEntries[structureEntryIndex].cellSelection[cellIndex];
+
+        if(isShiftPressed){ //toggle the selection of all the other cells
+            modifiedStructureEntries[structureEntryIndex].cellSelection.forEach((cell, index) => {
     
                 if(index != cellIndex && headerColumnType[index] !== StructureHeaderColumnType.Custom) {
-                    finalStructureEntries[structureEntryIndex].cellSelection[index] = !selectedCell;
+                    modifiedStructureEntries[structureEntryIndex].cellSelection[index] = !selectedCell;
                 }
-    
-            });     
-        }else{
-            finalStructureEntries[structureEntryIndex].cellSelection[cellIndex] = !selectedCell;
+            });
         }
     }
 
-    return finalStructureEntries;
+    return modifiedStructureEntries;
 };
 
 export const removeLastStructureLink = (structureEntries: StructureEntry[]): StructureEntry[] => {
-    const finalStructureEntries = structureEntries;
+    const modifiedStructureEntries = structureEntries;
 
-    finalStructureEntries[finalStructureEntries.length - 1].structureLink = undefined;
+    modifiedStructureEntries[modifiedStructureEntries.length - 1].structureLink = undefined;
 
-    return finalStructureEntries;
+    return modifiedStructureEntries;
 };
+
+export const addWildcardToStructureEntry = (structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, wildcardIndex: number): StructureEntry[] => {
+    const modifiedStructureEntries = structureEntries;
+    modifiedStructureEntries[structureEntryIndex].wildcardsIndices[cellIndex].push(wildcardIndex);
+
+    return modifiedStructureEntries;
+}
+
+export const removeWildcardFromStructureEntry = (structureEntries: StructureEntry[], structureEntryIndex: number, cellIndex: number, wildcardIndex: number): StructureEntry[] => {
+    const modifiedStructureEntries = structureEntries;
+    // console.log('entryIndex:',structureEntryIndex);
+    // console.log('cellIndex:',cellIndex);
+    let wildcardsInCell = modifiedStructureEntries[structureEntryIndex].wildcardsIndices[cellIndex];
+
+    wildcardsInCell = wildcardsInCell.filter(value => value !== wildcardIndex);
+    
+    modifiedStructureEntries[structureEntryIndex].wildcardsIndices[cellIndex] = wildcardsInCell;
+
+    return modifiedStructureEntries;
+}

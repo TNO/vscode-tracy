@@ -1,7 +1,8 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import LogFile from './LogFile';
+import Tooltip from '@mui/material/Tooltip'
 import { LogViewState, StructureMatchId } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
@@ -187,32 +188,36 @@ export default class App extends React.Component<Props, State> {
     }
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
-        const {structureMatchesLogRows, lastSelectedRow} = this.state;
-        const newSelectedRows = this.state.selectedRowsTypes;
+        if(event.ctrlKey) {
 
-        if(!structureMatchesLogRows.includes(rowIndex)) {
-            if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
+            const {structureMatchesLogRows, lastSelectedRow} = this.state;
+            const newSelectedRows = this.state.selectedRowsTypes;
 
-                // Shift click higher in the event log
-                if(lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
+            if(!structureMatchesLogRows.includes(rowIndex)) {
+                
+                if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
     
-                    for(let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
-                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                    // Shift click higher in the event log
+                    if(lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
+        
+                        for(let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
+                            newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        }
+        
                     }
-    
-                }
-                // Shift click lower in the event log
-                else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
-                    for(let i = rowIndex; i < lastSelectedRow + 1; i++){
-                        newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                    // Shift click lower in the event log
+                    else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
+                        for(let i = rowIndex; i < lastSelectedRow + 1; i++){
+                            newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        }
                     }
+                }else {
+                    newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
                 }
-            }else {
-                newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+        
+                this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
             }
-    
-            this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
-        }        
+        }
     }
 
     clearSelectedRowsTypes(): SelectedRowType[] {
@@ -337,15 +342,21 @@ export default class App extends React.Component<Props, State> {
                 </div>                    
                 <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth, boxSizing: 'border-box'}}>
                     <div className='header-background' style={COLUMN_0_HEADER_STYLE}>
-                        <VSCodeButton appearance='icon' onClick={() => this.handleStructureDialogActions(false)}>
-                        <i className="codicon codicon-three-bars"/>
-                        </VSCodeButton>
-                        <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
-                        <i className="codicon codicon-tag"/>
-                        </VSCodeButton>
-                        <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
-                        <i className="codicon codicon-settings-gear"/>
-                        </VSCodeButton>
+                        <Tooltip title={<h3>Create a structure from selected rows</h3>} placement="bottom" arrow>
+                            <VSCodeButton appearance='icon' onClick={() => this.handleStructureDialogActions(false)}>
+                                <i className="codicon codicon-three-bars"/>
+                            </VSCodeButton>
+                        </Tooltip>
+                        <Tooltip title={<h3>Create/Modify Flag Annotations Columns</h3>} placement="bottom" arrow>
+                            <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
+                                <i className="codicon codicon-tag"/>
+                            </VSCodeButton>
+                        </Tooltip>
+                        <Tooltip title={<h3>Create/Modify State-Based Annotation Columns</h3>} placement="bottom" arrow>
+                            <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
+                                <i className="codicon codicon-settings-gear"/>
+                            </VSCodeButton>
+                        </Tooltip>    
                     </div>
                     {this.state.logViewState &&
                     <MinimapView

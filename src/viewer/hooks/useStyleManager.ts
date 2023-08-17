@@ -6,8 +6,7 @@ const getLogViewRowStyle = (rowIndex: number): React.CSSProperties => {
         position: 'absolute', 
         height: LOG_ROW_HEIGHT, 
         overflow: 'hidden', 
-        top: rowIndex * LOG_ROW_HEIGHT, 
-        userSelect: 'none',
+        top: rowIndex * LOG_ROW_HEIGHT,
         borderRadius: '5px'
     };
 
@@ -31,6 +30,12 @@ export const StructureDialogDialogStyle: React.CSSProperties = {
     flexDirection: 'column',
     overflow:'scroll'
 };
+
+export const WildcardStyle: React.CSSProperties = {
+    border:'1px solid',
+    borderRadius: '2px',
+    userSelect: 'none'
+}
 
 export const getStructureTableHeaderStyle = (containerWidth: number): React.CSSProperties => {
     const headerStyle: React.CSSProperties = {    
@@ -89,8 +94,7 @@ export const getStructureTableRowStyle= (rowIndex: number, structureLinkIndex: n
         position: 'absolute', 
         height: LOG_ROW_HEIGHT,
         top: rowIndex * LOG_ROW_HEIGHT + structureLinkIndex * STRUCTURE_LINK_HEIGHT,
-        overflow: 'hidden',
-        userSelect: 'none'
+        overflow: 'hidden'
     };
 
     return rowStyle;
@@ -134,12 +138,18 @@ export const getStructureTableCellSelectionStyle = (structureEntries: StructureE
             display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
             paddingLeft: '2px', 
             color: "var(--vscode-titleBar-inactiveForeground)",
-            background: 'repeating-linear-gradient(-55deg, #222222b3, #222222b3 10px, #333333b3 10px, #333333b3 20px)'
+            background: 'repeating-linear-gradient(-55deg, #222222b3, #222222b3 10px, #333333b3 10px, #333333b3 20px)',
+            userSelect: 'none'
         };
     }else {
         cellSelectionStyle = {
-            display: 'flex', height: LOG_ROW_HEIGHT, alignItems: 'center', justifyContent: 'left', 
-            paddingLeft: '2px', backgroundColor: 'transparent'
+            display: 'flex', 
+            height: LOG_ROW_HEIGHT, 
+            alignItems: 'center', 
+            justifyContent: 'left', 
+            paddingLeft: '2px', 
+            backgroundColor: 'transparent',
+            userSelect: 'text'
         };
     }
 
@@ -227,3 +237,40 @@ export const getLogViewStructureMatchStyle = (currentStructureMatch: number[], s
     
     return structureMatchRowStyle;
 };
+
+export const getContextMenuStyle = (contextMenuHeight: number, contextMenuWidth: number, xPos: number, yPos: number): React.CSSProperties => {
+    const contextMenuStyle: React.CSSProperties = {
+        height: contextMenuHeight,
+        width: contextMenuWidth,
+        top:yPos,
+        left: xPos,
+        position: 'fixed',
+        userSelect: 'none'
+        };
+
+        const vw = document.documentElement.clientWidth;
+        const vh = document.documentElement.clientHeight;
+
+        if (xPos + contextMenuWidth > vw) contextMenuStyle.left = vw - contextMenuWidth;
+
+        if (yPos + contextMenuHeight > vh) contextMenuStyle.top = vh - contextMenuHeight;
+
+    return contextMenuStyle;
+}
+
+
+export const getContextMenuItemStyle = (isSelected: boolean): React.CSSProperties => {
+    const contextMenuItemStyle: React.CSSProperties = {
+        height: '28px', 
+        lineHeight: '28px',
+        paddingLeft: '5px',
+        paddingRight: '5px',
+        borderRadius: '4px',
+        cursor:'pointer',
+        textOverflow: 'ellipsis',
+        background: isSelected ? 'var(--vscode-menu-selectionBackground)': '',
+        color: isSelected ? 'var(--vscode-menu-selectionForeground)': ''
+    };
+
+    return contextMenuItemStyle;
+}
