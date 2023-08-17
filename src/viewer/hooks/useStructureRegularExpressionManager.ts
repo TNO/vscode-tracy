@@ -42,7 +42,7 @@ const getCellValue = (content: CellContents[], rowIndex: number, cellIndex: numb
             value = "null";
         else{
             const valueParts: string[] = [];
-            
+
             for(let i=0; i < content.length; i++) {
 
                 if(content[i].wildcardIndex == null){
@@ -186,9 +186,9 @@ export const useStructureRegularExpressionSearch = (expression: string, logFileA
             }
         }
 
-            for(let o = startingIndexOfMatch; o <= endingIndexOfMatch; o++){
-                indexesOfEntriesInMatch.push(o);
-            }
+        for(let o = startingIndexOfMatch; o <= endingIndexOfMatch; o++){
+            indexesOfEntriesInMatch.push(o);
+        }
 
         resultingMatches.push(indexesOfEntriesInMatch);
     });
