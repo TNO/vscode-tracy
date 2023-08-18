@@ -285,8 +285,8 @@ export default class App extends React.Component<Props, State> {
     handleSegmentation(entryExpression: string, exitExpression: string) {
         const {logFileAsString, logEntryRanges} = this.state;
         let {collapsibleRows} = this.state;
-
-        let new_segments: { [key: number]: number } = [];
+        let levels: { [key: number]: number } = [];
+        
         const entryMatches = getRegularExpressionMatches(entryExpression, logFileAsString, logEntryRanges);
         const exitMatches = getRegularExpressionMatches(exitExpression, logFileAsString, logEntryRanges);
 
@@ -302,13 +302,16 @@ export default class App extends React.Component<Props, State> {
             else {
                 let entry = stack.pop()!;
                 collapsibleRows[entry] = next_exit;
+                levels[entry] = stack.length;
                 next_exit = exitMatches.shift()!;
             }
         }
-        if (next_exit !== undefined)
-            collapsibleRows[stack.pop()!] = next_exit;
+        if (next_exit !== undefined) {
+            let last_entry = stack.pop()!
+            collapsibleRows[last_entry] = next_exit;
+            levels[last_entry] = 0;
+        }
 
-        console.log(collapsibleRows)
         this.setState({collapsibleRows});
     }
 
