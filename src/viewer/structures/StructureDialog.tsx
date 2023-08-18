@@ -162,6 +162,9 @@ export default class StructureDialog extends React.Component<Props, State> {
                     onToggleStructureLink = {(structureEntryIndex) => this.toggleStructureLink(structureEntryIndex)}
                     onStructureEntryRemoved = {(structureEntryIndex) => this.removeStructureEntry(structureEntryIndex)}/>
                 <div style={{textAlign: 'right', padding: '5px'}}>
+                    <VSCodeButton className='structure-result-element' onClick={() => {this.matchStructure();}} disabled={this.state.structureEntries.length === 1}>
+                        Create Segment
+                    </VSCodeButton>
                     <VSCodeButton className='structure-result-element' onClick={() => {this.toggleIsRemovingStructureEntries();}}>
                         {isRemovingStructureEntries ? 'Done' : 'Remove rows'}
                     </VSCodeButton>
