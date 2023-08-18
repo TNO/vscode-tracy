@@ -1,3 +1,31 @@
+export const escapeSpecialChars = (text: string): string => {
+    let safeText = '';
+
+    if(text !== undefined) {
+        safeText = text.replace(/[\\]/g, "\\\\\\$&"); //double escaped slashes
+        safeText = safeText.replace(/[\.\*\+\?\^\$\{\}\(\)\|\[\]\-]/g, "\\$&"); // replace special characters
+        safeText = safeText.replace(/[\"]/g, "\\\\$&"); //double quotes
+
+    }
+
+    const RegExpCarriageReturnAtEnd = /\r$/;
+
+    if(RegExpCarriageReturnAtEnd.test(text)) {
+    safeText = safeText.replace(RegExpCarriageReturnAtEnd, '\\\\r');
+    }
+
+    return safeText;
+};
+
+export const useRegularExpressionSearch = (flags: string, expression: string, text: string): boolean => {
+    const structureQuery = new RegExp(expression, flags);
+    let result = structureQuery.exec(escapeSpecialChars(text));
+    if (result === null)
+        return false;
+    else
+        return true;
+}
+
 
 // Long function to reduce number of checks
 export const returnSearchIndices = (rows: string[][], columnIndex: number, searchText: string, reSearchBool: boolean, wholeSearchBool: boolean, caseSearchBool: boolean): number[] => {
@@ -115,31 +143,30 @@ export const returnSearchIndices = (rows: string[][], columnIndex: number, searc
 }
 
 
-export const escapeSpecialChars = (text: string): string => {
-    let safeText = '';
+export const getRegularExpressionMatches = (expression: string, logFileAsString: string, logEntryRanges: number[][]): number[] => {
+    const searchIndices: number[] = [];
+    const resultingMatches: number[] = [];
+    const flags = 'gs'
+    const query = new RegExp(expression, flags);
+    let result;
+    let current_index = 0;
 
-    if(text !== undefined) {
-        safeText = text.replace(/[\\]/g, "\\\\\\$&"); //double escaped slashes
-        safeText = safeText.replace(/[\.\*\+\?\^\$\{\}\(\)\|\[\]\-]/g, "\\$&"); // replace special characters
-        safeText = safeText.replace(/[\"]/g, "\\\\$&"); //double quotes
-
+    while ((result = query.exec(logFileAsString)) !== null) {
+        searchIndices.push(result.index);
     }
 
-
-    const RegExpCarriageReturnAtEnd = /\r$/;
-
-    if(RegExpCarriageReturnAtEnd.test(text)) {
-    safeText = safeText.replace(RegExpCarriageReturnAtEnd, '\\\\r');
+    if (searchIndices.length > 0) {
+        for (let i = 0; i < logEntryRanges.length; i++) {
+            if (searchIndices[current_index] >= logEntryRanges[i][0]) {
+                if (searchIndices[current_index] <= logEntryRanges[i][1]) {
+                    current_index += 1;
+                    if (i != resultingMatches[-1])
+                        resultingMatches.push(i);
+                    if (current_index === searchIndices.length)
+                        break;
+                }
+            }
+        }
     }
-
-    return safeText;
-};
-
-export const useRegularExpressionSearch = (flags: string, expression: string, text: string): boolean => {
-    const structureQuery = new RegExp(expression, flags);
-    let result = structureQuery.exec(escapeSpecialChars(text));
-    if (result === null)
-        return false;
-    else
-        return true;
+    return resultingMatches;
 }
