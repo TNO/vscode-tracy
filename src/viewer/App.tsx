@@ -45,6 +45,9 @@ interface State {
     structureMatchesLogRows: number[];
     currentStructureMatch: number[];
     currentStructureMatchIndex: StructureMatchId;
+
+    //Collapsible Table
+    collapsibleRows: { [key: number]: number };
 }
 
 const COLUMN_0_HEADER_STYLE = {
@@ -73,6 +76,7 @@ export default class App extends React.Component<Props, State> {
             reSearch: false, wholeSearch: false, caseSearch: false,
             selectedLogRows: [], rowProperties: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
+            collapsibleRows: {}
         };
 
         this.onMessage = this.onMessage.bind(this);
@@ -278,6 +282,17 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
+    handleSegmentation(entryExpression: string, exitExpression: string) {
+        const {logFileAsString, logEntryRanges} = this.state;
+        let {collapsibleRows} = this.state;
+
+        let structureMatchesLogRows:number[] = [];
+        const entryMatches = useStructureRegularExpressionSearch(entryExpression, logFileAsString, logEntryRanges);
+
+
+        this.setState({collapsibleRows});
+    }
+
 
     switchBooleanState(name: string){
         if (name === 'coloredTable')
@@ -427,6 +442,7 @@ export default class App extends React.Component<Props, State> {
                 onClose={() => this.handleStructureDialogActions(true)}
                 onStructureUpdate={() => this.handleStructureUpdate(false)}
                 onMatchStructure={(expression) => this.handleStructureMatching(expression)}
+                onDefineSegment={(entryExpression, exitExpression) => this.handleSegmentation(entryExpression, exitExpression)}
                 onNavigateStructureMatches={(isGoingForward) => this.handleNavigateStructureMatches(isGoingForward)}
                 />
                 }

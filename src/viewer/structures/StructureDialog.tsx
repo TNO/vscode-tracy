@@ -21,6 +21,7 @@ interface Props {
     onStructureUpdate: () => void;
     onNavigateStructureMatches: (isGoingForward: boolean) => void;
     onMatchStructure: (expression: string) => void;
+    onDefineSegment: (entryExpression: string, exitExpression: string) => void;
 }
 
 interface State {
@@ -138,6 +139,20 @@ export default class StructureDialog extends React.Component<Props, State> {
         this.setState({isStructureMatching: true});
     }
 
+    defineSegment(){
+        const entryRegExp = useStructureQueryConstructor(
+            this.props.logHeaderColumns,
+            this.state.structureHeaderColumnsTypes,
+            [this.state.structureEntries[0]]
+            );
+            const exitRegExp = useStructureQueryConstructor(
+                this.props.logHeaderColumns,
+                this.state.structureHeaderColumnsTypes,
+                [this.state.structureEntries[-1]]
+                );
+        this.props.onDefineSegment(entryRegExp, exitRegExp);
+    }
+
     render() {
         const {structureEntries, isRemovingStructureEntries, isStructureMatching} = this.state;
         const structureEntriesCopy = cloneDeep(structureEntries);
@@ -162,7 +177,7 @@ export default class StructureDialog extends React.Component<Props, State> {
                     onToggleStructureLink = {(structureEntryIndex) => this.toggleStructureLink(structureEntryIndex)}
                     onStructureEntryRemoved = {(structureEntryIndex) => this.removeStructureEntry(structureEntryIndex)}/>
                 <div style={{textAlign: 'right', padding: '5px'}}>
-                    <VSCodeButton className='structure-result-element' onClick={() => {this.matchStructure();}} disabled={this.state.structureEntries.length === 1}>
+                    <VSCodeButton className='structure-result-element' onClick={() => {this.defineSegment();}} disabled={this.state.structureEntries.length === 1}>
                         Create Segment
                     </VSCodeButton>
                     <VSCodeButton className='structure-result-element' onClick={() => {this.toggleIsRemovingStructureEntries();}}>
