@@ -140,16 +140,17 @@ export default class StructureDialog extends React.Component<Props, State> {
     }
 
     defineSegment(){
+        
         const entryRegExp = useStructureQueryConstructor(
             this.props.logHeaderColumns,
             this.state.structureHeaderColumnsTypes,
-            [this.state.structureEntries[0]]
+            this.state.structureEntries.slice(0, 1)
             );
-            const exitRegExp = useStructureQueryConstructor(
-                this.props.logHeaderColumns,
-                this.state.structureHeaderColumnsTypes,
-                [this.state.structureEntries[-1]]
-                );
+        const exitRegExp = useStructureQueryConstructor(
+            this.props.logHeaderColumns,
+            this.state.structureHeaderColumnsTypes,
+            this.state.structureEntries.slice(-1)
+            );
         this.props.onDefineSegment(entryRegExp, exitRegExp);
     }
 
