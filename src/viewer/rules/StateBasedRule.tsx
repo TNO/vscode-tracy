@@ -6,7 +6,7 @@ import Table from './Tables/Table';
 import StateTable from './Tables/StateTable';
 import TransitionTable from './Tables/TransitionTable';
 import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodeDivider, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
-import { useRegularExpressionSearch } from '../hooks/useTextOperationManager';
+import { useRegularExpressionSearch } from '../hooks/useLogSearchManager';
 
 
 interface State {name: string, transitions: Transition[]};

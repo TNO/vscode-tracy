@@ -5,7 +5,7 @@ import LogFile from '../LogFile';
 import Table from './Tables/Table';
 import FlagTable from './Tables/FlagTable';
 import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodeDivider, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
-import { useRegularExpressionSearch } from '../hooks/useTextOperationManager';
+import { useRegularExpressionSearch } from '../hooks/useLogSearchManager';
 
 interface Flag {name: string, conditions: Condition[][]}
 interface Condition {Column: string, Operation: string, Text: string}
