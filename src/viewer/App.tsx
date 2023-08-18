@@ -7,7 +7,7 @@ import { LogViewState, StructureMatchId, RowProperty } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, RowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import { useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch } from './hooks/useStructureRegularExpressionManager'
-import { returnSearchIndices, useRegularExpressionSearch } from './hooks/useTextOperationManager'
+import { getRegularExpressionMatches, returnSearchIndices } from './hooks/useLogSearchManager'
 import { constructNewRowProperty } from './hooks/useRowProperty';
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
@@ -286,10 +286,29 @@ export default class App extends React.Component<Props, State> {
         const {logFileAsString, logEntryRanges} = this.state;
         let {collapsibleRows} = this.state;
 
-        let structureMatchesLogRows:number[] = [];
-        const entryMatches = useStructureRegularExpressionSearch(entryExpression, logFileAsString, logEntryRanges);
+        let new_segments: { [key: number]: number } = [];
+        const entryMatches = getRegularExpressionMatches(entryExpression, logFileAsString, logEntryRanges);
+        const exitMatches = getRegularExpressionMatches(exitExpression, logFileAsString, logEntryRanges);
 
+        let stack: number[] = [];
+        let next_entry = entryMatches.shift()!;
+        let next_exit = exitMatches.shift()!;
 
+        while (next_entry !== undefined && next_exit !== undefined) {
+            if (next_entry < next_exit) {
+                stack.push(next_entry);
+                next_entry = entryMatches.shift()!;
+            }
+            else {
+                let entry = stack.pop()!;
+                collapsibleRows[entry] = next_exit;
+                next_exit = exitMatches.shift()!;
+            }
+        }
+        if (next_exit !== undefined)
+            collapsibleRows[stack.pop()!] = next_exit;
+
+        console.log(collapsibleRows)
         this.setState({collapsibleRows});
     }
 
