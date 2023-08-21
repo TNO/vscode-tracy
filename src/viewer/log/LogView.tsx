@@ -102,14 +102,10 @@ export default class LogView extends React.Component<Props, State> {
             first_render = Math.max(0, Math.ceil(last_render - maxVisibleItems) - 1);
         }
 
-        // Hide LogFile if search did not return any rows
-        if ((logFile.rows.length === 1) && (logFile.rows[0][0] === '')) {
-            first_render = 0;
-            last_render = -1;
-        }
-
         let counter = first_render;
         for (let r = first_render; counter <= last_render; r++){
+            if (r === rowProperties.length)
+                break;
             if (rowProperties[r].isSearchResult && rowProperties[r].isRendered) {
                 let rowStyle;
 
