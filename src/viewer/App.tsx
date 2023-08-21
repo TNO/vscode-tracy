@@ -3,19 +3,18 @@ import LogFile from './LogFile';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import Tooltip from '@mui/material/Tooltip'
-import { LogViewState, StructureMatchId, RowProperty } from './types';
+import { LogViewState, StructureMatchId, RowProperty, Segment } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, RowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import { useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch } from './hooks/useStructureRegularExpressionManager'
 import { getRegularExpressionMatches, returnSearchIndices } from './hooks/useLogSearchManager'
-import { constructNewRowProperty } from './hooks/useRowProperty';
+import { constructNewRowProperty, constructNewSegment } from './hooks/useRowProperty';
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
 import Rule from './rules/Rule';
 import MinimapHeader from './minimap/MinimapHeader';
 import SelectColDialog from './log/SelectColDialog';
-
 interface Props {
 }
 interface State {
@@ -47,7 +46,7 @@ interface State {
     currentStructureMatchIndex: StructureMatchId;
 
     //Collapsible Table
-    collapsibleRows: { [key: number]: number };
+    collapsibleRows: { [key: number]: Segment };
 }
 
 const COLUMN_0_HEADER_STYLE = {
@@ -76,7 +75,8 @@ export default class App extends React.Component<Props, State> {
             reSearch: false, wholeSearch: false, caseSearch: false,
             selectedLogRows: [], rowProperties: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
-            collapsibleRows: {}
+            collapsibleRows: {},
+            // collapsibleRows: { 1: constructNewSegment(1, 10, 0), 2: constructNewSegment(2, 6, 1), 5: constructNewSegment(5, 15, 0)},
         };
 
         this.onMessage = this.onMessage.bind(this);
@@ -285,7 +285,6 @@ export default class App extends React.Component<Props, State> {
     handleSegmentation(entryExpression: string, exitExpression: string) {
         const {logFileAsString, logEntryRanges} = this.state;
         let {collapsibleRows} = this.state;
-        let levels: { [key: number]: number } = [];
         
         const entryMatches = getRegularExpressionMatches(entryExpression, logFileAsString, logEntryRanges);
         const exitMatches = getRegularExpressionMatches(exitExpression, logFileAsString, logEntryRanges);
@@ -301,15 +300,13 @@ export default class App extends React.Component<Props, State> {
             }
             else {
                 let entry = stack.pop()!;
-                collapsibleRows[entry] = next_exit;
-                levels[entry] = stack.length;
+                collapsibleRows[entry] = constructNewSegment(entry, next_exit, stack.length);
                 next_exit = exitMatches.shift()!;
             }
         }
         if (next_exit !== undefined) {
-            let last_entry = stack.pop()!
-            collapsibleRows[last_entry] = next_exit;
-            levels[last_entry] = 0;
+            let entry = stack.pop()!
+            collapsibleRows[entry] = constructNewSegment(entry, next_exit, 0);
         }
 
         this.setState({collapsibleRows});
@@ -398,6 +395,8 @@ export default class App extends React.Component<Props, State> {
                         structureMatchesLogRows={this.state.structureMatchesLogRows}
                         currentStructureMatch = {this.state.currentStructureMatch}
                         onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
+                        onRowPropsChanged={(index, isRendered) => this.handleRowCollapse(index, isRendered)}
+                        collapsibleRows={this.state.collapsibleRows}
                     />
                 </div>                    
                 <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth, boxSizing: 'border-box'}}>

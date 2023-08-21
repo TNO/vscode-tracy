@@ -13,12 +13,12 @@ export interface LogViewState {
 }
 
 export interface Header {
-    name: string, 
+    name: string,
     type: 'string' | 'number'
 }
 
 export interface StructureEntry {
-    row: string[], 
+    row: string[],
     cellSelection: boolean[],
     structureLink: StructureLinkDistance | undefined
 }
@@ -27,6 +27,12 @@ export interface RowProperty {
     isSearchResult: boolean,
     isRendered: boolean,
     rowType: RowType
+}
+
+export interface Segment {
+    start: number,
+    end: number,
+    level: number
 }
 
 export type StructureMatchId = number | null;

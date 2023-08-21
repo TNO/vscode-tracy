@@ -141,11 +141,9 @@ export default class MinimapView extends React.Component<Props, State> {
             nrOfRows =  (y - scrollTopBox*scaleItem)/(height/visibleItems);//number of rows to move, can be positive or negative
             scrollTop = (logStart + nrOfRows)*ROW_HEIGHT;
         }
-
-        // const maximumScrollTop = (maxVisibleItems - logVisibleItems)*ROW_HEIGHT;
-        // scrollTop = Math.min(maximumScrollTop, scrollTop);
-
-        //set scrollTop of the log to the new value
+        //when grey box meet the bottom of the log, the scroll top will not increase.
+        const maximumScrollTop = (maxVisibleItems - logVisibleItems)*ROW_HEIGHT;
+        scrollTop = Math.min(maximumScrollTop, scrollTop);
         if (!this.props.forwardRef.current) return;
         const scrollLeft = this.props.forwardRef.current.scrollLeft;
         const start = scrollTop / ROW_HEIGHT;
@@ -154,8 +152,7 @@ export default class MinimapView extends React.Component<Props, State> {
         this.props.forwardRef.current.scrollTop = scrollTop;
         const state = {height, scrollLeft, scrollTop, startFloor, start, endCeil, visibleItems: logVisibleItems, rowHeight: ROW_HEIGHT};
         const scale = this.state.scale
-        this.setState({state});
-        this.setState({scale});
+        this.setState({state, scale});
         this.draw();
         this.props.onLogViewStateChanged(state);
     }
