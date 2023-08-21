@@ -63,6 +63,18 @@ div.resizable-content {
 }
 
 .segment {
-    width: 30px;
     border: lpx;
+}
+
+div.vertical-line {
+    width: 2px;
+    /* Line width */
+    background-color: rgb(223, 90, 90);
+    /* Line color */
+    height: 100%;
+    /* Override in-line if you want specific height. */
+    display: inline-block;
+    /* Causes the line to float to right of content. 
+      You can instead use position:absolute or display:inline-block
+      if this fits better with your design */
 }

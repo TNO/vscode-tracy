@@ -2,7 +2,7 @@ import React, { ChangeEvent } from 'react';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import LogFile from './LogFile';
-import { LogViewState, StructureMatchId, RowProperty } from './types';
+import { LogViewState, StructureMatchId, RowProperty, Segment } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, RowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch} from './hooks/useStructureRegularExpressionManager'
@@ -12,7 +12,7 @@ import FlagsDialog from './rules/Dialogs/FlagsDialog';
 import Rule from './rules/Rule';
 import MinimapHeader from './minimap/MinimapHeader';
 import SelectColDialog from './log/SelectColDialog';
-import { constructNewRowProperty } from './hooks/useRowProperty';
+import { constructNewRowProperty, constructNewSegment } from './hooks/useRowProperty';
 interface Props {
 }
 interface State {
@@ -43,7 +43,7 @@ interface State {
     currentStructureMatchIndex: StructureMatchId;
 
     //Collapsible Table
-    collapsibleRows: { [key: number]: number };
+    collapsibleRows: { [key: number]: Segment };
 }
 
 const COLUMN_0_HEADER_STYLE = {
@@ -71,7 +71,7 @@ export default class App extends React.Component<Props, State> {
             selectedLogRows: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
             rowProperties: [],
-            collapsibleRows: { 1: 7, 8: 10 },
+            collapsibleRows: { 1: constructNewSegment(1, 10, 0), 2: constructNewSegment(2, 6, 1), 5: constructNewSegment(5, 15, 0)},
         };
 
         this.onMessage = this.onMessage.bind(this);

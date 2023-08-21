@@ -28,4 +28,10 @@ export interface RowProperty {
     rowType: RowType
 }
 
+export interface Segment {
+    start: number,
+    end: number,
+    level: number
+}
+
 export type StructureMatchId = number | null;

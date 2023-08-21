@@ -34,11 +34,11 @@ export const BACKGROUND_COLOR_MATCHED_ROW_OTHER = `rgba(${RGB_OFFICE_GREEN}, 0.5
 
 export const BORDER_SELECTED_ROW_RADIUS = `5px`;
 
-export const RGB_Annotation1 = '255, 153, 51';
+export const RGB_Annotation0 = `rgb(223, 90, 90)`;
 
-export const RGB_Annotation2 = '';
+export const RGB_Annotation1 = `rgb(71, 186, 89)`;
 
-export const RGB_Annotation3 = '';
+export const RGB_Annotation2 = `rgb(46, 111, 179)`;
 
 // TODO: determine column width automatically, not hardcoded
 export const LOG_COLUMN_WIDTH_LOOKUP = {
