@@ -96,7 +96,7 @@ export default class LogView extends React.Component<Props, State> {
         // This method only renders the rows that are visible
         if (!this.state.state) return;
         const result: any = [];
-        const {logFile, rowProperties, structureMatches,currentStructureMatch, structureMatchesLogRows} = this.props;
+        const {logFile, rowProperties, structureMatches, currentStructureMatch, structureMatchesLogRows} = this.props;
         let first_render = this.state.state.startFloor;
         let last_render = this.state.state.endCeil;
         let visibleRows = logFile.rows.filter((v, i) => rowProperties[i].isRendered);
@@ -108,10 +108,9 @@ export default class LogView extends React.Component<Props, State> {
             first_render = Math.max(0, Math.ceil(last_render - maxVisibleItems) - 1);
         }
 
-        // Hide LogFile if search did not return any rows
-        if ((visibleRows.length === 1) && (visibleRows[0][0] === '')) {
-            first_render = 0;
-            last_render = -1;
+        // Search does not match any row
+        if ((visibleRows.length === 0)) {
+            return [];
         }
 
         let counter = first_render;
@@ -306,6 +305,12 @@ export default class LogView extends React.Component<Props, State> {
         }
     }
 
+    getVisibleRows() {
+        const { logFile, rowProperties, collapsibleRows } = this.props;
+        let visibleRows = logFile.rows.filter((v, i) => rowProperties[i].isRendered);
+        return visibleRows.length
+    }
+
     renderHeader(width: number) {
         const style: React.CSSProperties = {
             width, height: '100%', position: 'absolute',
@@ -339,7 +344,7 @@ export default class LogView extends React.Component<Props, State> {
 
     render() {
         const {logFile, collapsibleRows} = this.props;
-        const containerHeight = logFile.amountOfRows() * LOG_ROW_HEIGHT;
+        const containerHeight = this.getVisibleRows() * LOG_ROW_HEIGHT;
         const containerWidth = (logFile.amountOfColumns() * BORDER_SIZE) +
             logFile.headers.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
         const segmentWidth = (getSegmentMaxLevel(collapsibleRows) + 1) * 30 + BORDER_SIZE;

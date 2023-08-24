@@ -293,6 +293,8 @@ export default class App extends React.Component<Props, State> {
         let next_entry = entryMatches.shift()!;
         let next_exit = exitMatches.shift()!;
 
+        // TODO: Add maximum level (5)
+
         while (next_entry !== undefined && next_exit !== undefined) {
             if (next_entry < next_exit) {
                 stack.push(next_entry);
