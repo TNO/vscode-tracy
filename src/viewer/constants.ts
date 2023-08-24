@@ -40,6 +40,10 @@ export const RGB_Annotation1 = `rgb(71, 186, 89)`;
 
 export const RGB_Annotation2 = `rgb(46, 111, 179)`;
 
+export const RGB_Annotation3 = `rgb(255, 165, 0)`;
+
+export const RGB_Annotation4 = `rgb(128, 0, 128)`;
+
 // TODO: determine column width automatically, not hardcoded
 export const LOG_COLUMN_WIDTH_LOOKUP = {
     timestamp: 180,

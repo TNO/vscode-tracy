@@ -1,6 +1,6 @@
 import React from 'react';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, 
-         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, RGB_Annotation0, RGB_Annotation1, RGB_Annotation2 } from '../constants';
+         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, RGB_Annotation0, RGB_Annotation1, RGB_Annotation2, RGB_Annotation3, RGB_Annotation4 } from '../constants';
 import { getHeaderColumnInnerStyle, getHeaderColumnStyle, getLogViewRowSelectionStyle, getLogViewStructureMatchStyle } from '../hooks/useStyleManager';
 import { LogViewState, RowProperty, Segment, StructureMatchId } from '../types';
 import LogFile from '../LogFile';
@@ -162,11 +162,12 @@ export default class LogView extends React.Component<Props, State> {
         }
         let rowResult: any = [];
         let counter = first_render;
-        let maxLevel = getSegmentMaxLevel(collapsibleRows);
+        let maxLevel = Math.min(4, getSegmentMaxLevel(collapsibleRows));
+        console.log(maxLevel);
         for (let r = first_render; counter < last_render; r++){
             if(rowProperties[r].isRendered){
                 for (let l = 0; l <= maxLevel; l++) {
-                    rowResult.push(Object.keys(collapsibleRows).filter(key => collapsibleRows[key].level == l).map(key => this.renderSegmentForRow(r, collapsibleRows[key])));
+                    rowResult.push(this.renderSegmentForRow(r, l));
                 }
                 result.push(<div style={{ flex: 1, display: "flex", flexDirection: "row" }} key={r}>{rowResult}</div>);
                 counter++;
@@ -176,39 +177,41 @@ export default class LogView extends React.Component<Props, State> {
         return result;
     }
 
-    renderSegmentForRow(r: number, segment: Segment) {
+    renderSegmentForRow(r: number, level: number) {
         const { collapsibleRows } = this.props;
         const style: React.CSSProperties = {
             textAlign: "center",
             alignContent: "center",
             justifyContent: "center",
             height: LOG_ROW_HEIGHT,
-            color: this.getRGB(segment.level),
+            color: this.getRGB(level),
             position: 'relative',
             width: 30
         };
-        const result: any = [];
-        const l = segment.level;
-        if (segment.start == r && collapsibleRows[r].level == l){
-            result.push(<VSCodeButton
-                style={{...style}}
-                key={r}
-                appearance="icon"
-                onClick={() => this.collapseRows(r)}
-            >
-            {this.state.collapsed[r] ? (
-            <i className="codicon codicon-chevron-right" key={r} />
-            ) : (
-            <i className="codicon codicon-chevron-down" key={r} />
-            )}
+        let annotation = false;
+        if (collapsibleRows[r] != undefined && collapsibleRows[r].level == level) {
+            return (<VSCodeButton style={{...style}} key={r+"_"+level} appearance="icon" onClick={() => this.collapseRows(r)}>
+                {this.state.collapsed[r] ? (
+                <i className="codicon codicon-chevron-right" key={r} />
+                ) : (
+                <i className="codicon codicon-chevron-down" key={r} />
+                )}
             </VSCodeButton>);
-        } else if (r <= segment.end && r > segment.start) {
-            result.push(<div style={{ ...style }} key={r}><div style={{backgroundColor: this.getRGB(segment.level)}} className="vertical-line"></div></div>);
         } else {
-            result.push(<div style={{  ...style }} key={r}></div>);
+            Object.keys(collapsibleRows).filter(key => collapsibleRows[key].level == level).map(key => {
+                let segment: Segment = collapsibleRows[key];
+                if (segment != undefined) {
+                    if ( r <= segment.end && r > segment.start) {
+                        annotation = true;
+                    }
+                }
+            });
         }
-            
-        return result;
+        if (annotation) {
+            return (<div style={{ ...style }} key={r+"_"+level}><div style={{backgroundColor: this.getRGB(level)}} className="vertical-line"></div></div>);
+        } else {
+            return (<div style={{  ...style }} key={r+"_"+level}></div>);
+        }
     }
     
     collapseRows(index: number) {
@@ -302,11 +305,13 @@ export default class LogView extends React.Component<Props, State> {
             case 0: return RGB_Annotation0;
             case 1: return RGB_Annotation1;
             case 2: return RGB_Annotation2;
+            case 3: return RGB_Annotation3;
+            case 4: return RGB_Annotation4;
         }
     }
 
     getVisibleRows() {
-        const { logFile, rowProperties, collapsibleRows } = this.props;
+        const { logFile, rowProperties } = this.props;
         let visibleRows = logFile.rows.filter((v, i) => rowProperties[i].isRendered);
         return visibleRows.length
     }
@@ -347,14 +352,16 @@ export default class LogView extends React.Component<Props, State> {
         const containerHeight = this.getVisibleRows() * LOG_ROW_HEIGHT;
         const containerWidth = (logFile.amountOfColumns() * BORDER_SIZE) +
             logFile.headers.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
-        const segmentWidth = (getSegmentMaxLevel(collapsibleRows) + 1) * 30 + BORDER_SIZE;
+        const segmentWidth = (Math.min(4, getSegmentMaxLevel(collapsibleRows)) + 1) * 30 + BORDER_SIZE;
         return (
             <div style={{ flex: 1, display: "flex", flexDirection: "row", overflow: 'hidden' }}>
-                <div className="segment" style={{width:segmentWidth}}>
+                <div className="segment" style={{ display: 'flex', flexDirection: 'column', width:segmentWidth }}>
                     <div>
                         <div style={HEADER_STYLE} className="header-background"></div>
                     </div>
-                    <div style={{ flex: 1, flexWrap: "wrap" }}>{this.renderSegmentAnnotation()}</div>
+                    <div style={{position: 'relative', flex: 1, overflow: 'hidden'}}>
+                        <div style={{ height: containerHeight, width: segmentWidth, position: 'absolute'}}>{this.renderSegmentAnnotation()}</div>
+                    </div>
                 </div>
                 <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
                     {this.renderHeader(containerWidth)}
