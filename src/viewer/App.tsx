@@ -290,10 +290,9 @@ export default class App extends React.Component<Props, State> {
         const exitMatches = getRegularExpressionMatches(exitExpression, logFileAsString, logEntryRanges);
 
         let stack: number[] = [];
+        let maximum_level = 5;
         let next_entry = entryMatches.shift()!;
-        let next_exit = exitMatches.shift()!;
-
-        // TODO: Add maximum level (5)
+        let next_exit = exitMatches.shift()!;        
 
         while (next_entry !== undefined && next_exit !== undefined) {
             if (next_entry < next_exit) {
@@ -302,7 +301,10 @@ export default class App extends React.Component<Props, State> {
             }
             else {
                 let entry = stack.pop()!;
-                collapsibleRows[entry] = constructNewSegment(entry, next_exit, stack.length);
+                if (stack.length <= (maximum_level - 1))
+                    collapsibleRows[entry] = constructNewSegment(entry, next_exit, stack.length);
+                else
+                    console.log(`Maximum segment level reached: Discarding (${entry}, ${next_exit})`)
                 next_exit = exitMatches.shift()!;
             }
         }
