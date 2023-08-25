@@ -76,7 +76,8 @@ export default class FlagsDialog extends React.Component<Props, State> {
         let flagrule = rule as FlagRule;
         if (property === 'defaultValue')
             rules[index] = flagrule.setDefault(new_value);
-        // else if (property === '')
+        else if (property === 'flagType')
+            rules[index] = flagrule.setFlagType(new_value);
         this.setState({rules});
     }
 
@@ -109,12 +110,16 @@ export default class FlagsDialog extends React.Component<Props, State> {
             this.setState({rules: this.state.rules.filter((r, i) => i !== index)});
         }
 
+        let tableRows = this.state.rules.filter(r => r.ruleType === 'Flag rule').map((rule) => {
+                let flagRule = rule as FlagRule;
+                return [rule.column, flagRule.flagType, rule.description]})
+
         return (
             <div style={{marginTop: '10px'}}>
                 <Table
                     // title='Manage flags'
                     columns={[{name: 'Name', width: '150px'}, {name: 'Type', width: '150px'}, {name: 'Description', width: ''}]}
-                    rows={this.state.rules.filter(r => r.ruleType === 'Flag rule').map((rule) => [rule.column, rule.ruleType, rule.description])} 
+                    rows={tableRows} 
                     noRowsText={'No flags have been defined (click + to add)'}
                     onAddAction={onAddAction}
                     onEditAction={onEditAction}
@@ -130,8 +135,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
         const rule = this.state.rules[ruleIndex];
         let ruleAsFlag = rule as FlagRule;
         const defaultValue = ruleAsFlag.defaultValue;
-        const flagSelection = ruleAsFlag.captureFlags;
-        console.log(flagSelection)
+        const flagType = ruleAsFlag.flagType;
         const user_columns = this.state.rules.map((r, i) => r.column).filter(name => name != rule.column)
         const defaultRuleColumn = `FlagRule${ruleIndex + 1}`;
         const typeOptions = [FlagRule];
@@ -154,7 +158,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
             ],
             [
                 ('Flag Selection'),
-                <VSCodeDropdown style={{width: textFieldWidth, marginBottom: '2px'}} value={flagSelection} onChange={() => 'TODO'}>
+                <VSCodeDropdown style={{width: textFieldWidth, marginBottom: '2px'}} value={flagType} onChange={(e) => this.updateFlagProperty(rule, 'flagType', e.target.value, ruleIndex)}>
                     <VSCodeOption value={'User Defined'} key={0}>User Defined</VSCodeOption>
                     <VSCodeOption value={'Capture Match'} key={1}>Capture Match</VSCodeOption>
                 </VSCodeDropdown>
