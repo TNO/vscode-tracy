@@ -16,30 +16,33 @@ export default class FlagRule extends Rule {
 
     readonly flags: Flag[];
     readonly defaultValue: string;
+    readonly captureFlags: string;
     readonly selectedFlag: number;
 
-    public constructor(column: string, description: string, defaultValue: string, selectedFlag: number, flags: Flag[]) {
+    public constructor(column: string, description: string, defaultValue: string, captureFlags: string, selectedFlag: number, flags: Flag[]) {
         super(column, description);
         this.defaultValue = defaultValue;
+        this.captureFlags = captureFlags;
         this.selectedFlag = selectedFlag;
         this.flags = flags;
     }
 
-    reset = () => new FlagRule(this.column, this.description, this.defaultValue, 0, this.flags);
-    setColumn = (column: string) => new FlagRule(column, this.description, this.defaultValue, this.selectedFlag, this.flags);
-    setDescription = (description: string) => new FlagRule(this.column, description, this.defaultValue, this.selectedFlag, this.flags);
-    setSelected = (selectedFlag: number) => new FlagRule(this.column, this.description, this.defaultValue, selectedFlag, this.flags);
-    setDefault = (defaultValue: string) => new FlagRule(this.column, this.description, defaultValue, this.selectedFlag, this.flags);
-    setFlags = (flags: Flag[]) => new FlagRule(this.column, this.description, this.defaultValue, this.selectedFlag, flags);
+    reset = () => new FlagRule(this.column, this.description, this.defaultValue, this.captureFlags, 0, this.flags);
+    setColumn = (column: string) => new FlagRule(column, this.description, this.defaultValue, this.captureFlags, this.selectedFlag, this.flags);
+    setDescription = (description: string) => new FlagRule(this.column, description, this.defaultValue, this.captureFlags, this.selectedFlag, this.flags);
+    setCapture = (captureFlags: string) => new FlagRule(this.column, this.description, this.defaultValue, captureFlags, this.selectedFlag, this.flags);
+    setSelected = (selectedFlag: number) => new FlagRule(this.column, this.description, this.defaultValue, this.captureFlags, selectedFlag, this.flags);
+    setDefault = (defaultValue: string) => new FlagRule(this.column, this.description, defaultValue, this.captureFlags, this.selectedFlag, this.flags);
+    setFlags = (flags: Flag[]) => new FlagRule(this.column, this.description, this.defaultValue, this.captureFlags, this.selectedFlag, flags);
 
     public toJSON() {
-        const {column, description, defaultValue, flags} = this;
+        const {column, description, defaultValue, captureFlags, flags} = this;
         const type = 'FlagRule';
-        return {column, type, description, defaultValue, flags};
+        return {column, type, description, defaultValue, captureFlags, flags};
     }
 
     static fromJSON(json: {[s: string]: any}) {
-        return new FlagRule(json.column, json.description, json.defaultValue, 0, json.flags);
+        return new FlagRule(json.column, json.description, json.defaultValue, json.captureFlags, 0, json.flags);
     }
 
     public renderEdit(onEdit: (newRule: Rule) => void, keyWidth: string, textFieldWidth: string, user_columns:string[], logFile: LogFile) {
