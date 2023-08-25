@@ -43,8 +43,8 @@ export default class FlagsDialog extends React.Component<Props, State> {
                     for (let j = 0; j < updated_flags.length; j++)
                         for (let k = 0; k < updated_flags[j].conditions.length; k++)
                             for (let l = 0; l < updated_flags[j].conditions[k].length; l++)
-                                if (updated_flags[j].conditions[k][l].searchColumn === rules[index].column)
-                                    updated_flags[j].conditions[k][l].searchColumn = rule.column;
+                                if (updated_flags[j].conditions[k][l].Column === rules[index].column)
+                                    updated_flags[j].conditions[k][l].Column = rule.column;
                     updated_rule.setFlags(updated_flags);
                     rules[i] = updated_rule;
                 }
