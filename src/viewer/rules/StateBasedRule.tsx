@@ -15,8 +15,8 @@ interface TransitionCondition {Column: string, Operation: string, Text: string}
 
 
 export default class StateBasedRule extends Rule {
-    static friendlyType = "State based rule";
-    friendlyType = StateBasedRule.friendlyType;
+    static ruleType = "State based rule";
+    ruleType = StateBasedRule.ruleType;
 
     readonly ruleStates: State[];
     readonly initialStateIndex: number;

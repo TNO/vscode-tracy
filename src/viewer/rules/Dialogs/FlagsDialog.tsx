@@ -37,7 +37,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
         const rules = [...this.state.rules];
         if (rules[index].column != rule.column) {
             for (let i = 0; i < rules.length; i++){
-                if (rules[i].friendlyType === 'Flag rule') {
+                if (rules[i].ruleType === 'Flag rule') {
                     let updated_rule = rules[i] as FlagRule;
                     let updated_flags = updated_rule.flags;
                     for (let j = 0; j < updated_flags.length; j++)
@@ -48,7 +48,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                     updated_rule.setFlags(updated_flags);
                     rules[i] = updated_rule;
                 }
-                else if (rules[i].friendlyType === 'State based rule') {
+                else if (rules[i].ruleType === 'State based rule') {
                     let updated_rule = rules[i] as StateBasedRule;
                     let updated_states = updated_rule.ruleStates;
                     for (let j = 0; j < updated_states.length; j++) {
@@ -71,10 +71,12 @@ export default class FlagsDialog extends React.Component<Props, State> {
         this.setState({rules});
     }
 
-    updateDefault(rule: Rule, val: string, index: number) {
+    updateFlagProperty(rule: Rule, property: string, new_value: string, index: number) {
         const rules = [...this.state.rules];
         let flagrule = rule as FlagRule;
-        rules[index] = flagrule.setDefault(val);
+        if (property === 'defaultValue')
+            rules[index] = flagrule.setDefault(new_value);
+        // else if (property === '')
         this.setState({rules});
     }
 
@@ -92,17 +94,17 @@ export default class FlagsDialog extends React.Component<Props, State> {
 
     renderManage() {
         const onAddAction = () => {
-            const newRule = new FlagRule(`FlagRule${this.state.rules.filter(r => r.friendlyType === 'Flag rule').length + 1}`, '', '', 'User Defined', 0, []);
+            const newRule = new FlagRule(`FlagRule${this.state.rules.filter(r => r.ruleType === 'Flag rule').length + 1}`, '', '', 'User Defined', 0, []);
             this.setState({rules: [...this.state.rules, newRule], selectedRule: this.state.rules.length, showEdit: true});
         }
 
         const onEditAction = (table_index: number) => {
-            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'Flag rule')[table_index]);
+            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.ruleType === 'Flag rule')[table_index]);
             this.setState({showEdit: true, selectedRule: index});
         }
 
         const onDeleteAction = (table_index: number) => {
-            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'Flag rule')[table_index]);
+            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.ruleType === 'Flag rule')[table_index]);
             if (this.state.selectedRule === index) this.setState({selectedRule: -1});
             this.setState({rules: this.state.rules.filter((r, i) => i !== index)});
         }
@@ -112,7 +114,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                 <Table
                     // title='Manage flags'
                     columns={[{name: 'Name', width: '150px'}, {name: 'Type', width: '150px'}, {name: 'Description', width: ''}]}
-                    rows={this.state.rules.filter(r => r.friendlyType === 'Flag rule').map((rule) => [rule.column, rule.friendlyType, rule.description])} 
+                    rows={this.state.rules.filter(r => r.ruleType === 'Flag rule').map((rule) => [rule.column, rule.ruleType, rule.description])} 
                     noRowsText={'No flags have been defined (click + to add)'}
                     onAddAction={onAddAction}
                     onEditAction={onEditAction}
@@ -162,7 +164,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                 <VSCodeTextField 
                     style={{width: textFieldWidth, marginBottom: '2px'}}
                     initialValue={defaultValue} 
-                    onInput={(e) => this.updateDefault(rule, e.target.value, ruleIndex)}/>
+                    onInput={(e) => this.updateFlagProperty(rule, 'defaultValue', e.target.value, ruleIndex)}/>
             ],
         ];
 

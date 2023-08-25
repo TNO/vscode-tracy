@@ -3,8 +3,8 @@ import LogFile from '../LogFile';
 export default abstract class Rule {
     readonly column: string;
     readonly description: string;
-    abstract readonly friendlyType: string;
-    static friendlyType = 'ShouldBeOverridden'; // TypeScript does not support abstract static
+    abstract readonly ruleType: string;
+    static ruleType = 'ShouldBeOverridden'; // TypeScript does not support abstract static
 
     constructor(column: string, description: string) {
         this.column = column;

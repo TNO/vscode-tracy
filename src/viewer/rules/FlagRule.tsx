@@ -11,8 +11,8 @@ interface Flag {name: string, conditions: Condition[][]}
 interface Condition {Column: string, Operation: string, Text: string}
 
 export default class FlagRule extends Rule {
-    static friendlyType = "Flag rule";
-    friendlyType = FlagRule.friendlyType;
+    static ruleType = "Flag rule";
+    ruleType = FlagRule.ruleType;
 
     readonly flags: Flag[];
     readonly defaultValue: string;
