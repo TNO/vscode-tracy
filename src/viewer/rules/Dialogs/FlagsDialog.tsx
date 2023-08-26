@@ -146,19 +146,19 @@ export default class FlagsDialog extends React.Component<Props, State> {
                 ('Name'),
                 <VSCodeTextField 
                     style={{width: textFieldWidth, marginBottom: '2px'}}
-                    initialValue={rule.column} 
+                    value={rule.column} 
                     onInput={(e) => this.updateRule(rule.setColumn(e.target.value || defaultRuleColumn), ruleIndex)}/>
             ],
             [
                 ('Description'),
                 <VSCodeTextField 
                     style={{width: textFieldWidth, marginBottom: '2px'}}
-                    initialValue={rule.description} 
+                    value={rule.description} 
                     onInput={(e) => this.updateRule(rule.setDescription(e.target.value), ruleIndex)}/>
             ],
             [
                 ('Flag Selection'),
-                <VSCodeDropdown style={{width: textFieldWidth, marginBottom: '2px'}} value={flagType} onChange={(e) => this.updateFlagProperty(rule, 'flagType', e.target.value, ruleIndex)}>
+                <VSCodeDropdown disabled={ruleAsFlag.flags.length > 0?true: false} style={{width: textFieldWidth, marginBottom: '2px'}} value={flagType} onChange={(e) => this.updateFlagProperty(rule, 'flagType', e.target.value, ruleIndex)}>
                     <VSCodeOption value={'User Defined'} key={0}>User Defined</VSCodeOption>
                     <VSCodeOption value={'Capture Match'} key={1}>Capture Match</VSCodeOption>
                 </VSCodeDropdown>
@@ -167,7 +167,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                 ('Default Value'),
                 <VSCodeTextField 
                     style={{width: textFieldWidth, marginBottom: '2px'}}
-                    initialValue={defaultValue} 
+                    value={defaultValue} 
                     onInput={(e) => this.updateFlagProperty(rule, 'defaultValue', e.target.value, ruleIndex)}/>
             ],
         ];

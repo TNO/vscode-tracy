@@ -130,14 +130,14 @@ export default class StatesDialog extends React.Component<Props, State> {
                 ('Name'),
                 <VSCodeTextField 
                     style={{width: textFieldWidth, marginBottom: '2px'}}
-                    initialValue={rule.column} 
+                    value={rule.column} 
                     onInput={(e) => this.updateRule(rule.setColumn(e.target.value || defaultRuleColumn), ruleIndex)}/>
             ],
             [
                 ('Description'),
                 <VSCodeTextField 
                     style={{width: textFieldWidth, marginBottom: '2px'}}
-                    initialValue={rule.description} 
+                    value={rule.description} 
                     onInput={(e) => this.updateRule(rule.setDescription(e.target.value), ruleIndex)}/>
             ]
         ];
