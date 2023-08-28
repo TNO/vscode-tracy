@@ -67,7 +67,7 @@ export default class StateBasedRule extends Rule {
 
         const stateRows = this.ruleStates.map((r, i) => {
             return [
-                <VSCodeTextField initialValue={r.name} onInput={(e) => editStateName(i, e.target.value)}/>,
+                <VSCodeTextField value={r.name} onInput={(e) => editStateName(i, e.target.value)}/>,
             ]
         })
 
