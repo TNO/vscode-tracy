@@ -76,12 +76,11 @@ export default class App extends React.Component<Props, State> {
             selectedLogRows: [], rowProperties: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
             collapsibleRows: {},
-            // collapsibleRows: { 1: constructNewSegment(1, 10, 0), 2: constructNewSegment(2, 6, 1), 5: constructNewSegment(5, 15, 0)},
         };
 
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
-        this.vscode.postMessage({type: 'update'});
+        this.vscode.postMessage({type: 'readFile'});
     }
 
     componentDidMount(): void {
@@ -98,7 +97,7 @@ export default class App extends React.Component<Props, State> {
 
     onMessage(event: MessageEvent) {
         const message = event.data;
-        if (message.type === 'update') {
+        if (message.type === 'readFile') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
             let lines = JSON.parse(message.text);
             const logFileText = JSON.stringify(lines, null, 2);
@@ -142,9 +141,9 @@ export default class App extends React.Component<Props, State> {
     }
 
     handleDialogActions(newRules: Rule[], is_close: boolean) {
-        this.vscode.postMessage({type: 'save_rules', rules: newRules.map((r) => r.toJSON())});
+        this.vscode.postMessage({type: 'saveRules', rules: newRules.map((r) => r.toJSON())});
         if (is_close === true)
-            this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showStatesDialog: false, showFlagsDialog: false});
+            this.setState({rules: newRules, logFile: this.state.logFile.update(newRules), showStatesDialog: false, showFlagsDialog: false});
         else
             this.setState({rules: newRules});
     }
@@ -160,7 +159,7 @@ export default class App extends React.Component<Props, State> {
         if (isClosing === true){
             logHeaderColumnTypes = [];
             this.handleStructureUpdate(isClosing);
-        }else {
+        } else {
             const {logFile, rowProperties, rules, showStructureDialog} = this.state;
 
             const selectedLogRows = logFile.rows.filter((v, i) => rowProperties[i].rowType === RowType.UserSelect);
