@@ -1,12 +1,14 @@
 import React from 'react';
+import LogFile from './LogFile';
 import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
-import LogFile from './LogFile';
 import Tooltip from '@mui/material/Tooltip'
-import { LogViewState, StructureMatchId } from './types';
+import { LogViewState, StructureMatchId, RowProperty, Segment } from './types';
 import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
-import {useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch} from './hooks/useStructureRegularExpressionManager'
+import { useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch } from './hooks/useStructureRegularExpressionManager'
+import { getRegularExpressionMatches, returnSearchIndices } from './hooks/useLogSearchManager'
+import { constructNewRowProperty, constructNewSegment } from './hooks/useRowProperty';
 import StructureDialog from './structures/StructureDialog';
 import StatesDialog from './rules/Dialogs/StatesDialog';
 import FlagsDialog from './rules/Dialogs/FlagsDialog';
@@ -25,22 +27,27 @@ interface State {
     showFlagsDialog: boolean;
     showMinimapHeader: boolean;
     showSelectDialog: boolean;
-    searchColumn: string;
-    searchText: string;
     selectedColumns: boolean[];
     selectedColumnsMini: boolean[];
     coloredTable: boolean;
+    reSearch: boolean;
+    wholeSearch: boolean;
+    caseSearch: boolean;
 
     // Structure related
     logFileAsString: string
     logEntryRanges: number[][];
     selectedLogRows: string[][];
-    selectedRowsTypes: SelectedRowType[];
+    // selectedRowsTypes: RowType[];
+    rowProperties: RowProperty[];
     lastSelectedRow: number | undefined;
     structureMatches: number[][];
     structureMatchesLogRows: number[];
     currentStructureMatch: number[];
     currentStructureMatchIndex: StructureMatchId;
+
+    //Collapsible Table
+    collapsibleRows: { [key: number]: Segment };
 }
 
 const COLUMN_0_HEADER_STYLE = {
@@ -52,6 +59,8 @@ const COLUMN_2_HEADER_STYLE = {
     height: '100%', display: 'flex', borderLeft: BORDER
 }
 
+let searchText: string = '';
+let searchColumn: string = 'All';
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
@@ -64,14 +73,15 @@ export default class App extends React.Component<Props, State> {
             logFile: LogFile.create([], []), logFileAsString: '', logViewState: undefined, coloredTable: false, showMinimapHeader: true, 
             rules: [], showStatesDialog: false, showFlagsDialog: false, 
             showSelectDialog: false, selectedColumns: [], selectedColumnsMini: [],
-            searchColumn: 'All', searchText: '', 
-            selectedLogRows: [], selectedRowsTypes: [], logEntryRanges: [],
+            reSearch: false, wholeSearch: false, caseSearch: false,
+            selectedLogRows: [], rowProperties: [], logEntryRanges: [],
             showStructureDialog: false, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: [], lastSelectedRow: undefined,
+            collapsibleRows: {},
         };
 
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
-        this.vscode.postMessage({type: 'update'});
+        this.vscode.postMessage({type: 'readFile'});
     }
 
     componentDidUpdate(prevProps: Props, prevState: State) {
@@ -80,64 +90,55 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    filterOnEnter(key_press: any) {
-        if (key_press === 'Enter') {
-            this.vscode.postMessage({type: 'update'});
-        }
-    }
-
-    findIndices(rows: string[][], col_index: number, str: string) {
-        let indices: number[] = [];
-        if (col_index === -1) {
-            for (let i = 0; i < rows.length; i++) {
-                if (rows[i].join(" ").indexOf(str) != -1)
-                    indices.push(i);
-            }
-        }
-        else {
-            for (let i = 0; i < rows.length; i++) {
-                if (rows[i][col_index].indexOf(str) != -1)
-                    indices.push(i);
-            }
-        }
-        return indices;        
-    }
-
     onMessage(event: MessageEvent) {
-        let logFile: LogFile;
-        let newSelectedRowsTypes: SelectedRowType[];
         const message = event.data;
-        
-        if (message.type === 'update') {
+        if (message.type === 'readFile') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
             let lines = JSON.parse(message.text);
             const logFileText = JSON.stringify(lines, null, 2);
-            logFile = LogFile.create(lines, rules);
-
-            if (this.state.searchText !== '') {
-                const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
-                const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText);
-                let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
-
-                if (filtered_lines.length === 0) {
-                    filtered_lines = [lines[0]]
-                    for (let k of Object.keys(lines[0]))
-                        filtered_lines[0][k] = ''
-                }
-
-                logFile = LogFile.create(filtered_lines, rules);
-            }
-
             const textRanges = useJsonObjectToTextRangesMap(logFileText);
-            newSelectedRowsTypes = logFile.rows.map(() => SelectedRowType.None);
-            this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, selectedRowsTypes: newSelectedRowsTypes});
+            let logFile = LogFile.create(lines, rules);
+            let newRowsProps = logFile.rows.map(() => constructNewRowProperty(true, true, SelectedRowType.None));
+            this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, rowProperties: newRowsProps});
+        }
+    }
+
+    filterLog(action: any) {
+        let newRowsProps;
+        if (action === 'Clear') {
+            searchText = '';
+            newRowsProps = this.state.logFile.rows.map(() => constructNewRowProperty(true, true, SelectedRowType.None));
+            this.setState({rowProperties: newRowsProps});
+        }
+        else if (action === 'Enter') {
+            if (searchText === '') {
+                newRowsProps = this.state.logFile.rows.map(() => constructNewRowProperty(true, true, SelectedRowType.None));
+                this.setState({rowProperties: newRowsProps});
+            }
+            else {
+                const rules = this.state.rules;
+                let lines = JSON.parse(this.state.logFileAsString);
+                let logFile = this.state.logFile;
+                let logFileText = this.state.logFileAsString;
+                const col_index = this.state.logFile.headers.findIndex(h => h.name === searchColumn)
+                const filteredIndices = returnSearchIndices(logFile.rows, col_index, searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
+                
+                newRowsProps = this.state.logFile.rows.map((row, index) => {
+                    if (filteredIndices.includes(index))
+                        return constructNewRowProperty(true, true, SelectedRowType.None);
+                    else
+                        return constructNewRowProperty(false, false, SelectedRowType.None);
+                });    
+                const textRanges = useJsonObjectToTextRangesMap(logFileText);
+                this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, rowProperties: newRowsProps});
+            }
         }
     }
 
     handleDialogActions(newRules: Rule[], is_close: boolean) {
-        this.vscode.postMessage({type: 'save_rules', rules: newRules.map((r) => r.toJSON())});
+        this.vscode.postMessage({type: 'saveRules', rules: newRules.map((r) => r.toJSON())});
         if (is_close === true)
-            this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showStatesDialog: false, showFlagsDialog: false});
+            this.setState({rules: newRules, logFile: this.state.logFile.update(newRules), showStatesDialog: false, showFlagsDialog: false});
         else
             this.setState({rules: newRules});
     }
@@ -153,10 +154,10 @@ export default class App extends React.Component<Props, State> {
         if (isClosing === true){
             logHeaderColumnTypes = [];
             this.handleStructureUpdate(isClosing);
-        }else {
-            const {logFile, selectedRowsTypes, rules, showStructureDialog} = this.state;
+        } else {
+            const {logFile, rowProperties, rules, showStructureDialog} = this.state;
 
-            const selectedLogRows = logFile.rows.filter((v, i) => selectedRowsTypes[i] === SelectedRowType.UserSelect);
+            const selectedLogRows = logFile.rows.filter((v, i) => rowProperties[i].rowType === SelectedRowType.UserSelect);
             
             if(selectedLogRows.length === 0) {
                 return;
@@ -187,52 +188,58 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
+    handleRowCollapse(rowIndex: number, isRendered: boolean){
+        const newRowProps = this.state.rowProperties;
+        newRowProps[rowIndex].isRendered = isRendered;
+        this.setState({rowProperties: newRowProps});
+    }
+
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
-        if(event.ctrlKey) {
-
+        if (event.ctrlKey) {
+            const newRowProps = this.state.rowProperties;
             const {structureMatchesLogRows, lastSelectedRow} = this.state;
-            const newSelectedRows = this.state.selectedRowsTypes;
 
-            if(!structureMatchesLogRows.includes(rowIndex)) {
+            if (!structureMatchesLogRows.includes(rowIndex)) {
                 
-                if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
+                if (event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
     
                     // Shift click higher in the event log
-                    if(lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
+                    if (lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
         
-                        for(let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
-                            newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        for (let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
+                            newRowProps[i].rowType = (newRowProps[i].rowType === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
                         }
         
                     }
                     // Shift click lower in the event log
                     else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
                         for(let i = rowIndex; i < lastSelectedRow + 1; i++){
-                            newSelectedRows[i] = (newSelectedRows[i] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                            newRowProps[i].rowType = (newRowProps[i].rowType === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
                         }
                     }
-                }else {
-                    newSelectedRows[rowIndex] = (newSelectedRows[rowIndex] === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                } else {
+                    newRowProps[rowIndex].rowType = (newRowProps[rowIndex].rowType === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
                 }
         
-                this.setState({selectedRowsTypes: newSelectedRows, lastSelectedRow: rowIndex});
+
+                this.setState({rowProperties: newRowProps, lastSelectedRow: rowIndex});
             }
         }
     }
 
-    clearSelectedRowsTypes(): SelectedRowType[] {
-        const clearedSelectedRows = this.state.selectedRowsTypes.map(() => SelectedRowType.None);
+    clearSelectedRowsTypes(): RowProperty[] {
+        const clearedSelectedRows = this.state.rowProperties.map(() =>constructNewRowProperty(true, true, SelectedRowType.None));
         return clearedSelectedRows;
     }
 
     handleStructureUpdate(isClosing: boolean) {
         const clearedSelectedRows = this.clearSelectedRowsTypes();
 
-        this.setState({showStructureDialog:!isClosing ,selectedRowsTypes: clearedSelectedRows, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: []});
+        this.setState({showStructureDialog:!isClosing , rowProperties: clearedSelectedRows, structureMatches: [], structureMatchesLogRows: [], currentStructureMatchIndex: null, currentStructureMatch: []});
     }
 
     handleStructureMatching(expression:string) {
-        const selectedRowsTypes = this.clearSelectedRowsTypes();
+        const rowProperties = this.clearSelectedRowsTypes();
         const {logFileAsString, logEntryRanges} = this.state;
         let {currentStructureMatch, currentStructureMatchIndex} = this.state;
 
@@ -251,7 +258,7 @@ export default class App extends React.Component<Props, State> {
             currentStructureMatch = [];
         }
 
-        this.setState({selectedRowsTypes, structureMatches, structureMatchesLogRows, currentStructureMatch, currentStructureMatchIndex});
+        this.setState({rowProperties, structureMatches, structureMatchesLogRows, currentStructureMatch, currentStructureMatchIndex});
     }
 
     handleNavigateStructureMatches(isGoingForward: boolean) {
@@ -273,15 +280,54 @@ export default class App extends React.Component<Props, State> {
         }
     }
 
-    handleTableCheckbox(){
-        if (this.state.coloredTable) {
-            this.setState({coloredTable:false});
-        } else {
-            this.setState({coloredTable:true});
+    handleSegmentation(entryExpression: string, exitExpression: string) {
+        const {logFileAsString, logEntryRanges} = this.state;
+        let {collapsibleRows} = this.state;
+        
+        const entryMatches = getRegularExpressionMatches(entryExpression, logFileAsString, logEntryRanges);
+        const exitMatches = getRegularExpressionMatches(exitExpression, logFileAsString, logEntryRanges);
+
+        let stack: number[] = [];
+        let maximum_level = 5;
+        let next_entry = entryMatches.shift()!;
+        let next_exit = exitMatches.shift()!;        
+
+        while (next_entry !== undefined && next_exit !== undefined) {
+            if (next_entry < next_exit) {
+                stack.push(next_entry);
+                next_entry = entryMatches.shift()!;
+            }
+            else {
+                let entry = stack.pop()!;
+                if (stack.length <= (maximum_level - 1))
+                    collapsibleRows[entry] = constructNewSegment(entry, next_exit, stack.length);
+                else
+                    console.log(`Maximum segment level reached: Discarding (${entry}, ${next_exit})`)
+                next_exit = exitMatches.shift()!;
+            }
         }
+        if (next_exit !== undefined) {
+            let entry = stack.pop()!
+            collapsibleRows[entry] = constructNewSegment(entry, next_exit, 0);
+        }
+
+        this.setState({collapsibleRows});
+    }
+
+
+    switchBooleanState(name: string){
+        if (name === 'coloredTable')
+            this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
+        else if (name === 'reSearch')
+            this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
+        else if (name === 'wholeSearch')
+            this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
+        else if (name === 'caseSearch')
+            this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
     }
 
     render() {
+        var txt = '';
         const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         const minimapHeight = this.state.showMinimapHeader ? '12%' : '5%' ;
 
@@ -294,17 +340,30 @@ export default class App extends React.Component<Props, State> {
                         onClick={() => this.setState({showSelectDialog: true})}>
                         Choose Columns
                     </VSCodeButton>
-                    <label>
-                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.handleTableCheckbox()}/>
+                    {/* <label>
+                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.switchBooleanState('coloredTable')}/>
                         Color Table
-                    </label>
+                    </label> */}
                 </div>
                 <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
-                    <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
+                    <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => searchColumn = e.target.value}>
                     {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
-                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.filterOnEnter(e.key)}>
-                    <span slot="end" className="codicon codicon-search"></span>
+                    <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" value={searchText} onInput={(e) => searchText = e.target.value} onKeyUp={(e) => this.filterLog(e.key)}>                    
+                    
+                    <Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
+                        <span slot="end" style={{backgroundColor: this.state.caseSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-case-sensitive" onClick={() => this.switchBooleanState('caseSearch')}></span>
+                    </Tooltip>
+                    <Tooltip title={<h3>Match Whole Word</h3>} placement="bottom" arrow>
+                        <span slot="end" style={{backgroundColor: this.state.wholeSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-whole-word" onClick={() => this.switchBooleanState('wholeSearch')}></span>
+                    </Tooltip>
+                    <Tooltip title={<h3>Use Regular Expression</h3>} placement="bottom" arrow>
+                        <span slot="end" style={{backgroundColor: this.state.reSearch ? 'dodgerblue' : '', borderRadius: '20%', marginRight: '5px', cursor:'pointer'}} className="codicon codicon-regex" onClick={() => this.switchBooleanState('reSearch')}></span>
+                    </Tooltip>
+                    <Tooltip title={<h3>Clear</h3>} placement="bottom" arrow>
+                        <span slot="end" style={{cursor:'pointer'}} className="codicon codicon-close" onClick={() => this.filterLog('Clear')}></span>
+                    </Tooltip>
+                    
                     </VSCodeTextField>
                     {this.state.showMinimapHeader &&
                     <VSCodeButton appearance='icon' onClick={() => this.setState({showMinimapHeader: false})}>
@@ -333,11 +392,13 @@ export default class App extends React.Component<Props, State> {
                         onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
                         forwardRef={this.child}
                         coloredTable={this.state.coloredTable}
-                        selectedRows={this.state.selectedRowsTypes}
+                        rowProperties={this.state.rowProperties}
                         structureMatches={this.state.structureMatches}
                         structureMatchesLogRows={this.state.structureMatchesLogRows}
                         currentStructureMatch = {this.state.currentStructureMatch}
                         onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
+                        onRowPropsChanged={(index, isRendered) => this.handleRowCollapse(index, isRendered)}
+                        collapsibleRows={this.state.collapsibleRows}
                     />
                 </div>                    
                 <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth, boxSizing: 'border-box'}}>
@@ -356,7 +417,10 @@ export default class App extends React.Component<Props, State> {
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
                                 <i className="codicon codicon-settings-gear"/>
                             </VSCodeButton>
-                        </Tooltip>    
+                        </Tooltip>
+                        <VSCodeButton appearance='icon' onClick={()=>this.switchBooleanState('coloredTable')}>
+                        <i className="codicon codicon-symbol-color"/>
+                        </VSCodeButton>
                     </div>
                     {this.state.logViewState &&
                     <MinimapView
@@ -364,6 +428,7 @@ export default class App extends React.Component<Props, State> {
                     logViewState={this.state.logViewState}
                     onLogViewStateChanged={(logViewState) => this.setState({logViewState})}
                     forwardRef={this.child}
+                    rowProperties={this.state.rowProperties}
                     />
                     }
                 </div>
@@ -400,6 +465,7 @@ export default class App extends React.Component<Props, State> {
                 onClose={() => this.handleStructureDialogActions(true)}
                 onStructureUpdate={() => this.handleStructureUpdate(false)}
                 onMatchStructure={(expression) => this.handleStructureMatching(expression)}
+                onDefineSegment={(entryExpression, exitExpression) => this.handleSegmentation(entryExpression, exitExpression)}
                 onNavigateStructureMatches={(isGoingForward) => this.handleNavigateStructureMatches(isGoingForward)}
                 />
                 }

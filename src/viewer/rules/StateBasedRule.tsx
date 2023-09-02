@@ -6,6 +6,7 @@ import Table from './Tables/Table';
 import StateTable from './Tables/StateTable';
 import TransitionTable from './Tables/TransitionTable';
 import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodeDivider, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
+import { useRegularExpressionSearch } from '../hooks/useLogSearchManager';
 
 
 interface State {name: string, transitions: Transition[]};
@@ -14,8 +15,8 @@ interface TransitionCondition {Column: string, Operation: string, Text: string}
 
 
 export default class StateBasedRule extends Rule {
-    static friendlyType = "State based rule";
-    friendlyType = StateBasedRule.friendlyType;
+    static ruleType = "State based rule";
+    ruleType = StateBasedRule.ruleType;
 
     readonly ruleStates: State[];
     readonly initialStateIndex: number;
@@ -66,7 +67,7 @@ export default class StateBasedRule extends Rule {
 
         const stateRows = this.ruleStates.map((r, i) => {
             return [
-                <VSCodeTextField initialValue={r.name} onInput={(e) => editStateName(i, e.target.value)}/>,
+                <VSCodeTextField value={r.name} onInput={(e) => editStateName(i, e.target.value)}/>,
             ]
         })
 
@@ -112,6 +113,7 @@ export default class StateBasedRule extends Rule {
                             <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
                             <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
                             <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
+                            <VSCodeOption key='4' value='regexSearch'>regex search</VSCodeOption>
                         </VSCodeDropdown>,
                         <VSCodeTextField  style={{width: '100%'}} value={r.Text}  onInput={(e) => editTransition(t_i, c_i, 'Text', e.target.value)}/>,
                     ];
@@ -275,6 +277,12 @@ export default class StateBasedRule extends Rule {
                             }
                             else if (condition.Operation === 'endsWith') {
                                 if (!logValue.endsWith(condition.Text)) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
+                            }
+                            else if (condition.Operation === 'regexSearch') {
+                                if (useRegularExpressionSearch('gs', condition.Text, logValue) === false) {
                                     all_conditions_satisfied = false;
                                     break;
                                 }
