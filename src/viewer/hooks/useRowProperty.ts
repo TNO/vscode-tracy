@@ -1,9 +1,7 @@
 import { RowProperty, Segment } from "../types";
-import {
-    RowType
-} from "../constants";
+import { SelectedRowType} from "../constants";
 
-export const constructNewRowProperty = (isSearchResult: boolean, isRendered: boolean, rowType: RowType): RowProperty => {
+export const constructNewRowProperty = (isSearchResult: boolean, isRendered: boolean, rowType: SelectedRowType): RowProperty => {
     const newRowProperty: RowProperty = { isSearchResult, isRendered, rowType };
     return newRowProperty;
 }

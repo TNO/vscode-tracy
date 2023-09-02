@@ -129,8 +129,6 @@ export const useStructureQueryConstructor = (logHeaders: Header[], headerColumnT
         }
     }
 
-    console.log(regularExp);
-
     return regularExp;
 }
 
