@@ -14,9 +14,9 @@ export default class LogFile {
     private readonly headerIndexLookup: {[k: string]: number};
 
     readonly contentHeaders: string[];
-    readonly headers: Header[];
     readonly rows: string[][];
     readonly columnsColors: string[][] = [];
+    headers: Header[];
     selectedColumns: boolean[];
     selectedColumnsMini: boolean[];
 
@@ -40,6 +40,7 @@ export default class LogFile {
     }
 
     update(rules: Rule[]): LogFile {
+        this.updateHeaders(rules);
         this.computeRulesValuesAndColors(rules);
         this.setSelectedColumns(this.selectedColumns, this.selectedColumnsMini); //only show the selected columns after updating the rules
         return this;
@@ -78,6 +79,14 @@ export default class LogFile {
     private static getHeaders(contentHeaders: string[], rules: Rule[]) {
         const allHeaders = [...contentHeaders, ...rules.map((r) => r.column)];
         return allHeaders.map((name) => {
+            const type = HEADER_TYPE_LOOKUP[name] ?? DEFAULT_HEADER_TYPE;
+            return {name, type};
+        });
+    }
+
+    private updateHeaders(rules: Rule[]) {
+        const allHeaders = [...this.contentHeaders, ...rules.map((r) => r.column)];
+        this.headers = allHeaders.map((name) => {
             const type = HEADER_TYPE_LOOKUP[name] ?? DEFAULT_HEADER_TYPE;
             return {name, type};
         });
