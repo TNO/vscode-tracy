@@ -157,7 +157,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                     onInput={(e) => this.updateRule(rule.setDescription(e.target.value), ruleIndex)}/>
             ],
             [
-                ('Flag Selection'),
+                ('Type'),
                 <VSCodeDropdown disabled={ruleAsFlag.flags.length > 0?true: false} style={{width: textFieldWidth, marginBottom: '2px'}} value={flagType} onChange={(e) => this.updateFlagProperty(rule, 'flagType', e.target.value, ruleIndex)}>
                     <VSCodeOption value={'User Defined'} key={0}>User Defined</VSCodeOption>
                     <VSCodeOption value={'Capture Match'} key={1}>Capture Match</VSCodeOption>
