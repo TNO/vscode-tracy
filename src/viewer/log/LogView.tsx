@@ -48,7 +48,7 @@ export default class LogView extends React.Component<Props, State> {
 
     componentDidMount(): void {
         window.addEventListener('resize', () => this.updateState());
-        this.updateState();
+        // this.updateState();
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
@@ -58,9 +58,9 @@ export default class LogView extends React.Component<Props, State> {
         if (prevProps.currentStructureMatch[0] !== this.props.currentStructureMatch[0]) {
             this.updateState(this.props.currentStructureMatch[0]);
         }
-        if (prevState.columnWidth !== this.state.columnWidth) {
-            this.render();
-        }
+        // if (prevState.columnWidth !== this.state.columnWidth) {
+        //     this.render(); //TODO: Discuss whether this is redundant.
+        // }
     }
 
     renderColumn(value: string, columnIndex: number, isHeader: boolean, width: number, colorMap: string) {

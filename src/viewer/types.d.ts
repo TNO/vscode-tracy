@@ -1,5 +1,4 @@
-import { type } from "os"
-import { RowType, StructureLinkDistance } from "./constants"
+import { SelectedRowType, StructureLinkDistance } from "./constants"
 
 export interface LogViewState {
     height: number,
@@ -18,15 +17,39 @@ export interface Header {
 }
 
 export interface StructureEntry {
-    row: string[],
+    row: CellContents[][], 
     cellSelection: boolean[],
-    structureLink: StructureLinkDistance | undefined
+    structureLink: StructureLinkDistance | undefined,
+    wildcardsIndices: number[][]
 }
+
+export interface ContextMenuItem {
+    text: string,
+    callback: (anchorDiv: string) => void,
+}
+
+export interface Wildcard {
+    wildcardSubstitutions: WildcardSubstitution []
+}
+
+export interface WildcardSubstitution {
+    entryIndex: number, 
+    cellIndex: number,
+    contentsIndex: number
+}
+
+export interface CellContents {
+    contentsIndex: number
+    textValue: string,
+    wildcardIndex: number | null
+} 
+
+export type StructureMatchId = number | null;
 
 export interface RowProperty {
     isSearchResult: boolean,
     isRendered: boolean,
-    rowType: RowType
+    rowType: SelectedRowType
 }
 
 export interface Segment {
@@ -34,5 +57,3 @@ export interface Segment {
     end: number,
     level: number
 }
-
-export type StructureMatchId = number | null;

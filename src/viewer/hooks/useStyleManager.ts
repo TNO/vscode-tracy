@@ -1,4 +1,4 @@
-import { RowType, LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, STRUCTURE_LINK_HEIGHT, STRUCTURE_WIDTH, BORDER, BORDER_SELECTED_ROW, BORDER_STRUCTURE_MATCH_CURRENT, BORDER_STRUCTURE_MATCH_OTHER, BACKGROUND_COLOR_MATCHED_ROW_CURRENT, BACKGROUND_COLOR_MATCHED_ROW_OTHER, BACKGROUND_COLOR_SELECTED_ROW } from '../constants';
+import { SelectedRowType, LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, STRUCTURE_LINK_HEIGHT, STRUCTURE_WIDTH, BORDER, BORDER_SELECTED_ROW, BORDER_STRUCTURE_MATCH_CURRENT, BORDER_STRUCTURE_MATCH_OTHER, BACKGROUND_COLOR_MATCHED_ROW_CURRENT, BACKGROUND_COLOR_MATCHED_ROW_OTHER, BACKGROUND_COLOR_SELECTED_ROW } from '../constants';
 import { RowProperty, StructureEntry } from '../types';
 
 const getLogViewRowStyle = (rowIndex: number, leftPadding: number): React.CSSProperties => {
@@ -32,6 +32,12 @@ export const StructureDialogDialogStyle: React.CSSProperties = {
     flexDirection: 'column',
     overflow: 'scroll'
 };
+
+export const WildcardStyle: React.CSSProperties = {
+    border:'1px solid',
+    borderRadius: '2px',
+    userSelect: 'none'
+}
 
 export const getStructureTableHeaderStyle = (containerWidth: number): React.CSSProperties => {
     const headerStyle: React.CSSProperties = {
@@ -168,14 +174,14 @@ export const getLogViewRowSelectionStyle = (selectedRows: RowProperty[], rowInde
     let rowSelectionStyle: React.CSSProperties = {};
 
     switch (selectedRows[rowIndex].rowType) {
-        case RowType.UserSelect:
+        case SelectedRowType.UserSelect:
             rowSelectionStyle = {
                 borderBottom: BORDER_SELECTED_ROW,
                 borderTop: BORDER_SELECTED_ROW,
                 backgroundColor: BACKGROUND_COLOR_SELECTED_ROW
             };
             break;
-        case RowType.None:
+        case SelectedRowType.None:
             rowSelectionStyle = {
                 borderBottom: BORDER,
             };
@@ -245,3 +251,40 @@ export const getLogViewStructureMatchStyle = (currentStructureMatch: number[], s
 
     return structureMatchRowStyle;
 };
+
+export const getContextMenuStyle = (contextMenuHeight: number, contextMenuWidth: number, xPos: number, yPos: number): React.CSSProperties => {
+    const contextMenuStyle: React.CSSProperties = {
+        height: contextMenuHeight,
+        width: contextMenuWidth,
+        top:yPos,
+        left: xPos,
+        position: 'fixed',
+        userSelect: 'none'
+        };
+
+        const vw = document.documentElement.clientWidth;
+        const vh = document.documentElement.clientHeight;
+
+        if (xPos + contextMenuWidth > vw) contextMenuStyle.left = vw - contextMenuWidth;
+
+        if (yPos + contextMenuHeight > vh) contextMenuStyle.top = vh - contextMenuHeight;
+
+    return contextMenuStyle;
+}
+
+
+export const getContextMenuItemStyle = (isSelected: boolean): React.CSSProperties => {
+    const contextMenuItemStyle: React.CSSProperties = {
+        height: '28px', 
+        lineHeight: '28px',
+        paddingLeft: '5px',
+        paddingRight: '5px',
+        borderRadius: '4px',
+        cursor:'pointer',
+        textOverflow: 'ellipsis',
+        background: isSelected ? 'var(--vscode-menu-selectionBackground)': '',
+        color: isSelected ? 'var(--vscode-menu-selectionForeground)': ''
+    };
+
+    return contextMenuItemStyle;
+}

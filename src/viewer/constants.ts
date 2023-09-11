@@ -69,7 +69,7 @@ export enum StructureHeaderColumnType {
     Custom = "CUSTOM"
 }
 
-export enum RowType {
+export enum SelectedRowType {
     None = "NONE",
     UserSelect = "SELECTED",
     QueryResult = "QUERY_RESULT"

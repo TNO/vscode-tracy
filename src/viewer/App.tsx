@@ -4,7 +4,7 @@ import LogView from './log/LogView';
 import MinimapView from './minimap/MinimapView';
 import Tooltip from '@mui/material/Tooltip'
 import { LogViewState, StructureMatchId, RowProperty, Segment } from './types';
-import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, RowType, StructureHeaderColumnType} from './constants';
+import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, SelectedRowType, StructureHeaderColumnType} from './constants';
 import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import { useJsonObjectToTextRangesMap, useStructureRegularExpressionSearch } from './hooks/useStructureRegularExpressionManager'
 import { getRegularExpressionMatches, returnSearchIndices } from './hooks/useLogSearchManager'
@@ -15,6 +15,7 @@ import FlagsDialog from './rules/Dialogs/FlagsDialog';
 import Rule from './rules/Rule';
 import MinimapHeader from './minimap/MinimapHeader';
 import SelectColDialog from './log/SelectColDialog';
+
 interface Props {
 }
 interface State {
@@ -81,13 +82,7 @@ export default class App extends React.Component<Props, State> {
 
         this.onMessage = this.onMessage.bind(this);
         window.addEventListener('message', this.onMessage);
-        this.vscode.postMessage({type: 'update'});
-    }
-
-    componentDidMount(): void {
-        document.addEventListener("contextmenu", (event) => {
-            event.preventDefault();
-          });
+        this.vscode.postMessage({type: 'readFile'});
     }
 
     componentDidUpdate(prevProps: Props, prevState: State) {
@@ -98,13 +93,13 @@ export default class App extends React.Component<Props, State> {
 
     onMessage(event: MessageEvent) {
         const message = event.data;
-        if (message.type === 'update') {
+        if (message.type === 'readFile') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
             let lines = JSON.parse(message.text);
             const logFileText = JSON.stringify(lines, null, 2);
             const textRanges = useJsonObjectToTextRangesMap(logFileText);
             let logFile = LogFile.create(lines, rules);
-            let newRowsProps = logFile.rows.map(() => constructNewRowProperty(true, true, RowType.None));
+            let newRowsProps = logFile.rows.map(() => constructNewRowProperty(true, true, SelectedRowType.None));
             this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, rowProperties: newRowsProps});
         }
     }
@@ -113,12 +108,12 @@ export default class App extends React.Component<Props, State> {
         let newRowsProps;
         if (action === 'Clear') {
             searchText = '';
-            newRowsProps = this.state.logFile.rows.map(() => constructNewRowProperty(true, true, RowType.None));
+            newRowsProps = this.state.logFile.rows.map(() => constructNewRowProperty(true, true, SelectedRowType.None));
             this.setState({rowProperties: newRowsProps});
         }
         else if (action === 'Enter') {
             if (searchText === '') {
-                newRowsProps = this.state.logFile.rows.map(() => constructNewRowProperty(true, true, RowType.None));
+                newRowsProps = this.state.logFile.rows.map(() => constructNewRowProperty(true, true, SelectedRowType.None));
                 this.setState({rowProperties: newRowsProps});
             }
             else {
@@ -131,9 +126,9 @@ export default class App extends React.Component<Props, State> {
                 
                 newRowsProps = this.state.logFile.rows.map((row, index) => {
                     if (filteredIndices.includes(index))
-                        return constructNewRowProperty(true, true, RowType.None);
+                        return constructNewRowProperty(true, true, SelectedRowType.None);
                     else
-                        return constructNewRowProperty(false, false, RowType.None);
+                        return constructNewRowProperty(false, false, SelectedRowType.None);
                 });    
                 const textRanges = useJsonObjectToTextRangesMap(logFileText);
                 this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, rowProperties: newRowsProps});
@@ -142,9 +137,9 @@ export default class App extends React.Component<Props, State> {
     }
 
     handleDialogActions(newRules: Rule[], is_close: boolean) {
-        this.vscode.postMessage({type: 'save_rules', rules: newRules.map((r) => r.toJSON())});
+        this.vscode.postMessage({type: 'saveRules', rules: newRules.map((r) => r.toJSON())});
         if (is_close === true)
-            this.setState({rules: newRules, logFile: this.state.logFile.setRules(newRules), showStatesDialog: false, showFlagsDialog: false});
+            this.setState({rules: newRules, logFile: this.state.logFile.update(newRules), showStatesDialog: false, showFlagsDialog: false});
         else
             this.setState({rules: newRules});
     }
@@ -160,10 +155,10 @@ export default class App extends React.Component<Props, State> {
         if (isClosing === true){
             logHeaderColumnTypes = [];
             this.handleStructureUpdate(isClosing);
-        }else {
+        } else {
             const {logFile, rowProperties, rules, showStructureDialog} = this.state;
 
-            const selectedLogRows = logFile.rows.filter((v, i) => rowProperties[i].rowType === RowType.UserSelect);
+            const selectedLogRows = logFile.rows.filter((v, i) => rowProperties[i].rowType === SelectedRowType.UserSelect);
             
             if(selectedLogRows.length === 0) {
                 return;
@@ -201,36 +196,40 @@ export default class App extends React.Component<Props, State> {
     }
 
     handleSelectedLogRow(rowIndex: number, event: React.MouseEvent){
-        const {structureMatchesLogRows, lastSelectedRow} = this.state;
-        const newRowProps = this.state.rowProperties;
+        if (event.ctrlKey) {
+            const newRowProps = this.state.rowProperties;
+            const {structureMatchesLogRows, lastSelectedRow} = this.state;
 
-        if(!structureMatchesLogRows.includes(rowIndex)) {
-            if(event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
+            if (!structureMatchesLogRows.includes(rowIndex)) {
+                
+                if (event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
+    
+                    // Shift click higher in the event log
+                    if (lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
+        
+                        for (let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
+                            newRowProps[i].rowType = (newRowProps[i].rowType === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        }
+        
+                    }
+                    // Shift click lower in the event log
+                    else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
+                        for(let i = rowIndex; i < lastSelectedRow + 1; i++){
+                            newRowProps[i].rowType = (newRowProps[i].rowType === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                        }
+                    }
+                } else {
+                    newRowProps[rowIndex].rowType = (newRowProps[rowIndex].rowType === SelectedRowType.None) ? SelectedRowType.UserSelect : SelectedRowType.None;
+                }
+        
 
-                // Shift click higher in the event log
-                if(lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
-    
-                    for(let i = lastSelectedRow + 1; i < rowIndex + 1; i++){
-                        newRowProps[i].rowType = (newRowProps[i].rowType === RowType.None) ? RowType.UserSelect : RowType.None;
-                    }
-    
-                }
-                // Shift click lower in the event log
-                else if(lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
-                    for(let i = rowIndex; i < lastSelectedRow + 1; i++){
-                        newRowProps[i].rowType = (newRowProps[i].rowType === RowType.None) ? RowType.UserSelect : RowType.None;
-                    }
-                }
-            }else {
-                newRowProps[rowIndex].rowType = (newRowProps[rowIndex].rowType === RowType.None) ? RowType.UserSelect : RowType.None;
+                this.setState({rowProperties: newRowProps, lastSelectedRow: rowIndex});
             }
-    
-            this.setState({rowProperties: newRowProps, lastSelectedRow: rowIndex});
-        }        
+        }
     }
 
     clearSelectedRowsTypes(): RowProperty[] {
-        const clearedSelectedRows = this.state.rowProperties.map(() =>constructNewRowProperty(true, true, RowType.None));
+        const clearedSelectedRows = this.state.rowProperties.map(() =>constructNewRowProperty(true, true, SelectedRowType.None));
         return clearedSelectedRows;
     }
 
@@ -290,10 +289,9 @@ export default class App extends React.Component<Props, State> {
         const exitMatches = getRegularExpressionMatches(exitExpression, logFileAsString, logEntryRanges);
 
         let stack: number[] = [];
+        let maximum_level = 5;
         let next_entry = entryMatches.shift()!;
-        let next_exit = exitMatches.shift()!;
-
-        // TODO: Add maximum level (5)
+        let next_exit = exitMatches.shift()!;        
 
         while (next_entry !== undefined && next_exit !== undefined) {
             if (next_entry < next_exit) {
@@ -302,7 +300,10 @@ export default class App extends React.Component<Props, State> {
             }
             else {
                 let entry = stack.pop()!;
-                collapsibleRows[entry] = constructNewSegment(entry, next_exit, stack.length);
+                if (stack.length <= (maximum_level - 1))
+                    collapsibleRows[entry] = constructNewSegment(entry, next_exit, stack.length);
+                else
+                    console.log(`Maximum segment level reached: Discarding (${entry}, ${next_exit})`)
                 next_exit = exitMatches.shift()!;
             }
         }
@@ -403,21 +404,21 @@ export default class App extends React.Component<Props, State> {
                 </div>                    
                 <div style={{display: 'flex', flexDirection: 'column', width: minimapWidth, boxSizing: 'border-box'}}>
                     <div className='header-background' style={COLUMN_0_HEADER_STYLE}>
-                        {/* <Tooltip title={<h3>Create a structure from selected rows</h3>} placement="bottom" arrow> */}
+                        <Tooltip title={<h3>Create a structure from selected rows</h3>} placement="bottom" arrow>
                             <VSCodeButton appearance='icon' onClick={() => this.handleStructureDialogActions(false)}>
                                 <i className="codicon codicon-three-bars"/>
                             </VSCodeButton>
-                        {/* </Tooltip> */}
-                        {/* <Tooltip title={<h3>Create/Modify Flag Annotations Columns</h3>} placement="bottom" arrow> */}
+                        </Tooltip>
+                        <Tooltip title={<h3>Create/Modify Flag Annotations Columns</h3>} placement="bottom" arrow>
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showFlagsDialog: true})}>
                                 <i className="codicon codicon-tag"/>
                             </VSCodeButton>
-                        {/* </Tooltip> */}
-                        {/* <Tooltip title={<h3>Create/Modify State-Based Annotation Columns</h3>} placement="bottom" arrow> */}
+                        </Tooltip>
+                        <Tooltip title={<h3>Create/Modify State-Based Annotation Columns</h3>} placement="bottom" arrow>
                             <VSCodeButton appearance='icon' onClick={() => this.setState({showStatesDialog: true})}>
                                 <i className="codicon codicon-settings-gear"/>
                             </VSCodeButton>
-                        {/* </Tooltip> */}
+                        </Tooltip>
                         <VSCodeButton appearance='icon' onClick={()=>this.switchBooleanState('coloredTable')}>
                         <i className="codicon codicon-symbol-color"/>
                         </VSCodeButton>

@@ -4,4 +4,8 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
   root: true,
+  rules: {
+    "no-useless-escape": "off",
+    "@typescript-eslint/no-non-null-assertion": "off"
+  }
 };

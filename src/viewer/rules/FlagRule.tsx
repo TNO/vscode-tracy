@@ -4,45 +4,50 @@ import Rule from './Rule';
 import LogFile from '../LogFile';
 import Table from './Tables/Table';
 import FlagTable from './Tables/FlagTable';
-import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodeDivider, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
 import { useRegularExpressionSearch } from '../hooks/useLogSearchManager';
 
 interface Flag {name: string, conditions: Condition[][]}
 interface Condition {Column: string, Operation: string, Text: string}
 
 export default class FlagRule extends Rule {
-    static friendlyType = "Flag rule";
-    friendlyType = FlagRule.friendlyType;
+    static ruleType = "Flag rule";
+    ruleType = FlagRule.ruleType;
 
     readonly flags: Flag[];
     readonly defaultValue: string;
+    readonly flagType: string;
     readonly selectedFlag: number;
 
-    public constructor(column: string, description: string, defaultValue: string, selectedFlag: number, flags: Flag[]) {
+    public constructor(column: string, description: string, defaultValue: string, flagType: string, selectedFlag: number, flags: Flag[]) {
         super(column, description);
         this.defaultValue = defaultValue;
+        this.flagType = flagType;
         this.selectedFlag = selectedFlag;
         this.flags = flags;
     }
 
-    reset = () => new FlagRule(this.column, this.description, this.defaultValue, 0, this.flags);
-    setColumn = (column: string) => new FlagRule(column, this.description, this.defaultValue, this.selectedFlag, this.flags);
-    setDescription = (description: string) => new FlagRule(this.column, description, this.defaultValue, this.selectedFlag, this.flags);
-    setSelected = (selectedFlag: number) => new FlagRule(this.column, this.description, this.defaultValue, selectedFlag, this.flags);
-    setDefault = (defaultValue: string) => new FlagRule(this.column, this.description, defaultValue, this.selectedFlag, this.flags);
-    setFlags = (flags: Flag[]) => new FlagRule(this.column, this.description, this.defaultValue, this.selectedFlag, flags);
+    reset = () => new FlagRule(this.column, this.description, this.defaultValue, this.flagType, 0, this.flags);
+    setColumn = (column: string) => new FlagRule(column, this.description, this.defaultValue, this.flagType, this.selectedFlag, this.flags);
+    setDescription = (description: string) => new FlagRule(this.column, description, this.defaultValue, this.flagType, this.selectedFlag, this.flags);
+    setFlagType = (flagType: string) => new FlagRule(this.column, this.description, this.defaultValue, flagType, this.selectedFlag, this.flags);
+    setSelected = (selectedFlag: number) => new FlagRule(this.column, this.description, this.defaultValue, this.flagType, selectedFlag, this.flags);
+    setDefault = (defaultValue: string) => new FlagRule(this.column, this.description, defaultValue, this.flagType, this.selectedFlag, this.flags);
+    setFlags = (flags: Flag[]) => new FlagRule(this.column, this.description, this.defaultValue, this.flagType, this.selectedFlag, flags);
 
     public toJSON() {
-        const {column, description, defaultValue, flags} = this;
+        const {column, description, defaultValue, flagType, flags} = this;
         const type = 'FlagRule';
-        return {column, type, description, defaultValue, flags};
+        return {column, type, description, defaultValue, flagType, flags};
     }
 
     static fromJSON(json: {[s: string]: any}) {
-        return new FlagRule(json.column, json.description, json.defaultValue, 0, json.flags);
+        return new FlagRule(json.column, json.description, json.defaultValue, json.flagType, 0, json.flags);
     }
 
     public renderEdit(onEdit: (newRule: Rule) => void, keyWidth: string, textFieldWidth: string, user_columns:string[], logFile: LogFile) {
+   
+        const all_columns = ['', ...logFile.contentHeaders, ...user_columns];
 
         const editFlagName = (index: number, value: string) => {
             const flags = [...this.flags];
@@ -50,11 +55,13 @@ export default class FlagRule extends Rule {
             onEdit(this.setFlags(flags));
         };
 
-        const flagRows = this.flags.map((r, i) => {
-            return [
-                <VSCodeTextField initialValue={r.name} onInput={(e) => editFlagName(i, e.target.value)}/>,
-            ]
-        })
+        const editCaptureCondition = (index: number, field: string, value: string) => {
+            const flags = [...this.flags];
+            let existing_conditions = {...flags[index].conditions[0][0], [field]:value};
+            flags[index].conditions[0][0] = existing_conditions;
+            onEdit(this.setFlags(flags));
+        };
+
 
         const onAddFlag = () => {
             let new_name;
@@ -71,28 +78,8 @@ export default class FlagRule extends Rule {
             onEdit(this.setFlags(flags.filter((r, i) => index !== i)));
         }
 
-        const all_columns = ['', ...logFile.contentHeaders, ...user_columns];
-        let ruleRows: any[][] = [];
-        if (this.flags.length > 0) {
-            if (this.flags[this.selectedFlag].conditions.length === 0) ruleRows.push([]);
-            for (let c_i = 0; c_i < this.flags[this.selectedFlag].conditions.length; c_i++) {
-                const condition_set = this.flags[this.selectedFlag].conditions[c_i];
-                ruleRows.push(condition_set.map((sub, s_i) => {
-                    return [
-                        <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={sub.Column} onChange={(e) => editSubcondition(c_i, s_i, 'Column', e.target.value)}>
-                            {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
-                        </VSCodeDropdown>,
-                        <VSCodeDropdown  style={{width: '100%'}} value={sub.Operation}  onChange={(e) => editSubcondition(c_i, s_i, 'Operation', e.target.value)}>
-                            <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
-                            <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
-                            <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
-                            <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
-                            <VSCodeOption key='4' value='regexSearch'>regex search</VSCodeOption>
-                        </VSCodeDropdown>,
-                        <VSCodeTextField  style={{width: '100%'}} value={sub.Text}  onInput={(e) => editSubcondition(c_i, s_i, 'Text', e.target.value)}/>,
-                    ];
-                }));
-            }
+        const onAddCaptureFlag = () => {
+            onEdit(this.setFlags([...this.flags, {name: '', conditions: [[{Column: 'All', Operation: 'capture', Text: ''}]]}]));
         }
 
         const onAddCondition = () => {
@@ -129,66 +116,116 @@ export default class FlagRule extends Rule {
             onEdit(this.setFlags(this.flags));
         }
 
-        const onDropdownSelect = (val: string) => {
+        const onFlagDropdownSelect = (val: string) => {
             const index = this.flags.findIndex(x => x.name === val);
             onEdit(this.setSelected(index));
         }
 
         const flagDropdownRows = [
             [
-                <VSCodeDropdown style={{marginLeft: '5px'}} onChange={(e) => onDropdownSelect(e.target.value)}>
+                <VSCodeDropdown style={{marginLeft: '5px'}} onChange={(e) => onFlagDropdownSelect(e.target.value)}>
                     {this.flags.map((state, index) =>
                         <VSCodeOption value={state.name} key={index}>{state.name}</VSCodeOption>)}
                 </VSCodeDropdown>
             ],
         ];
 
+        let flagRows: any[][] = [];
+        let conditionRows: any[][] = [];
+
+        if (this.flagType === 'User Defined') {
+            for (let i = 0; i < this.flags.length; i++)
+                flagRows.push([<VSCodeTextField style={{width: '100%', marginBottom: '2px'}} value={this.flags[i].name} onInput={(e) => editFlagName(i, e.target.value)}/>])
+        
+            if (this.flags.length > 0) {
+                if (this.flags[this.selectedFlag].conditions.length === 0) conditionRows.push([]);
+                for (let c_i = 0; c_i < this.flags[this.selectedFlag].conditions.length; c_i++) {
+                    const condition_set = this.flags[this.selectedFlag].conditions[c_i];
+                    conditionRows.push(condition_set.map((sub, s_i) => {
+                        return [
+                            <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={sub.Column} onChange={(e) => editSubcondition(c_i, s_i, 'Column', e.target.value)}>
+                                {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                            </VSCodeDropdown>,
+                            <VSCodeDropdown  style={{width: '100%'}} value={sub.Operation}  onChange={(e) => editSubcondition(c_i, s_i, 'Operation', e.target.value)}>
+                                <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
+                                <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
+                                <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
+                                <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
+                                <VSCodeOption key='4' value='regexSearch'>regex search</VSCodeOption>
+                            </VSCodeDropdown>,
+                            <VSCodeTextField  style={{width: '100%'}} value={sub.Text}  onInput={(e) => editSubcondition(c_i, s_i, 'Text', e.target.value)}/>,
+                        ];
+                    }));
+                }
+            }
+        }
+        else if (this.flagType === 'Capture Match') {
+            for (let i = 0; i < this.flags.length; i++)
+                flagRows.push([
+                    <VSCodeTextField style={{width: '100%', marginBottom: '2px'}} value={this.flags[i].conditions[0][0].Text} onInput={(e) => editCaptureCondition(i, 'Text', e.target.value)}/>,
+                    <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={this.flags[i].conditions[0][0].Column} onChange={(e) => editCaptureCondition(i, 'Column', e.target.value)}>
+                        <VSCodeOption key={all_columns.length} value={'All'}>All</VSCodeOption>
+                        {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                    </VSCodeDropdown>
+                ])
+        }
+
         return (
             <div style={{height: "100%", width:"100%", display: "flex"}}>
-                <VSCodePanels aria-label="Logic-Panels">
-                <VSCodePanelTab id="tab-1">Flags</VSCodePanelTab>
-                <VSCodePanelTab id="tab-2">Conditions</VSCodePanelTab>
-                <VSCodePanelTab id="tab-3">Regex Capture</VSCodePanelTab>
-                <VSCodePanelView id="view-1">                    
-                    <Table
-                        columns={[{name: 'Name', width: ''}]}
-                        rows={flagRows}
-                        noRowsText={'No flags have been defined (click + to add)'}
-                        onAddAction={onAddFlag}
-                        onDeleteAction={onDeleteFlag}
-                    />
-                </VSCodePanelView>
-                <VSCodePanelView id="view-2">
-                    <div style={{marginTop: '20px', marginRight: '50px'}}>
+                {
+                    (this.flagType === 'User Defined') && 
+                    <VSCodePanels aria-label="Logic-Panels">
+                    <VSCodePanelTab id="tab-1">Flags</VSCodePanelTab>
+                    <VSCodePanelTab id="tab-2">Conditions</VSCodePanelTab>
+                    <VSCodePanelView id="view-1">                    
                         <Table
-                            hideHeader={true}
-                            rows={flagDropdownRows}
-                            columns={[{width: ''}]}
+                            columns={[{name: 'Name', width: ''}]}
+                            rows={flagRows}
+                            noRowsText={'No flags have been defined (click + to add)'}
+                            onAddAction={onAddFlag}
+                            onDeleteAction={onDeleteFlag}
                         />
-                    </div>
+                    </VSCodePanelView>
+                    <VSCodePanelView id="view-2">
+                        <div style={{marginTop: '20px', marginRight: '50px'}}>
+                            <Table
+                                hideHeader={true}
+                                rows={flagDropdownRows}
+                                columns={[{width: ''}]}
+                            />
+                        </div>
 
-                    <div style={{width: '100%', float: 'right', margin: '1%'}}>
-                        <FlagTable
-                            columns={[ {width: '30px'}, {name: 'Column', width: '150px'}, {name: 'Operation', width: '150px'}, {name: 'Text', width: ''}]}
-                            rows={ruleRows}
-                            noRowsText={'No conditions have been defined (click + to add)'}
-                            onAddConditionAction={onAddCondition}
-                            onDeleteConditionAction={onDeleteCondition}
-                            onAddSubconditionAction={onAddSubcondition}
-                            onDeleteSubconditionAction={onDeleteSubcondition}
-                        />
-                    </div>
-                </VSCodePanelView>
-                <VSCodePanelView id="view-3">                    
-                    <Table
-                        columns={[{name: 'Name', width: ''}]}
-                        rows={flagRows}
-                        noRowsText={'No capture flags have been defined (click + to add)'}
-                        onAddAction={onAddFlag}
-                        onDeleteAction={onDeleteFlag}
-                    />
-                </VSCodePanelView>
+                        <div style={{width: '100%', float: 'right', margin: '1%'}}>
+                            <FlagTable
+                                columns={[ {width: '30px'}, {name: 'Column', width: '150px'}, {name: 'Operation', width: '150px'}, {name: 'Text', width: ''}]}
+                                rows={conditionRows}
+                                noRowsText={'No conditions have been defined (click + to add)'}
+                                onAddConditionAction={onAddCondition}
+                                onDeleteConditionAction={onDeleteCondition}
+                                onAddSubconditionAction={onAddSubcondition}
+                                onDeleteSubconditionAction={onDeleteSubcondition}
+                            />
+                        </div>
+                    </VSCodePanelView>
                 </VSCodePanels>
+                }
+                {
+                    (this.flagType === 'Capture Match') && 
+                    <VSCodePanels aria-label="Logic-Panels">
+                        <VSCodePanelTab id="tab-1">Capture Groups</VSCodePanelTab>
+
+                        <VSCodePanelView id="view-1">                    
+                        <Table
+                            columns={[{name: 'Text', width: '200px'}, {name: 'Column', width: '150px'}]}
+                            rows={flagRows}
+                            noRowsText={'No capture flags have been defined (click + to add)'}
+                            onAddAction={onAddCaptureFlag}
+                            onDeleteAction={onDeleteFlag}
+                        />
+                        </VSCodePanelView>
+                    </VSCodePanels>
+                }
+                
             </div>
         );
     }
@@ -197,51 +234,61 @@ export default class FlagRule extends Rule {
         const values: string[] = [];
         for (let r = 0; r < logFile.amountOfRows(); r++) {
             values[r] = this.defaultValue;
-            for (const flag of this.flags) {
-                let flag_found: boolean = false;
-                for (const condition_set of flag.conditions) {
-                    let all_conditions_satisfied: boolean = true;
-                    for (const condition of condition_set) {
-                        const logValue = logFile.value(condition.Column, r) ?? '';
-                        if (condition.Operation === 'contains') {
-                            if (!logValue.includes(condition.Text)) {
-                                all_conditions_satisfied = false;
-                                break;
+            if (this.flagType === 'User Defined') {
+                for (const flag of this.flags) {
+                    let flag_found: boolean = false;
+                    for (const condition_set of flag.conditions) {
+                        let all_conditions_satisfied: boolean = true;
+                        for (const condition of condition_set) {
+                            const logValue = logFile.value(condition.Column, r) ?? '';
+                            if (condition.Operation === 'contains') {
+                                if (!logValue.includes(condition.Text)) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
+                            }
+                            else if (condition.Operation === 'equals') {
+                                if (logValue !== condition.Text) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
+                            }
+                            else if (condition.Operation === 'startsWith') {
+                                if (!logValue.startsWith(condition.Text)) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
+                            }
+                            else if (condition.Operation === 'endsWith') {
+                                if (!logValue.endsWith(condition.Text)) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
+                            }
+                            else if (condition.Operation === 'regexSearch') {
+                                if (useRegularExpressionSearch('gs', condition.Text, logValue) === false) {
+                                    all_conditions_satisfied = false;
+                                    break;
+                                }
                             }
                         }
-                        else if (condition.Operation === 'equals') {
-                            if (logValue !== condition.Text) {
-                                all_conditions_satisfied = false;
-                                break;
-                            }
-                        }
-                        else if (condition.Operation === 'startsWith') {
-                            if (!logValue.startsWith(condition.Text)) {
-                                all_conditions_satisfied = false;
-                                break;
-                            }
-                        }
-                        else if (condition.Operation === 'endsWith') {
-                            if (!logValue.endsWith(condition.Text)) {
-                                all_conditions_satisfied = false;
-                                break;
-                            }
-                        }
-                        else if (condition.Operation === 'regexSearch') {
-                            if (useRegularExpressionSearch('gs', condition.Text, logValue) === false) {
-                                all_conditions_satisfied = false;
-                                break;
-                            }
+                        if (all_conditions_satisfied === true) {
+                            flag_found = true;
+                            break;
                         }
                     }
-                    if (all_conditions_satisfied === true) {
-                        flag_found = true;
+                    if (flag_found === true) {
+                        values[r] = flag.name;
                         break;
                     }
                 }
-                if (flag_found === true) {
-                    values[r] = flag.name;
-                    break;
+            }
+            else if (this.flagType === 'Capture Match') {
+                for (const flag of this.flags) {
+                    const logValue = logFile.value(flag.conditions[0][0].Column, r) ?? '';
+                    let flag_found = logValue.match(flag.conditions[0][0].Text)
+                    if (flag_found !== null)
+                        values[r] = flag_found[1];
                 }
             }
         }
