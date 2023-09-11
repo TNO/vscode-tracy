@@ -35,12 +35,10 @@ export default class MinimapView extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: State): void {
-        this.draw();
-        // console.log("draw");
-        // if (prevProps.logViewState !== this.props.logViewState || prevState.scale !== this.state.scale || 
-        //     prevProps.logFile !== this.props.logFile) {
-        //     this.draw();
-        // }
+        if (prevProps.logViewState !== this.props.logViewState || prevState.scale !== this.state.scale || 
+            prevProps.logFile !== this.props.logFile) {
+            this.draw();
+        }
     }
 
     draw() {
