@@ -1,8 +1,9 @@
 import { RowType, LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, STRUCTURE_LINK_HEIGHT, STRUCTURE_WIDTH, BORDER, BORDER_SELECTED_ROW, BORDER_STRUCTURE_MATCH_CURRENT, BORDER_STRUCTURE_MATCH_OTHER, BACKGROUND_COLOR_MATCHED_ROW_CURRENT, BACKGROUND_COLOR_MATCHED_ROW_OTHER, BACKGROUND_COLOR_SELECTED_ROW } from '../constants';
 import { RowProperty, StructureEntry } from '../types';
 
-const getLogViewRowStyle = (rowIndex: number): React.CSSProperties => {
+const getLogViewRowStyle = (rowIndex: number, leftPadding: number): React.CSSProperties => {
     const rowStyle: React.CSSProperties = {
+        left: leftPadding,
         position: 'absolute',
         height: LOG_ROW_HEIGHT,
         overflow: 'hidden',
@@ -53,6 +54,18 @@ export const getHeaderColumnStyle = (columnWidth: number, columnIndex: number, h
         height,
         width: columnWidth,
         borderLeft: BORDER
+    };
+
+    return headerColumnStyle;
+};
+
+export const getSegmentStyle = (columnWidth: number, height: number): React.CSSProperties => {
+    const headerColumnStyle: React.CSSProperties = {
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        display: 'inline-block',
+        height,
+        width: columnWidth
     };
 
     return headerColumnStyle;
@@ -138,11 +151,11 @@ export const getStructureTableCellSelectionStyle = (structureEntries: StructureE
         };
     } else {
         cellSelectionStyle = {
-            display: 'flex', 
-            height: LOG_ROW_HEIGHT, 
-            alignItems: 'center', 
-            justifyContent: 'left', 
-            paddingLeft: '2px', 
+            display: 'flex',
+            height: LOG_ROW_HEIGHT,
+            alignItems: 'center',
+            justifyContent: 'left',
+            paddingLeft: '2px',
             backgroundColor: 'transparent',
             userSelect: 'text'
         };
@@ -151,7 +164,7 @@ export const getStructureTableCellSelectionStyle = (structureEntries: StructureE
     return cellSelectionStyle;
 }
 
-export const getLogViewRowSelectionStyle = (selectedRows: RowProperty[], rowIndex: number, index: number): React.CSSProperties => {
+export const getLogViewRowSelectionStyle = (selectedRows: RowProperty[], rowIndex: number, index: number, left: number): React.CSSProperties => {
     let rowSelectionStyle: React.CSSProperties = {};
 
     switch (selectedRows[rowIndex].rowType) {
@@ -169,14 +182,14 @@ export const getLogViewRowSelectionStyle = (selectedRows: RowProperty[], rowInde
             break;
     }
 
-    rowSelectionStyle = {...getLogViewRowStyle(index), ...rowSelectionStyle};
+    rowSelectionStyle = { ...getLogViewRowStyle(index, left), ...rowSelectionStyle };
 
     return rowSelectionStyle;
 }
 
-export const getLogViewStructureMatchStyle = (currentStructureMatch: number[], structureMatches: number[][], rowIndex: number): React.CSSProperties => {
+export const getLogViewStructureMatchStyle = (currentStructureMatch: number[], structureMatches: number[][], rowIndex: number, left: number): React.CSSProperties => {
     const isCurrentMatch = currentStructureMatch.includes(rowIndex) ? true : false;
-    let structureMatchRowStyle = getLogViewRowStyle(rowIndex);
+    let structureMatchRowStyle = getLogViewRowStyle(rowIndex, left);
     const currentStructureMatchLastIndex = currentStructureMatch.length - 1;
 
     const structureMatchFirstAndLastRowStyle = {
