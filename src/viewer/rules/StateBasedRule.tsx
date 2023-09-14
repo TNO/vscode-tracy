@@ -5,11 +5,11 @@ import LogFile from '../LogFile';
 import Table from './Tables/Table';
 import StateTable from './Tables/StateTable';
 import TransitionTable from './Tables/TransitionTable';
-import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodeDivider, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
 
 
-interface State {name: string, transitions: Transition[]};
-interface Transition {destination: string, conditions: TransitionCondition[][]};
+interface State {name: string, transitions: Transition[]}
+interface Transition {destination: string, conditions: TransitionCondition[][]}
 interface TransitionCondition {Column: string, Operation: string, Text: string}
 
 
@@ -53,10 +53,10 @@ export default class StateBasedRule extends Rule {
 
         const editStateName = (state_index: number, value: string) => {
             const states = [...this.ruleStates];
-            const previous_name = states[state_index].name
+            const previousName = states[state_index].name
             for (let i = 0; i < states.length; i++) {
                 for (let j = 0; j < states[i].transitions.length; j++) {
-                    if (states[i].transitions[j].destination === previous_name)
+                    if (states[i].transitions[j].destination === previousName)
                         states[i].transitions[j].destination = value
                 }
             }
@@ -66,7 +66,10 @@ export default class StateBasedRule extends Rule {
 
         const stateRows = this.ruleStates.map((r, i) => {
             return [
-                <VSCodeTextField initialValue={r.name} onInput={(e) => editStateName(i, e.target.value)}/>,
+                <VSCodeTextField 
+                    initialValue={r.name}
+                    key='Text'
+                    onInput={(e) => editStateName(i, e.target.value)}/>,
             ]
         })
 
@@ -75,45 +78,59 @@ export default class StateBasedRule extends Rule {
         }
 
         const onAddState = () => {
-            let new_name;
-            let existing_states = this.ruleStates.map((n, i) => n.name);
+            let newName;
+            const existingStates = this.ruleStates.map((n, i) => n.name);
             for (let i = 1; i < this.ruleStates.length+2; i++) {
-                new_name = 'State ' + i.toString()
-                if (existing_states.indexOf(new_name) == -1) break;
+                newName = 'State ' + i.toString()
+                if (existingStates.indexOf(newName) == -1) break;
             }
-            onEdit(this.setStates([...this.ruleStates, {name: new_name, transitions: [{destination:new_name, conditions: []}]}], this.initialStateIndex));
+            onEdit(this.setStates([...this.ruleStates, {name: newName, transitions: [{destination:newName, conditions: []}]}], this.initialStateIndex));
         }
 
         const onDeleteState = (index: number) => {
             const states = [...this.ruleStates];
-            const state_name = states[index].name
+            const stateName = states[index].name
             for (let i = 0; i < states.length; i++)
-                states[i].transitions = states[i].transitions.filter((r, i) => r.destination != state_name);
+                states[i].transitions = states[i].transitions.filter((r, i) => r.destination != stateName);
             if (index === this.initialStateIndex) onEdit(this.setStates(states.filter((r, i) => index !== i), 0));
             else if (index < this.initialStateIndex) onEdit(this.setStates(states.filter((r, i) => index !== i), this.initialStateIndex-1));
             else onEdit(this.setStates(states.filter((r, i) => index !== i), this.initialStateIndex));
         }
 
 
-        const all_columns = ['', ...logFile.contentHeaders, ...user_columns];
+        const allColumns = ['', ...logFile.contentHeaders, ...user_columns];
 
-        let transitionRows: any[][] = [];
+        const transitionRows: any[][] = [];
         if (this.ruleStates.length > 0) {
             if (this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions.length === 0) transitionRows.push([]);
-            for (let t_i = 0; t_i < this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions.length; t_i++) {
-                const condition_set = this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions[t_i];
-                transitionRows.push(condition_set.map((r, c_i) => {
+            for (let transitionIndex = 0; transitionIndex < this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions.length; transitionIndex++) {
+                const conditionSet = this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions[transitionIndex];
+                transitionRows.push(conditionSet.map((r, c_i) => {
                     return [
-                        <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={r.Column} onChange={(e) => editTransition(t_i, c_i, 'Column', e.target.value)}>
-                            {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                        <VSCodeDropdown 
+                            style={{width: '100%', marginBottom: '2px'}} 
+                            value={r.Column} 
+                            key='Dropdown' 
+                            onChange={(e) => editTransition(transitionIndex, c_i, 'Column', e.target.value)}>{allColumns.map((col, col_i) =>
+                            <VSCodeOption 
+                                value={col}
+                                key={col_i}>{col}
+                            </VSCodeOption>)}
                         </VSCodeDropdown>,
-                        <VSCodeDropdown  style={{width: '100%'}} value={r.Operation}  onChange={(e) => editTransition(t_i, c_i, 'Operation', e.target.value)}>
-                            <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
-                            <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
-                            <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
-                            <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
+                        <VSCodeDropdown  
+                            style={{width: '100%'}} 
+                            value={r.Operation}  
+                            key='Dropdown'
+                            onChange={(e) => editTransition(transitionIndex, c_i, 'Operation', e.target.value)}>
+                            <VSCodeOption value='contains' key='0'>contains</VSCodeOption>
+                            <VSCodeOption value='equals' key='1'>equals</VSCodeOption>
+                            <VSCodeOption value='startsWith' key='2'>startsWith</VSCodeOption>
+                            <VSCodeOption value='endsWith'key='3'>endsWith</VSCodeOption>
                         </VSCodeDropdown>,
-                        <VSCodeTextField  style={{width: '100%'}} value={r.Text}  onInput={(e) => editTransition(t_i, c_i, 'Text', e.target.value)}/>,
+                        <VSCodeTextField  
+                            style={{width: '100%'}} 
+                            value={r.Text}  onInput={(e) => editTransition(transitionIndex, c_i, 'Text', e.target.value)}
+                            key='Text'/>,
                     ];
                 }));
             }
@@ -129,15 +146,15 @@ export default class StateBasedRule extends Rule {
         }
 
         const editTransition = (transitionIndex: number, conditionIndex: number, field: 'Column' | 'Operation' | 'Text', value: string) => {
-            const existing_conditions = [...this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions];
-            existing_conditions[transitionIndex][conditionIndex] = {...existing_conditions[transitionIndex][conditionIndex], [field]: value};
-            this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions = existing_conditions
+            const existingConditions = [...this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions];
+            existingConditions[transitionIndex][conditionIndex] = {...existingConditions[transitionIndex][conditionIndex], [field]: value};
+            this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions = existingConditions
             onEdit(this.setStates(this.ruleStates, this.initialStateIndex));
         }
 
         const onDeleteCondition = (transitionIndex: number, conditionIndex: number) => {
-            const updated_conditions = this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions[transitionIndex].filter((r, i) => conditionIndex !== i);
-            this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions[transitionIndex] = updated_conditions;
+            const updatedConditions = this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions[transitionIndex].filter((r, i) => conditionIndex !== i);
+            this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions[transitionIndex] = updatedConditions;
             onEdit(this.setStates(this.ruleStates, this.initialStateIndex));
         }
 
@@ -148,44 +165,44 @@ export default class StateBasedRule extends Rule {
         }
 
         const onDeleteTransition = (transitionIndex: number) => {
-            const updated_conditions = this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions.filter((r, i) => transitionIndex !== i);
-            this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions = updated_conditions;
+            const updatedConditions = this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions.filter((r, i) => transitionIndex !== i);
+            this.ruleStates[this.originIndex].transitions[this.destinationIndex].conditions = updatedConditions;
             onEdit(this.setStates(this.ruleStates, this.initialStateIndex));
         }
 
         const onOriginChange = (origin_name: string) => {
-            const dest_name = this.ruleStates[this.originIndex].transitions[this.destinationIndex].destination
+            const destinationName = this.ruleStates[this.originIndex].transitions[this.destinationIndex].destination
 
-            const new_origin = this.ruleStates.findIndex(x => x.name === origin_name)
-            const new_dest = this.ruleStates[new_origin].transitions.findIndex(x => x.destination === dest_name)
+            const newOrigin = this.ruleStates.findIndex(x => x.name === origin_name)
+            const newDestination = this.ruleStates[newOrigin].transitions.findIndex(x => x.destination === destinationName)
 
-            if (new_dest > -1) onEdit(this.setTransition(new_origin, new_dest));
+            if (newDestination > -1) onEdit(this.setTransition(newOrigin, newDestination));
             else {
-                this.ruleStates[new_origin].transitions.push({destination: dest_name, conditions: []})
-                onEdit(this.setTransition(new_origin, this.ruleStates[new_origin].transitions.length-1));
+                this.ruleStates[newOrigin].transitions.push({destination: destinationName, conditions: []})
+                onEdit(this.setTransition(newOrigin, this.ruleStates[newOrigin].transitions.length-1));
             }
         }
 
-        const onDestinationChange = (dest_name: string) => {
-            const new_dest = this.ruleStates[this.originIndex].transitions.findIndex(x => x.destination === dest_name)
-            if (new_dest > -1) onEdit(this.setTransition(this.originIndex, new_dest));
+        const onDestinationChange = (destinationName: string) => {
+            const newDestination = this.ruleStates[this.originIndex].transitions.findIndex(x => x.destination === destinationName)
+            if (newDestination > -1) onEdit(this.setTransition(this.originIndex, newDestination));
             else {
-                this.ruleStates[this.originIndex].transitions.push({destination: dest_name, conditions: []})
+                this.ruleStates[this.originIndex].transitions.push({destination: destinationName, conditions: []})
                 onEdit(this.setTransition(this.originIndex, this.ruleStates[this.originIndex].transitions.length-1));
             }
         }
 
         const stateDropdownRows = [
             [
-                ('From:'),
-                <VSCodeDropdown style={{marginLeft: '20px'}} onChange={(e) => onOriginChange(e.target.value)}>
+                'From:',
+                <VSCodeDropdown style={{marginLeft: '20px'}} key='From' onChange={(e) => onOriginChange(e.target.value)}>
                     {this.ruleStates.map((state, index) =>
                         <VSCodeOption value={state.name} key={index}>{state.name}</VSCodeOption>)}
                 </VSCodeDropdown>
             ],
             [
-                ('To:'),
-                <VSCodeDropdown style={{marginLeft: '20px'}} onChange={(e) => onDestinationChange(e.target.value)}>
+                'To:',
+                <VSCodeDropdown style={{marginLeft: '20px'}} key='To' onChange={(e) => onDestinationChange(e.target.value)}>
                     {this.ruleStates.map((state, index) =>
                         <VSCodeOption value={state.name} key={index}>{state.name}</VSCodeOption>)}
                 </VSCodeDropdown>
@@ -237,58 +254,58 @@ export default class StateBasedRule extends Rule {
     }
 
     public computeValues(logFile: LogFile): string[] {
-        let current_state;
+        let currentState;
         const values: string[] = [];
         if (this.ruleStates.length === 0) {
             for (let r = 0; r < logFile.amountOfRows(); r++) 
                 values[r] = '';
         }
         else {
-            current_state = this.ruleStates[this.initialStateIndex].name;
-            values[0] = current_state;
+            currentState = this.ruleStates[this.initialStateIndex].name;
+            values[0] = currentState;
             for (let r = 1; r < logFile.amountOfRows(); r++) {
-                let state_transitions = this.ruleStates.filter(st => st.name === current_state)[0].transitions
-                state_transitions = state_transitions.filter(tr => tr.conditions.length > 0)
-                for (const transition of state_transitions) {
-                    let transition_found: boolean = false;
-                    for (const condition_set of transition.conditions) {
-                        let all_conditions_satisfied: boolean = true;
-                        for (const condition of condition_set) {
+                let stateTransitions = this.ruleStates.filter(st => st.name === currentState)[0].transitions
+                stateTransitions = stateTransitions.filter(tr => tr.conditions.length > 0)
+                for (const transition of stateTransitions) {
+                    let transitionFound = false;
+                    for (const conditionSet of transition.conditions) {
+                        let allConditionsSatisfied = true;
+                        for (const condition of conditionSet) {
                             const logValue = logFile.value(condition.Column, r) ?? '';
                             if (condition.Operation === 'contains') {
                                 if (!logValue.includes(condition.Text)) {
-                                    all_conditions_satisfied = false;
+                                    allConditionsSatisfied = false;
                                     break;
                                 }
                             }
                             else if (condition.Operation === 'equals') {
                                 if (logValue !== condition.Text) {
-                                    all_conditions_satisfied = false;
+                                    allConditionsSatisfied = false;
                                     break;
                                 }
                             }
                             else if (condition.Operation === 'startsWith') {
                                 if (!logValue.startsWith(condition.Text)) {
-                                    all_conditions_satisfied = false;
+                                    allConditionsSatisfied = false;
                                     break;
                                 }
                             }
                             else if (condition.Operation === 'endsWith') {
                                 if (!logValue.endsWith(condition.Text)) {
-                                    all_conditions_satisfied = false;
+                                    allConditionsSatisfied = false;
                                     break;
                                 }
                             }
                         }
-                        if (all_conditions_satisfied === true) {
-                            current_state = transition.destination;
-                            transition_found = true;
+                        if (allConditionsSatisfied === true) {
+                            currentState = transition.destination;
+                            transitionFound = true;
                             break;
                         }
                     }
-                    if (transition_found === true) break;
+                    if (transitionFound === true) break;
                 }
-                values[r] = current_state;
+                values[r] = currentState;
             }
         }
         return values;

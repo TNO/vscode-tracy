@@ -61,12 +61,12 @@ export default class LogFile {
     }
 
     getSelectedHeader(): Header[] {
-        let selectedHeaders = this.headers.filter((h, i) => this.selectedColumns[i] == true);
+        const selectedHeaders = this.headers.filter((h, i) => this.selectedColumns[i] == true);
         return selectedHeaders;
     }
 
     getSelectedHeaderMini(): Header[] {
-        let selectedHeadersMini = this.headers.filter((h, i) => this.selectedColumnsMini[i] == true);
+        const selectedHeadersMini = this.headers.filter((h, i) => this.selectedColumnsMini[i] == true);
         return selectedHeadersMini;
     }
 
@@ -95,7 +95,6 @@ export default class LogFile {
         }
 
         // Compute colors
-        var index = 0;
         this.headers.forEach((header, column) => {
             const values = this.rows.map((r) => r[column]);
             this.columnsColors[column] = LogFile.computeColors(header, values);

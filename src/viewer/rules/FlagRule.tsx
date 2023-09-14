@@ -4,7 +4,7 @@ import Rule from './Rule';
 import LogFile from '../LogFile';
 import Table from './Tables/Table';
 import FlagTable from './Tables/FlagTable';
-import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodeDivider, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
 
 interface Flag {name: string, conditions: Condition[][]}
 interface Condition {searchColumn: string, searchOperation: string, searchText: string}
@@ -51,18 +51,21 @@ export default class FlagRule extends Rule {
 
         const flagRows = this.flags.map((r, i) => {
             return [
-                <VSCodeTextField initialValue={r.name} onInput={(e) => editFlagName(i, e.target.value)}/>,
+                <VSCodeTextField 
+                    initialValue={r.name} 
+                    key='Text'
+                    onInput={(e) => editFlagName(i, e.target.value)}/>,
             ]
         })
 
         const onAddFlag = () => {
-            let new_name;
-            let existing_flags = this.flags.map((n, i) => n.name);
+            let newName;
+            const existingFlags = this.flags.map((n, i) => n.name);
             for (let i = 1; i < this.flags.length+2; i++) {
-                new_name = 'Flag ' + i.toString()
-                if (existing_flags.indexOf(new_name) == -1) break;
+                newName = 'Flag ' + i.toString()
+                if (existingFlags.indexOf(newName) == -1) break;
             }
-            onEdit(this.setFlags([...this.flags, {name: new_name, conditions: []}]));
+            onEdit(this.setFlags([...this.flags, {name: newName, conditions: []}]));
         }
 
         const onDeleteFlag = (index: number) => {
@@ -70,24 +73,38 @@ export default class FlagRule extends Rule {
             onEdit(this.setFlags(flags.filter((r, i) => index !== i)));
         }
 
-        const all_columns = ['', ...logFile.contentHeaders, ...user_columns];
-        let ruleRows: any[][] = [];
+        const allColumns = ['', ...logFile.contentHeaders, ...user_columns];
+        const ruleRows: any[][] = [];
         if (this.flags.length > 0) {
             if (this.flags[this.selectedFlag].conditions.length === 0) ruleRows.push([]);
-            for (let c_i = 0; c_i < this.flags[this.selectedFlag].conditions.length; c_i++) {
-                const condition_set = this.flags[this.selectedFlag].conditions[c_i];
-                ruleRows.push(condition_set.map((sub, s_i) => {
+            for (let columnIndex = 0; columnIndex < this.flags[this.selectedFlag].conditions.length; columnIndex++) {
+                const conditionSet = this.flags[this.selectedFlag].conditions[columnIndex];
+                ruleRows.push(conditionSet.map((sub, s_i) => {
                     return [
-                        <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={sub.searchColumn} onChange={(e) => editSubcondition(c_i, s_i, 'searchColumn', e.target.value)}>
-                            {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                        <VSCodeDropdown 
+                            style={{width: '100%', marginBottom: '2px'}} 
+                            key='Dropdown'
+                            value={sub.searchColumn} onChange={(e) => editSubcondition(columnIndex, s_i, 'searchColumn', e.target.value)}>{allColumns.map((col, col_i) => 
+                            <VSCodeOption 
+                                key={col_i} 
+                                value={col}>{col}
+                            </VSCodeOption>)}
                         </VSCodeDropdown>,
-                        <VSCodeDropdown  style={{width: '100%'}} value={sub.searchOperation}  onChange={(e) => editSubcondition(c_i, s_i, 'searchOperation', e.target.value)}>
-                            <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
-                            <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
-                            <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
-                            <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
+                        <VSCodeDropdown  
+                            style={{width: '100%'}} 
+                            key='Dropdown'
+                            value={sub.searchOperation}  
+                            onChange={(e) => editSubcondition(columnIndex, s_i, 'searchOperation', e.target.value)}>
+                                <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
+                                <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
+                                <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
+                                <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
                         </VSCodeDropdown>,
-                        <VSCodeTextField  style={{width: '100%'}} value={sub.searchText}  onInput={(e) => editSubcondition(c_i, s_i, 'searchText', e.target.value)}/>,
+                        <VSCodeTextField  
+                            style={{width: '100%'}} 
+                            key='searchText'
+                            value={sub.searchText}  
+                            onInput={(e) => editSubcondition(columnIndex, s_i, 'searchText', e.target.value)}/>,
                     ];
                 }));
             }
@@ -100,8 +117,8 @@ export default class FlagRule extends Rule {
         }
 
         const onDeleteCondition = (transitionIndex: number) => {
-            const new_conditions = this.flags[this.selectedFlag].conditions.filter((r, i) => transitionIndex !== i);
-            this.flags[this.selectedFlag].conditions = new_conditions;
+            const newConditions = this.flags[this.selectedFlag].conditions.filter((r, i) => transitionIndex !== i);
+            this.flags[this.selectedFlag].conditions = newConditions;
             onEdit(this.setFlags(this.flags));
         }
 
@@ -115,15 +132,15 @@ export default class FlagRule extends Rule {
         }
 
         const editSubcondition = (conditionIndex: number, subconditionIndex: number, field: 'searchColumn' | 'searchOperation' | 'searchText', value: string) => {
-            const existing_conditions = [...this.flags[this.selectedFlag].conditions];
-            existing_conditions[conditionIndex][subconditionIndex] = {...existing_conditions[conditionIndex][subconditionIndex], [field]: value};
-            this.flags[this.selectedFlag].conditions = existing_conditions
+            const existingConditions = [...this.flags[this.selectedFlag].conditions];
+            existingConditions[conditionIndex][subconditionIndex] = {...existingConditions[conditionIndex][subconditionIndex], [field]: value};
+            this.flags[this.selectedFlag].conditions = existingConditions
             onEdit(this.setFlags(this.flags));
         }
 
         const onDeleteSubcondition = (conditionIndex: number, subconditionIndex: number) => {
-            const updated_conditions = this.flags[this.selectedFlag].conditions[conditionIndex].filter((r, i) => subconditionIndex !== i);
-            this.flags[this.selectedFlag].conditions[conditionIndex] = updated_conditions;
+            const updatedConditions = this.flags[this.selectedFlag].conditions[conditionIndex].filter((r, i) => subconditionIndex !== i);
+            this.flags[this.selectedFlag].conditions[conditionIndex] = updatedConditions;
             onEdit(this.setFlags(this.flags));
         }
 
@@ -134,9 +151,14 @@ export default class FlagRule extends Rule {
 
         const flagDropdownRows = [
             [
-                <VSCodeDropdown style={{marginLeft: '5px'}} onChange={(e) => onDropdownSelect(e.target.value)}>
-                    {this.flags.map((state, index) =>
-                        <VSCodeOption value={state.name} key={index}>{state.name}</VSCodeOption>)}
+                <VSCodeDropdown 
+                    style={{marginLeft: '5px'}}
+                    key='Dropdown'
+                    onChange={(e) => onDropdownSelect(e.target.value)}>{this.flags.map((state, index) =>
+                    <VSCodeOption 
+                        value={state.name}
+                        key={index}>{state.name}
+                    </VSCodeOption>)}
                 </VSCodeDropdown>
             ],
         ];
@@ -186,42 +208,42 @@ export default class FlagRule extends Rule {
         for (let r = 0; r < logFile.amountOfRows(); r++) {
             values[r] = this.defaultValue;
             for (const flag of this.flags) {
-                let flag_found: boolean = false;
-                for (const condition_set of flag.conditions) {
-                    let all_conditions_satisfied: boolean = true;
-                    for (const condition of condition_set) {
+                let flagFound = false;
+                for (const conditionSet of flag.conditions) {
+                    let allConditionsSatisfied = true;
+                    for (const condition of conditionSet) {
                         const logValue = logFile.value(condition.searchColumn, r) ?? '';
                         if (condition.searchOperation === 'contains') {
                             if (!logValue.includes(condition.searchText)) {
-                                all_conditions_satisfied = false;
+                                allConditionsSatisfied = false;
                                 break;
                             }
                         }
                         else if (condition.searchOperation === 'equals') {
                             if (logValue !== condition.searchText) {
-                                all_conditions_satisfied = false;
+                                allConditionsSatisfied = false;
                                 break;
                             }
                         }
                         else if (condition.searchOperation === 'startsWith') {
                             if (!logValue.startsWith(condition.searchText)) {
-                                all_conditions_satisfied = false;
+                                allConditionsSatisfied = false;
                                 break;
                             }
                         }
                         else if (condition.searchOperation === 'endsWith') {
                             if (!logValue.endsWith(condition.searchText)) {
-                                all_conditions_satisfied = false;
+                                allConditionsSatisfied = false;
                                 break;
                             }
                         }
                     }
-                    if (all_conditions_satisfied === true) {
-                        flag_found = true;
+                    if (allConditionsSatisfied === true) {
+                        flagFound = true;
                         break;
                     }
                 }
-                if (flag_found === true) {
+                if (flagFound === true) {
                     values[r] = flag.name;
                     break;
                 }

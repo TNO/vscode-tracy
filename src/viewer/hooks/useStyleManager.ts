@@ -13,7 +13,7 @@ const getLogViewRowStyle = (rowIndex: number): React.CSSProperties => {
     return rowStyle;
 };
 
-export const StructureDialogBackdropStyle: React.CSSProperties = {
+export const structureDialogBackdropStyle: React.CSSProperties = {
     bottom: '10px',
     width: '100%',
     backgroundColor: '#00000030',
@@ -23,7 +23,7 @@ export const StructureDialogBackdropStyle: React.CSSProperties = {
     overflow: 'visible'
 };
 
-export const StructureDialogDialogStyle: React.CSSProperties = {
+export const structureDialogDialogStyle: React.CSSProperties = {
     width: '98%', 
     padding: '10px', 
     display: 'flex', 
@@ -31,7 +31,7 @@ export const StructureDialogDialogStyle: React.CSSProperties = {
     overflow:'scroll'
 };
 
-export const WildcardStyle: React.CSSProperties = {
+export const wildcardStyle: React.CSSProperties = {
     border:'1px solid',
     borderRadius: '2px',
     userSelect: 'none'

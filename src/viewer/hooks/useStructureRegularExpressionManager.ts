@@ -2,12 +2,12 @@ import { CellContents, Header, StructureEntry, Wildcard } from '../types';
 import { StructureHeaderColumnType, StructureLinkDistance } from '../constants';
 import { isSubstitutionFirstForWildcard } from './useWildcardManager';
 
-const RegExpAnyCharMin = '.+?';
-const RegExpAnyCharMax = '.+';
-const RegExpLineFeed = '\\n';
-const RegExpTimeStampPattern = "[A-Za-z0-9 ,:_=@|*+.\\(\\)\\[\\]\\/\\-]*?";
-const RegExpValuePattern = "[A-Za-z0-9 ,:;~`'\"_=@#%&|!$^*+<>?.{}()\\[\\]\\/\\\\-]*?";
-const RegExpjsonObject = '{.+?},?\\n';
+const regExpAnyCharMin = '.+?';
+const regExpAnyCharMax = '.+';
+const regExpLineFeed = '\\n';
+const regExpTimeStampPattern = "[A-Za-z0-9 ,:_=@|*+.\\(\\)\\[\\]\\/\\-]*?";
+const regExpValuePattern = "[A-Za-z0-9 ,:;~`'\"_=@#%&|!$^*+<>?.{}()\\[\\]\\/\\\\-]*?";
+const regExpjsonObject = '{.+?},?\\n';
 const flags = 'gs';
 
 const getRegExpExactWhiteSpace = (amountOfWhitespace: number): string => `\\s{${amountOfWhitespace}}`;
@@ -21,17 +21,17 @@ const escapeSpecialChars = (text: string): string => {
         safeText = safeText.replace(/[\"]/g, "\\\\$&"); //double quotes
     }
 
-    const RegExpCarriageReturnAtEnd = /\r$/;
+    const regExpCarriageReturnAtEnd = /\r$/;
 
-    if(RegExpCarriageReturnAtEnd.test(text)) {
-    safeText = safeText.replace(RegExpCarriageReturnAtEnd, '\\\\r');
+    if(regExpCarriageReturnAtEnd.test(text)) {
+    safeText = safeText.replace(regExpCarriageReturnAtEnd, '\\\\r');
     }
 
     return safeText;
 };
 
 const getLineEndString = (amountOfWhiteSpace: number): string => {
-    return RegExpLineFeed + getRegExpExactWhiteSpace(amountOfWhiteSpace);
+    return regExpLineFeed + getRegExpExactWhiteSpace(amountOfWhiteSpace);
 };
 
 const getCellValue = (content: CellContents[], rowIndex: number, cellIndex: number, header: Header, headerColumnType: StructureHeaderColumnType, isSelected: boolean, wildcards: Wildcard[]): string => {
@@ -51,7 +51,7 @@ const getCellValue = (content: CellContents[], rowIndex: number, cellIndex: numb
                     const isFirstSubstitution = isSubstitutionFirstForWildcard(wildcards[content[i].wildcardIndex!], rowIndex, cellIndex, i);
 
                     if(isFirstSubstitution){
-                        valueParts.push(`(?<c${content[i].wildcardIndex!}>${RegExpValuePattern})`);
+                        valueParts.push(`(?<c${content[i].wildcardIndex!}>${regExpValuePattern})`);
                     }else{
                         valueParts.push(`\\k<c${content[i].wildcardIndex!}>`);
                     }
@@ -62,7 +62,7 @@ const getCellValue = (content: CellContents[], rowIndex: number, cellIndex: numb
         }         
     }
     else {
-        value = (header.name.toLowerCase() === 'timestamp') ? `"${RegExpTimeStampPattern}"` : `"${RegExpValuePattern}"`;
+        value = (header.name.toLowerCase() === 'timestamp') ? `"${regExpTimeStampPattern}"` : `"${regExpValuePattern}"`;
     }
 
     return value;
@@ -96,7 +96,7 @@ const getRegExpForLogEntry = (logHeaders: Header[], headerTypes: StructureHeader
         }
     }
 
-    objectString = objectString.concat(rowString, '},?', RegExpLineFeed);
+    objectString = objectString.concat(rowString, '},?', regExpLineFeed);
 
     return objectString;
 };
@@ -118,10 +118,10 @@ export const useStructureQueryConstructor = (logHeaders: Header[], headerColumnT
                     structureLinkRegExp = getRegExpExactWhiteSpace(2);
                     break;
                 case StructureLinkDistance.Min:
-                    structureLinkRegExp = RegExpAnyCharMin;
+                    structureLinkRegExp = regExpAnyCharMin;
                     break;
                 case StructureLinkDistance.Max:
-                    structureLinkRegExp = RegExpAnyCharMax;
+                    structureLinkRegExp = regExpAnyCharMax;
                     break;
             }
 
@@ -137,7 +137,7 @@ export const useStructureQueryConstructor = (logHeaders: Header[], headerColumnT
 export const useJsonObjectToTextRangesMap = (logFileAsString: string): number[][] => {
     const perfStart = performance.now();
     const textRanges: number[][] = [];
-    const jsonObjectsRegExp = new RegExp(RegExpjsonObject, flags);
+    const jsonObjectsRegExp = new RegExp(regExpjsonObject, flags);
 
     let result = jsonObjectsRegExp.exec(logFileAsString);
 

@@ -87,7 +87,7 @@ export default class App extends React.Component<Props, State> {
     }
 
     findIndices(rows: string[][], col_index: number, str: string) {
-        let indices: number[] = [];
+        const indices: number[] = [];
         if (col_index === -1) {
             for (let i = 0; i < rows.length; i++) {
                 if (rows[i].join(" ").indexOf(str) != -1)
@@ -110,22 +110,22 @@ export default class App extends React.Component<Props, State> {
         
         if (message.type === 'update') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
-            let lines = JSON.parse(message.text);
+            const lines = JSON.parse(message.text);
             const logFileText = JSON.stringify(lines, null, 2);
             logFile = LogFile.create(lines, rules);
 
             if (this.state.searchText !== '') {
-                const col_index = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
-                const filteredIndices = this.findIndices(logFile.rows, col_index, this.state.searchText);
-                let filtered_lines = lines.filter((l, i) => filteredIndices.includes(i));
+                const colIndex = this.state.logFile.headers.findIndex(h => h.name === this.state.searchColumn)
+                const filteredIndices = this.findIndices(logFile.rows, colIndex, this.state.searchText);
+                let filteredLines = lines.filter((l, i) => filteredIndices.includes(i));
 
-                if (filtered_lines.length === 0) {
-                    filtered_lines = [lines[0]]
-                    for (let k of Object.keys(lines[0]))
-                        filtered_lines[0][k] = ''
+                if (filteredLines.length === 0) {
+                    filteredLines = [lines[0]]
+                    for (const k of Object.keys(lines[0]))
+                        filteredLines[0][k] = ''
                 }
 
-                logFile = LogFile.create(filtered_lines, rules);
+                logFile = LogFile.create(filteredLines, rules);
             }
 
             const textRanges = useJsonObjectToTextRangesMap(logFileText);
@@ -285,7 +285,7 @@ export default class App extends React.Component<Props, State> {
         const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         const minimapHeight = this.state.showMinimapHeader ? '12%' : '5%' ;
 
-        const all_columns = ['All', ...this.state.logFile.contentHeaders, ...this.state.rules.map(i=>i.column)];
+        const allColumns = ['All', ...this.state.logFile.contentHeaders, ...this.state.rules.map(i=>i.column)];
         return (
         <div id="container" style={{display:'flex', flexDirection: 'column', height: '100vh', boxSizing: 'border-box'}}>
             <div id="header" style={{display: 'flex', flexDirection: 'row', height: minimapHeight, boxSizing: 'border-box'}}>
@@ -301,7 +301,7 @@ export default class App extends React.Component<Props, State> {
                 </div>
                 <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
                     <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => this.setState({searchColumn: e.target.value})}>
-                    {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                    {allColumns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
                     <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" onInput={(e) => this.setState({searchText: e.target.value})} onKeyDown={(e) => this.filterOnEnter(e.key)}>
                     <span slot="end" className="codicon codicon-search"></span>
