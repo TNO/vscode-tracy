@@ -49,7 +49,7 @@ export default class MinimapView extends React.Component<Props, State> {
         if (!canvas || !this.props.logViewState) return;
         canvas.height = canvas.clientHeight * window.devicePixelRatio;
         canvas.width = canvas.clientWidth * window.devicePixelRatio;
-        var ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d")!;
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // Hide Minimap if search did not return any rows
@@ -107,10 +107,8 @@ export default class MinimapView extends React.Component<Props, State> {
         const canvas = this.canvas?.current;
         if (!canvas) return;
         const bounding = canvas.getBoundingClientRect();
-        var x = e.clientX;
-        var y = e.clientY;
+        let y = e.clientY;
         if (bounding != undefined) {
-            x = e.clientX - bounding.left;
             y = e.clientY - bounding.top;
         }
         const {logViewState, logFile} = this.props;
@@ -155,13 +153,13 @@ export default class MinimapView extends React.Component<Props, State> {
 
     handleWheel(e: React.WheelEvent<HTMLCanvasElement>) {
         if (this.state.controlDown === true) {
-            let offset = Math.abs(1.02 - this.state.scale) / 5;
+            const offset = Math.abs(1.02 - this.state.scale) / 5;
             let scale = this.state.scale + (e.deltaY < 0 ? offset : offset * -1);
             scale = Math.max(Math.min(1, scale), 0);
             this.setState({scale});
         } 
         else {
-            let scale = e.deltaY;
+            const scale = e.deltaY;
             this.updateState(scale);
         }
     }

@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { WildcardStyle } from "./useStyleManager";
+import { wildcardStyle } from "./useStyleManager";
 import { Wildcard, CellContents } from "../types";
 
 export const createWildcard = (structureEntryIndex: number, cellIndex: number, contentsIndex: number) => {
@@ -249,7 +249,7 @@ export const createCellContents = (contentsIndex: number, textValue: string, wil
 
 export const getReactElementsFromCellContents = (entryIndex: number, cellIndex: number, contentsIndex: number, wildcardIndex: number | null, textValue: string | null): ReactNode => {
     if(wildcardIndex !== null){
-        return <div key ={`w-${entryIndex}-${cellIndex}-${contentsIndex}`} id={`w-${entryIndex}-${cellIndex}-${contentsIndex}`} style={WildcardStyle}>?{wildcardIndex + 1}</div>
+        return <div key ={`w-${entryIndex}-${cellIndex}-${contentsIndex}`} id={`w-${entryIndex}-${cellIndex}-${contentsIndex}`} style={wildcardStyle}>?{wildcardIndex + 1}</div>
     }else{
         return <div key={`t-${entryIndex}-${cellIndex}-${contentsIndex}`} id={`t-${entryIndex}-${cellIndex}-${contentsIndex}`}>{textValue}</div>
     }

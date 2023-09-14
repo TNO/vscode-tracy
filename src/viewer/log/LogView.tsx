@@ -91,24 +91,24 @@ export default class LogView extends React.Component<Props, State> {
         if (!this.state.state) return;
         const result: any = [];
         const {logFile, selectedRows, structureMatches,currentStructureMatch, structureMatchesLogRows} = this.props;
-        let first_render = this.state.state.startFloor;
-        let last_render = this.state.state.endCeil;
+        let firstRender = this.state.state.startFloor;
+        let lastRender = this.state.state.endCeil;
 
-        if (last_render > logFile.rows.length){
+        if (lastRender > logFile.rows.length){
             if (!this.viewport.current) return;
             const height = this.viewport.current.clientHeight;
             const maxVisibleItems = height / LOG_ROW_HEIGHT;
-            last_render = logFile.rows.length - 1;
-            first_render = Math.max(0, Math.ceil(last_render - maxVisibleItems) - 1);
+            lastRender = logFile.rows.length - 1;
+            firstRender = Math.max(0, Math.ceil(lastRender - maxVisibleItems) - 1);
         }
 
         // Hide LogFile if search did not return any rows
         if ((logFile.rows.length === 1) && (logFile.rows[0][0] === '')) {
-            first_render = 0;
-            last_render = -1;
+            firstRender = 0;
+            lastRender = -1;
         }
 
-        for (let r = first_render; r <= last_render; r++) {
+        for (let r = firstRender; r <= lastRender; r++) {
             let rowStyle;
 
             if(structureMatchesLogRows.includes(r)){

@@ -4,7 +4,7 @@ import LogFile from '../../LogFile';
 import FlagRule from '../FlagRule';
 import StateBasedRule from '../StateBasedRule';
 import Table from '../Tables/Table';
-import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeButton, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
 
 
 interface Props {
@@ -38,32 +38,32 @@ export default class FlagsDialog extends React.Component<Props, State> {
         if (rules[index].column != rule.column) {
             for (let i = 0; i < rules.length; i++){
                 if (rules[i].friendlyType === 'Flag rule') {
-                    let updated_rule = rules[i] as FlagRule;
-                    let updated_flags = updated_rule.flags;
-                    for (let j = 0; j < updated_flags.length; j++)
-                        for (let k = 0; k < updated_flags[j].conditions.length; k++)
-                            for (let l = 0; l < updated_flags[j].conditions[k].length; l++)
-                                if (updated_flags[j].conditions[k][l].searchColumn === rules[index].column)
-                                    updated_flags[j].conditions[k][l].searchColumn = rule.column;
-                    updated_rule.setFlags(updated_flags);
-                    rules[i] = updated_rule;
+                    const updatedRule = rules[i] as FlagRule;
+                    const updatedFlags = updatedRule.flags;
+                    for (let j = 0; j < updatedFlags.length; j++)
+                        for (let k = 0; k < updatedFlags[j].conditions.length; k++)
+                            for (let l = 0; l < updatedFlags[j].conditions[k].length; l++)
+                                if (updatedFlags[j].conditions[k][l].searchColumn === rules[index].column)
+                                updatedFlags[j].conditions[k][l].searchColumn = rule.column;
+                    updatedRule.setFlags(updatedFlags);
+                    rules[i] = updatedRule;
                 }
                 else if (rules[i].friendlyType === 'State based rule') {
-                    let updated_rule = rules[i] as StateBasedRule;
-                    let updated_states = updated_rule.ruleStates;
-                    for (let j = 0; j < updated_states.length; j++) {
-                        for (let k = 0; k < updated_states[j].transitions.length; k++) {
-                            for (let l = 0; l < updated_states[j].transitions[k].conditions.length; l++) {
-                                for (let m = 0; m < updated_states[j].transitions[k].conditions[l].length; m++) {
-                                    if (updated_states[j].transitions[k].conditions[l][m].Column === rules[index].column)
-                                        updated_states[j].transitions[k].conditions[l][m].Column = rule.column;
+                    const updatedRule = rules[i] as StateBasedRule;
+                    const updatedStates = updatedRule.ruleStates;
+                    for (let j = 0; j < updatedStates.length; j++) {
+                        for (let k = 0; k < updatedStates[j].transitions.length; k++) {
+                            for (let l = 0; l < updatedStates[j].transitions[k].conditions.length; l++) {
+                                for (let m = 0; m < updatedStates[j].transitions[k].conditions[l].length; m++) {
+                                    if (updatedStates[j].transitions[k].conditions[l][m].Column === rules[index].column)
+                                        updatedStates[j].transitions[k].conditions[l][m].Column = rule.column;
 
                                 }
                             }
                         }
                     }
-                    updated_rule.setStates(updated_states, updated_rule.initialStateIndex);
-                    rules[i] = updated_rule;
+                    updatedRule.setStates(updatedStates, updatedRule.initialStateIndex);
+                    rules[i] = updatedRule;
                 }
             }
         }
@@ -73,8 +73,8 @@ export default class FlagsDialog extends React.Component<Props, State> {
 
     updateDefault(rule: Rule, val: string, index: number) {
         const rules = [...this.state.rules];
-        let flagrule = rule as FlagRule;
-        rules[index] = flagrule.setDefault(val);
+        const flagRule = rule as FlagRule;
+        rules[index] = flagRule.setDefault(val);
         this.setState({rules});
     }
 
@@ -126,11 +126,10 @@ export default class FlagsDialog extends React.Component<Props, State> {
         if (this.state.selectedRule === -1) return;
         const ruleIndex = this.state.selectedRule;
         const rule = this.state.rules[ruleIndex];
-        let tmp = rule as FlagRule;
+        const tmp = rule as FlagRule;
         const defValue = tmp.defaultValue;
-        const user_columns = this.state.rules.map((r, i) => r.column).filter(name => name != rule.column)
+        const userColumns = this.state.rules.map((r, i) => r.column).filter(name => name != rule.column)
         const defaultRuleColumn = `FlagRule${ruleIndex + 1}`;
-        const typeOptions = [FlagRule];
         const keyWidth = '100px';
         const textFieldWidth = '250px';
         const rows = [
@@ -139,6 +138,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                 <VSCodeTextField 
                     style={{width: textFieldWidth}}
                     initialValue={rule.column} 
+                    key='Name'
                     onInput={(e) => this.updateRule(rule.setColumn(e.target.value || defaultRuleColumn), ruleIndex)}/>
             ],
             [
@@ -146,6 +146,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                 <VSCodeTextField 
                     style={{width: textFieldWidth}}
                     initialValue={rule.description} 
+                    key='Description'
                     onInput={(e) => this.updateRule(rule.setDescription(e.target.value), ruleIndex)}/>
             ],
             [
@@ -153,6 +154,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                 <VSCodeTextField 
                     style={{width: textFieldWidth}}
                     initialValue={defValue} 
+                    key='Default'
                     onInput={(e) => this.updateDefault(rule, e.target.value, ruleIndex)}/>
             ],
             // [
@@ -171,7 +173,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                     rows={rows}
                     columns={[{width: '100px'}, {width: ''}]}
                 />
-                {rule.renderEdit((newRule) => this.updateRule(newRule, ruleIndex), keyWidth, textFieldWidth, user_columns, this.props.logFile)}
+                {rule.renderEdit((newRule) => this.updateRule(newRule, ruleIndex), keyWidth, textFieldWidth, userColumns, this.props.logFile)}
             </div>
         )
     }
