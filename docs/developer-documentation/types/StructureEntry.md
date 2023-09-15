@@ -1,6 +1,9 @@
-![[Structure-entry.svg]]
+# `StructureEntry`
+
+![](../../figures/Structure-entry.svg)
 
 ---
+
 ```TS
 interface StructureEntry {
     row: CellContents[][],

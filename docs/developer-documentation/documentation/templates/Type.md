@@ -1,5 +1,5 @@
+# Name
 
----
 ```TS
 interface ExampleType {
     name: string,
