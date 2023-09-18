@@ -4,14 +4,14 @@
 ---
 (Short description)
 
-### Relations to other components
+## Relations to other components
 
 - **Parent:** ParentComponent
 - **Children:**
 	- Child1
 	- Child2
 
-### Props
+## Props
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -19,7 +19,7 @@
 | `prop2` | `type2` | short description |
 | `prop3` | `type3` | short description |
 
-### State
+## State
 
 | Name | Type | Initial Value | Description |
 | ---- | ---- | ------------- | ----------- |
@@ -27,17 +27,15 @@
 | `stateObj2` | `type1` | `init value` | short description |
 | `stateObj3` | `type1` | `init value` | short description |
 
-### Functions
-
-#### Component lifecycle functions
-
-- `constructor(...)`
+## Functions
+### Component lifecycle functions
+- ### `constructor(...)`
 	- **Params:** 
 	    - `props: Props`
 	- **Description:**  Is invoked the first time the `StructureDialog` is opened. It constructs an array containing [StructureEntries](..\Types\StructureEntry.md) from the `logSelectedRows` props and updates the state accordingly.
 	- **Returns:** -
 
-- `shouldComponentUpdate(...)`
+- ### `shouldComponentUpdate(...)`
 	- **Params:**
         - `nextProps: Readonly<Props>`
         - `nextState: Readonly<State>`
@@ -45,16 +43,16 @@
 	- **Description:** This function returns a `boolean` value that indicates whether or not rendering should be skipped. It returns `true` if ..., and ... otherwise.
 	- **Returns:** `boolean`
 
-- `render()`
+- ### `render()`
 	- **Description:**
 	- **Returns:** Div of type `JSX.Element` containing....
 
-#### Functionality-related functions
-- `exampleFunctionWithNoParams()`
+### Functionality-related functions
+- ### `exampleFunctionWithNoParams()`
 	- **Description:** short description of what happens in the function.
 	- **Returns:** -
 
-- `exampleFunctionWithParams(...)`
+- ### `exampleFunctionWithParams(...)`
 	- **Params:**
 	    - `name: type`
 	- **Description:** short description of what happens in the function.
