@@ -12,8 +12,8 @@ This GitHub pages site aims to help both Tracy users and developers.
 ### Introduction
 - [Getting started](developer-documentation/getting-started.md)
 - [Architecture](developer-documentation/architecture.md)
-- [Developer responsibilities](developer-documentation/responsibilities.md)
-- [Debugging](developer-documentation/debugging.md)
+- [Developer responsibilities](developer-documentation/dev-guidlines.md)
+- [Debugging Tools and Practices](developer-documentation/debugging.md)
 
 ### React components
 - [`App`](developer-documentation/components/App.md)
