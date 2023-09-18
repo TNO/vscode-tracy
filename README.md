@@ -30,6 +30,8 @@ A prominent feature is the minimap, which allows navigation and analysis of a lo
 
 The minimap can be scaled (zoomed out and in) by holding the Control key and at the same time turning the mouse wheel, while the pointer is positioned over the minimap. The lines (rows) of the log that are visible, are indicated by a shaded area in the minimap. Scrolling the log is done with the scroll bar immediately to the left of the minimap, or by using the mouse wheel while the pointer is positioned over the log.
 
+## User and Developer Documentation
+For more information, check the [Tracy user and developer documentation](https://tno.github.io/vscode-tracy/).
 
 ## Developing
 To develop Tracy:
