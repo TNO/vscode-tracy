@@ -6,7 +6,7 @@ Tracy is a Visual Studio Code extension for the analysis of logs. It is meant as
 This GitHub pages site aims to help both Tracy users and developers.
 
 ## User documentation
-- [Getting started](user-documentation\getting-started.md)
+- [Getting started](user-documentation/getting-started.md)
 
 ## Developer documentation
 ### Introduction
@@ -16,7 +16,7 @@ This GitHub pages site aims to help both Tracy users and developers.
 - [Debugging](developer-documentation/debugging.md)
 
 ### React components
-- [`App`](components/App.md)
+- [`App`](developer-documentation/components/App.md)
 - [`LogView`](developer-documentation/components/LogView.md)
 - [`Minimap`](developer-documentation/components/Minimap.md) 
 - [`StructureDialog`](developer-documentation/components/StructureDialog.md)
