@@ -47,7 +47,7 @@ export default class FlagRule extends Rule {
 
     public renderEdit(onEdit: (newRule: Rule) => void, keyWidth: string, textFieldWidth: string, user_columns:string[], logFile: LogFile) {
    
-        const all_columns = ['', ...logFile.contentHeaders, ...user_columns];
+        const allColumns = ['', ...logFile.contentHeaders, ...user_columns];
 
         const editFlagName = (index: number, value: string) => {
             const flags = [...this.flags];
@@ -57,20 +57,20 @@ export default class FlagRule extends Rule {
 
         const editCaptureCondition = (index: number, field: string, value: string) => {
             const flags = [...this.flags];
-            let existing_conditions = {...flags[index].conditions[0][0], [field]:value};
-            flags[index].conditions[0][0] = existing_conditions;
+            const existingConditions = {...flags[index].conditions[0][0], [field]:value};
+            flags[index].conditions[0][0] = existingConditions;
             onEdit(this.setFlags(flags));
         };
 
 
         const onAddFlag = () => {
-            let new_name;
-            let existing_flags = this.flags.map((n, i) => n.name);
+            let newName;
+            const existingFlags = this.flags.map((n, i) => n.name);
             for (let i = 1; i < this.flags.length+2; i++) {
-                new_name = 'Flag ' + i.toString()
-                if (existing_flags.indexOf(new_name) == -1) break;
+                newName = 'Flag ' + i.toString()
+                if (existingFlags.indexOf(newName) == -1) break;
             }
-            onEdit(this.setFlags([...this.flags, {name: new_name, conditions: []}]));
+            onEdit(this.setFlags([...this.flags, {name: newName, conditions: []}]));
         }
 
         const onDeleteFlag = (index: number) => {
@@ -89,8 +89,8 @@ export default class FlagRule extends Rule {
         }
 
         const onDeleteCondition = (transitionIndex: number) => {
-            const new_conditions = this.flags[this.selectedFlag].conditions.filter((r, i) => transitionIndex !== i);
-            this.flags[this.selectedFlag].conditions = new_conditions;
+            const newConditions = this.flags[this.selectedFlag].conditions.filter((r, i) => transitionIndex !== i);
+            this.flags[this.selectedFlag].conditions = newConditions;
             onEdit(this.setFlags(this.flags));
         }
 
@@ -104,15 +104,15 @@ export default class FlagRule extends Rule {
         }
 
         const editSubcondition = (conditionIndex: number, subconditionIndex: number, field: 'Column' | 'Operation' | 'Text', value: string) => {
-            const existing_conditions = [...this.flags[this.selectedFlag].conditions];
-            existing_conditions[conditionIndex][subconditionIndex] = {...existing_conditions[conditionIndex][subconditionIndex], [field]: value};
-            this.flags[this.selectedFlag].conditions = existing_conditions
+            const existingConditions = [...this.flags[this.selectedFlag].conditions];
+            existingConditions[conditionIndex][subconditionIndex] = {...existingConditions[conditionIndex][subconditionIndex], [field]: value};
+            this.flags[this.selectedFlag].conditions = existingConditions
             onEdit(this.setFlags(this.flags));
         }
 
         const onDeleteSubcondition = (conditionIndex: number, subconditionIndex: number) => {
-            const updated_conditions = this.flags[this.selectedFlag].conditions[conditionIndex].filter((r, i) => subconditionIndex !== i);
-            this.flags[this.selectedFlag].conditions[conditionIndex] = updated_conditions;
+            const updatedConditions = this.flags[this.selectedFlag].conditions[conditionIndex].filter((r, i) => subconditionIndex !== i);
+            this.flags[this.selectedFlag].conditions[conditionIndex] = updatedConditions;
             onEdit(this.setFlags(this.flags));
         }
 
@@ -123,37 +123,37 @@ export default class FlagRule extends Rule {
 
         const flagDropdownRows = [
             [
-                <VSCodeDropdown style={{marginLeft: '5px'}} onChange={(e) => onFlagDropdownSelect(e.target.value)}>
+                <VSCodeDropdown style={{marginLeft: '5px'}} key='Dropdown' onChange={(e) => onFlagDropdownSelect(e.target.value)}>
                     {this.flags.map((state, index) =>
                         <VSCodeOption value={state.name} key={index}>{state.name}</VSCodeOption>)}
                 </VSCodeDropdown>
             ],
         ];
 
-        let flagRows: any[][] = [];
-        let conditionRows: any[][] = [];
+        const flagRows: any[][] = [];
+        const conditionRows: any[][] = [];
 
         if (this.flagType === 'User Defined') {
             for (let i = 0; i < this.flags.length; i++)
-                flagRows.push([<VSCodeTextField style={{width: '100%', marginBottom: '2px'}} value={this.flags[i].name} onInput={(e) => editFlagName(i, e.target.value)}/>])
+                flagRows.push([<VSCodeTextField style={{width: '100%', marginBottom: '2px'}} value={this.flags[i].name} key='Text' onInput={(e) => editFlagName(i, e.target.value)}/>])
         
             if (this.flags.length > 0) {
                 if (this.flags[this.selectedFlag].conditions.length === 0) conditionRows.push([]);
-                for (let c_i = 0; c_i < this.flags[this.selectedFlag].conditions.length; c_i++) {
-                    const condition_set = this.flags[this.selectedFlag].conditions[c_i];
-                    conditionRows.push(condition_set.map((sub, s_i) => {
+                for (let columnIndex = 0; columnIndex < this.flags[this.selectedFlag].conditions.length; columnIndex++) {
+                    const conditionSet = this.flags[this.selectedFlag].conditions[columnIndex];
+                    conditionRows.push(conditionSet.map((sub, s_i) => {
                         return [
-                            <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={sub.Column} onChange={(e) => editSubcondition(c_i, s_i, 'Column', e.target.value)}>
-                                {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                            <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={sub.Column} key='Dropdown' onChange={(e) => editSubcondition(columnIndex, s_i, 'Column', e.target.value)}>
+                                {allColumns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                             </VSCodeDropdown>,
-                            <VSCodeDropdown  style={{width: '100%'}} value={sub.Operation}  onChange={(e) => editSubcondition(c_i, s_i, 'Operation', e.target.value)}>
+                            <VSCodeDropdown  style={{width: '100%'}} value={sub.Operation} key='Dropdown' onChange={(e) => editSubcondition(columnIndex, s_i, 'Operation', e.target.value)}>
                                 <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
                                 <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
                                 <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
                                 <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
                                 <VSCodeOption key='4' value='regexSearch'>regex search</VSCodeOption>
                             </VSCodeDropdown>,
-                            <VSCodeTextField  style={{width: '100%'}} value={sub.Text}  onInput={(e) => editSubcondition(c_i, s_i, 'Text', e.target.value)}/>,
+                            <VSCodeTextField  style={{width: '100%'}} value={sub.Text} key='Text' onInput={(e) => editSubcondition(columnIndex, s_i, 'Text', e.target.value)}/>,
                         ];
                     }));
                 }
@@ -162,10 +162,10 @@ export default class FlagRule extends Rule {
         else if (this.flagType === 'Capture Match') {
             for (let i = 0; i < this.flags.length; i++)
                 flagRows.push([
-                    <VSCodeTextField style={{width: '100%', marginBottom: '2px'}} value={this.flags[i].conditions[0][0].Text} onInput={(e) => editCaptureCondition(i, 'Text', e.target.value)}/>,
-                    <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={this.flags[i].conditions[0][0].Column} onChange={(e) => editCaptureCondition(i, 'Column', e.target.value)}>
-                        <VSCodeOption key={all_columns.length} value={'All'}>All</VSCodeOption>
-                        {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                    <VSCodeTextField style={{width: '100%', marginBottom: '2px'}} value={this.flags[i].conditions[0][0].Text} key='Text' onInput={(e) => editCaptureCondition(i, 'Text', e.target.value)}/>,
+                    <VSCodeDropdown style={{width: '100%', marginBottom: '2px'}} value={this.flags[i].conditions[0][0].Column} key='Column' onChange={(e) => editCaptureCondition(i, 'Column', e.target.value)}>
+                        <VSCodeOption key={allColumns.length} value={'All'}>All</VSCodeOption>
+                        {allColumns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
                 ])
         }
@@ -236,48 +236,48 @@ export default class FlagRule extends Rule {
             values[r] = this.defaultValue;
             if (this.flagType === 'User Defined') {
                 for (const flag of this.flags) {
-                    let flag_found: boolean = false;
-                    for (const condition_set of flag.conditions) {
-                        let all_conditions_satisfied: boolean = true;
-                        for (const condition of condition_set) {
+                    let flagFound = false;
+                    for (const conditionSet of flag.conditions) {
+                        let allConditionsSatisfied = true;
+                        for (const condition of conditionSet) {
                             const logValue = logFile.value(condition.Column, r) ?? '';
                             if (condition.Operation === 'contains') {
                                 if (!logValue.includes(condition.Text)) {
-                                    all_conditions_satisfied = false;
+                                    allConditionsSatisfied = false;
                                     break;
                                 }
                             }
                             else if (condition.Operation === 'equals') {
                                 if (logValue !== condition.Text) {
-                                    all_conditions_satisfied = false;
+                                    allConditionsSatisfied = false;
                                     break;
                                 }
                             }
                             else if (condition.Operation === 'startsWith') {
                                 if (!logValue.startsWith(condition.Text)) {
-                                    all_conditions_satisfied = false;
+                                    allConditionsSatisfied = false;
                                     break;
                                 }
                             }
                             else if (condition.Operation === 'endsWith') {
                                 if (!logValue.endsWith(condition.Text)) {
-                                    all_conditions_satisfied = false;
+                                    allConditionsSatisfied = false;
                                     break;
                                 }
                             }
                             else if (condition.Operation === 'regexSearch') {
                                 if (useRegularExpressionSearch('gs', condition.Text, logValue) === false) {
-                                    all_conditions_satisfied = false;
+                                    allConditionsSatisfied = false;
                                     break;
                                 }
                             }
                         }
-                        if (all_conditions_satisfied === true) {
-                            flag_found = true;
+                        if (allConditionsSatisfied === true) {
+                            flagFound = true;
                             break;
                         }
                     }
-                    if (flag_found === true) {
+                    if (flagFound === true) {
                         values[r] = flag.name;
                         break;
                     }
@@ -286,9 +286,9 @@ export default class FlagRule extends Rule {
             else if (this.flagType === 'Capture Match') {
                 for (const flag of this.flags) {
                     const logValue = logFile.value(flag.conditions[0][0].Column, r) ?? '';
-                    let flag_found = logValue.match(flag.conditions[0][0].Text)
-                    if (flag_found !== null)
-                        values[r] = flag_found[1];
+                    const flagFound = logValue.match(flag.conditions[0][0].Text)
+                    if (flagFound !== null)
+                        values[r] = flagFound[1];
                 }
             }
         }

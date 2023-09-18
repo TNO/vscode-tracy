@@ -1,6 +1,6 @@
 import React from 'react';
 import { LOG_HEADER_HEIGHT, LOG_ROW_HEIGHT, LOG_COLUMN_WIDTH_LOOKUP, 
-         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, RGB_Annotation0, RGB_Annotation1, RGB_Annotation2, RGB_Annotation3, RGB_Annotation4 } from '../constants';
+         LOG_DEFAULT_COLUMN_WIDTH, BORDER, BORDER_SIZE, RGB_ANNOTATION0, RGB_ANNOTATION1, RGB_ANNOTATION2, RGB_ANNOTATION3, RGB_ANNOTATION4 } from '../constants';
 import { getHeaderColumnInnerStyle, getHeaderColumnStyle, getLogViewRowSelectionStyle, getLogViewStructureMatchStyle, getSegmentStyle } from '../hooks/useStyleManager';
 import { LogViewState, RowProperty, Segment, StructureMatchId } from '../types';
 import LogFile from '../LogFile';
@@ -97,15 +97,15 @@ export default class LogView extends React.Component<Props, State> {
         if (!this.state.state) return;
         const result: any = [];
         const {logFile, rowProperties, structureMatches, currentStructureMatch, structureMatchesLogRows, collapsibleRows} = this.props;
-        let first_render = this.state.state.startFloor;
-        let last_render = this.state.state.endCeil;
-        let visibleRows = logFile.rows.filter((v, i) => rowProperties[i].isRendered);
-        if (last_render > visibleRows.length){
+        let firstRender = this.state.state.startFloor;
+        let lastRender = this.state.state.endCeil;
+        const visibleRows = logFile.rows.filter((v, i) => rowProperties[i].isRendered);
+        if (lastRender > visibleRows.length){
             if (!this.viewport.current) return;
             const height = this.viewport.current.clientHeight;
             const maxVisibleItems = height / LOG_ROW_HEIGHT;
-            last_render = visibleRows.length - 1;
-            first_render = Math.max(0, Math.ceil(last_render - maxVisibleItems) - 1);
+            lastRender = visibleRows.length - 1;
+            firstRender = Math.max(0, Math.ceil(lastRender - maxVisibleItems) - 1);
         }
 
         // Search does not match any row
@@ -113,10 +113,10 @@ export default class LogView extends React.Component<Props, State> {
             return [];
         }
 
-        let counter = first_render;
-        let maxLevel = Math.min(4, getSegmentMaxLevel(collapsibleRows));
+        let counter = firstRender;
+        const maxLevel = Math.min(4, getSegmentMaxLevel(collapsibleRows));
         const segmentWidth:number = (this.getMaxLevel() + 1) * 30 + BORDER_SIZE;
-        for (let r = first_render; counter <= last_render; r++) {
+        for (let r = firstRender; counter <= lastRender; r++) {
             if (rowProperties[r].isSearchResult && rowProperties[r].isRendered) {
                 let rowStyle;
 
@@ -171,7 +171,7 @@ export default class LogView extends React.Component<Props, State> {
             </VSCodeButton>);
         } else {
             Object.keys(collapsibleRows).filter(key => collapsibleRows[key].level == level).map(key => {
-                let segment: Segment = collapsibleRows[key];
+                const segment: Segment = collapsibleRows[key];
                 if (segment != undefined) {
                     if ( r <= segment.end && r > segment.start) {
                         annotation = true;
@@ -196,7 +196,7 @@ export default class LogView extends React.Component<Props, State> {
             });
             let collapsedEnd = 0;
             for (let r = index + 1; r <= this.props.collapsibleRows[index].end; r++) {
-                let collap = this.state.collapsed[r];
+                const collap = this.state.collapsed[r];
                 if (collap) {
                    collapsedEnd = this.props.collapsibleRows[r] == undefined ? collapsedEnd : this.props.collapsibleRows[r].end;
                    this.props.onRowPropsChanged(r, true);
@@ -273,17 +273,17 @@ export default class LogView extends React.Component<Props, State> {
 
     getRGB(level: number) {
         switch(level){
-            case 0: return RGB_Annotation0;
-            case 1: return RGB_Annotation1;
-            case 2: return RGB_Annotation2;
-            case 3: return RGB_Annotation3;
-            case 4: return RGB_Annotation4;
+            case 0: return RGB_ANNOTATION0;
+            case 1: return RGB_ANNOTATION1;
+            case 2: return RGB_ANNOTATION2;
+            case 3: return RGB_ANNOTATION3;
+            case 4: return RGB_ANNOTATION4;
         }
     }
 
     getVisibleRows() {
         const { logFile, rowProperties } = this.props;
-        let visibleRows = logFile.rows.filter((v, i) => rowProperties[i].isRendered);
+        const visibleRows = logFile.rows.filter((v, i) => rowProperties[i].isRendered);
         return visibleRows.length
     }
 

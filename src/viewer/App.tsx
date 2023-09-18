@@ -59,8 +59,8 @@ const COLUMN_2_HEADER_STYLE = {
     height: '100%', display: 'flex', borderLeft: BORDER
 }
 
-let searchText: string = '';
-let searchColumn: string = 'All';
+let searchText = '';
+let searchColumn = 'All';
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
@@ -95,11 +95,11 @@ export default class App extends React.Component<Props, State> {
         const message = event.data;
         if (message.type === 'readFile') {
             const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
-            let lines = JSON.parse(message.text);
+            const lines = JSON.parse(message.text);
             const logFileText = JSON.stringify(lines, null, 2);
             const textRanges = useJsonObjectToTextRangesMap(logFileText);
-            let logFile = LogFile.create(lines, rules);
-            let newRowsProps = logFile.rows.map(() => constructNewRowProperty(true, true, SelectedRowType.None));
+            const logFile = LogFile.create(lines, rules);
+            const newRowsProps = logFile.rows.map(() => constructNewRowProperty(true, true, SelectedRowType.None));
             this.setState({logFile, logFileAsString: logFileText, logEntryRanges: textRanges, rules, rowProperties: newRowsProps});
         }
     }
@@ -118,11 +118,10 @@ export default class App extends React.Component<Props, State> {
             }
             else {
                 const rules = this.state.rules;
-                let lines = JSON.parse(this.state.logFileAsString);
-                let logFile = this.state.logFile;
-                let logFileText = this.state.logFileAsString;
-                const col_index = this.state.logFile.headers.findIndex(h => h.name === searchColumn)
-                const filteredIndices = returnSearchIndices(logFile.rows, col_index, searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
+                const logFile = this.state.logFile;
+                const logFileText = this.state.logFileAsString;
+                const colIndex = this.state.logFile.headers.findIndex(h => h.name === searchColumn)
+                const filteredIndices = returnSearchIndices(logFile.rows, colIndex, searchText, this.state.reSearch, this.state.wholeSearch, this.state.caseSearch);
                 
                 newRowsProps = this.state.logFile.rows.map((row, index) => {
                     if (filteredIndices.includes(index))
@@ -283,33 +282,33 @@ export default class App extends React.Component<Props, State> {
 
     handleSegmentation(entryExpression: string, exitExpression: string) {
         const {logFileAsString, logEntryRanges} = this.state;
-        let {collapsibleRows} = this.state;
+        const {collapsibleRows} = this.state;
         
         const entryMatches = getRegularExpressionMatches(entryExpression, logFileAsString, logEntryRanges);
         const exitMatches = getRegularExpressionMatches(exitExpression, logFileAsString, logEntryRanges);
 
-        let stack: number[] = [];
-        let maximum_level = 5;
-        let next_entry = entryMatches.shift()!;
-        let next_exit = exitMatches.shift()!;        
+        const stack: number[] = [];
+        const maximumLevel = 5;
+        let nextEntry = entryMatches.shift()!;
+        let nextExit = exitMatches.shift()!;        
 
-        while (next_entry !== undefined && next_exit !== undefined) {
-            if (next_entry < next_exit) {
-                stack.push(next_entry);
-                next_entry = entryMatches.shift()!;
+        while (nextEntry !== undefined && nextExit !== undefined) {
+            if (nextEntry < nextExit) {
+                stack.push(nextEntry);
+                nextEntry = entryMatches.shift()!;
             }
             else {
-                let entry = stack.pop()!;
-                if (stack.length <= (maximum_level - 1))
-                    collapsibleRows[entry] = constructNewSegment(entry, next_exit, stack.length);
+                const entry = stack.pop()!;
+                if (stack.length <= (maximumLevel - 1))
+                    collapsibleRows[entry] = constructNewSegment(entry, nextExit, stack.length);
                 else
-                    console.log(`Maximum segment level reached: Discarding (${entry}, ${next_exit})`)
-                next_exit = exitMatches.shift()!;
+                    console.log(`Maximum segment level reached: Discarding (${entry}, ${nextExit})`)
+                nextExit = exitMatches.shift()!;
             }
         }
-        if (next_exit !== undefined) {
-            let entry = stack.pop()!
-            collapsibleRows[entry] = constructNewSegment(entry, next_exit, 0);
+        if (nextExit !== undefined) {
+            const entry = stack.pop()!
+            collapsibleRows[entry] = constructNewSegment(entry, nextExit, 0);
         }
 
         this.setState({collapsibleRows});
@@ -328,11 +327,10 @@ export default class App extends React.Component<Props, State> {
     }
 
     render() {
-        var txt = '';
         const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
         const minimapHeight = this.state.showMinimapHeader ? '12%' : '5%' ;
 
-        const all_columns = ['All', ...this.state.logFile.contentHeaders, ...this.state.rules.map(i=>i.column)];
+        const allColumns = ['All', ...this.state.logFile.contentHeaders, ...this.state.rules.map(i=>i.column)];
         return (
         <div id="container" style={{display:'flex', flexDirection: 'column', height: '100vh', boxSizing: 'border-box'}}>
             <div id="header" style={{display: 'flex', flexDirection: 'row', height: minimapHeight, boxSizing: 'border-box'}}>
@@ -348,7 +346,7 @@ export default class App extends React.Component<Props, State> {
                 </div>
                 <div style={{flex: 1, display: 'flex', justifyContent: 'end'}}>
                     <VSCodeDropdown style={{marginRight: '5px'}} onChange={(e) => searchColumn = e.target.value}>
-                    {all_columns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
+                    {allColumns.map((col, col_i) => <VSCodeOption key={col_i} value={col}>{col}</VSCodeOption>)}
                     </VSCodeDropdown>
                     <VSCodeTextField style={{marginRight: '5px'}} placeholder="Search Text" value={searchText} onInput={(e) => searchText = e.target.value} onKeyUp={(e) => this.filterLog(e.key)}>                    
                     

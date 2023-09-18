@@ -38,32 +38,32 @@ export default class FlagsDialog extends React.Component<Props, State> {
         if (rules[index].column != rule.column) {
             for (let i = 0; i < rules.length; i++){
                 if (rules[i].ruleType === 'Flag rule') {
-                    let updated_rule = rules[i] as FlagRule;
-                    let updated_flags = updated_rule.flags;
-                    for (let j = 0; j < updated_flags.length; j++)
-                        for (let k = 0; k < updated_flags[j].conditions.length; k++)
-                            for (let l = 0; l < updated_flags[j].conditions[k].length; l++)
-                                if (updated_flags[j].conditions[k][l].Column === rules[index].column)
-                                    updated_flags[j].conditions[k][l].Column = rule.column;
-                    updated_rule.setFlags(updated_flags);
-                    rules[i] = updated_rule;
+                    const updateRule = rules[i] as FlagRule;
+                    const updatedFlags = updateRule.flags;
+                    for (let j = 0; j < updatedFlags.length; j++)
+                        for (let k = 0; k < updatedFlags[j].conditions.length; k++)
+                            for (let l = 0; l < updatedFlags[j].conditions[k].length; l++)
+                                if (updatedFlags[j].conditions[k][l].Column === rules[index].column)
+                                    updatedFlags[j].conditions[k][l].Column = rule.column;
+                    updateRule.setFlags(updatedFlags);
+                    rules[i] = updateRule;
                 }
                 else if (rules[i].ruleType === 'State based rule') {
-                    let updated_rule = rules[i] as StateBasedRule;
-                    let updated_states = updated_rule.ruleStates;
-                    for (let j = 0; j < updated_states.length; j++) {
-                        for (let k = 0; k < updated_states[j].transitions.length; k++) {
-                            for (let l = 0; l < updated_states[j].transitions[k].conditions.length; l++) {
-                                for (let m = 0; m < updated_states[j].transitions[k].conditions[l].length; m++) {
-                                    if (updated_states[j].transitions[k].conditions[l][m].Column === rules[index].column)
-                                        updated_states[j].transitions[k].conditions[l][m].Column = rule.column;
+                    const updatedRule = rules[i] as StateBasedRule;
+                    const updatedStates = updatedRule.ruleStates;
+                    for (let j = 0; j < updatedStates.length; j++) {
+                        for (let k = 0; k < updatedStates[j].transitions.length; k++) {
+                            for (let l = 0; l < updatedStates[j].transitions[k].conditions.length; l++) {
+                                for (let m = 0; m < updatedStates[j].transitions[k].conditions[l].length; m++) {
+                                    if (updatedStates[j].transitions[k].conditions[l][m].Column === rules[index].column)
+                                        updatedStates[j].transitions[k].conditions[l][m].Column = rule.column;
 
                                 }
                             }
                         }
                     }
-                    updated_rule.setStates(updated_states, updated_rule.initialStateIndex);
-                    rules[i] = updated_rule;
+                    updatedRule.setStates(updatedStates, updatedRule.initialStateIndex);
+                    rules[i] = updatedRule;
                 }
             }
         }
@@ -73,11 +73,11 @@ export default class FlagsDialog extends React.Component<Props, State> {
 
     updateFlagProperty(rule: Rule, property: string, new_value: string, index: number) {
         const rules = [...this.state.rules];
-        let flagrule = rule as FlagRule;
+        const flagRule = rule as FlagRule;
         if (property === 'defaultValue')
-            rules[index] = flagrule.setDefault(new_value);
+            rules[index] = flagRule.setDefault(new_value);
         else if (property === 'flagType')
-            rules[index] = flagrule.setFlagType(new_value);
+            rules[index] = flagRule.setFlagType(new_value);
         this.setState({rules});
     }
 
@@ -110,8 +110,8 @@ export default class FlagsDialog extends React.Component<Props, State> {
             this.setState({rules: this.state.rules.filter((r, i) => i !== index)});
         }
 
-        let tableRows = this.state.rules.filter(r => r.ruleType === 'Flag rule').map((rule) => {
-                let flagRule = rule as FlagRule;
+        const tableRows = this.state.rules.filter(r => r.ruleType === 'Flag rule').map((rule) => {
+                const flagRule = rule as FlagRule;
                 return [rule.column, flagRule.flagType, rule.description]})
 
         return (
@@ -133,12 +133,11 @@ export default class FlagsDialog extends React.Component<Props, State> {
         if (this.state.selectedRule === -1) return;
         const ruleIndex = this.state.selectedRule;
         const rule = this.state.rules[ruleIndex];
-        let ruleAsFlag = rule as FlagRule;
+        const ruleAsFlag = rule as FlagRule;
         const defaultValue = ruleAsFlag.defaultValue;
         const flagType = ruleAsFlag.flagType;
-        const user_columns = this.state.rules.map((r, i) => r.column).filter(name => name != rule.column)
+        const userColumns = this.state.rules.map((r, i) => r.column).filter(name => name != rule.column)
         const defaultRuleColumn = `FlagRule${ruleIndex + 1}`;
-        const typeOptions = [FlagRule];
         const keyWidth = '100px';
         const textFieldWidth = '250px';
         const rows = [
@@ -147,18 +146,20 @@ export default class FlagsDialog extends React.Component<Props, State> {
                 <VSCodeTextField 
                     style={{width: textFieldWidth, marginBottom: '2px'}}
                     value={rule.column} 
+                    key='Name'
                     onInput={(e) => this.updateRule(rule.setColumn(e.target.value || defaultRuleColumn), ruleIndex)}/>
             ],
             [
                 ('Description'),
                 <VSCodeTextField 
                     style={{width: textFieldWidth, marginBottom: '2px'}}
-                    value={rule.description} 
+                    value={rule.description}
+                    key='Name' 
                     onInput={(e) => this.updateRule(rule.setDescription(e.target.value), ruleIndex)}/>
             ],
             [
                 ('Type'),
-                <VSCodeDropdown disabled={ruleAsFlag.flags.length > 0?true: false} style={{width: textFieldWidth, marginBottom: '2px'}} value={flagType} onChange={(e) => this.updateFlagProperty(rule, 'flagType', e.target.value, ruleIndex)}>
+                <VSCodeDropdown disabled={ruleAsFlag.flags.length > 0?true: false} style={{width: textFieldWidth, marginBottom: '2px'}} value={flagType} key='Type' onChange={(e) => this.updateFlagProperty(rule, 'flagType', e.target.value, ruleIndex)}>
                     <VSCodeOption value={'User Defined'} key={0}>User Defined</VSCodeOption>
                     <VSCodeOption value={'Capture Match'} key={1}>Capture Match</VSCodeOption>
                 </VSCodeDropdown>
@@ -168,6 +169,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                 <VSCodeTextField 
                     style={{width: textFieldWidth, marginBottom: '2px'}}
                     value={defaultValue} 
+                    key='Default'
                     onInput={(e) => this.updateFlagProperty(rule, 'defaultValue', e.target.value, ruleIndex)}/>
             ],
         ];
@@ -180,7 +182,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
                     rows={rows}
                     columns={[{width: '100px'}, {width: ''}]}
                 />
-                {rule.renderEdit((newRule) => this.updateRule(newRule, ruleIndex), keyWidth, textFieldWidth, user_columns, this.props.logFile)}
+                {rule.renderEdit((newRule) => this.updateRule(newRule, ruleIndex), keyWidth, textFieldWidth, userColumns, this.props.logFile)}
             </div>
         )
     }

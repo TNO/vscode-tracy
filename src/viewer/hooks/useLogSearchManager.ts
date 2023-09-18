@@ -8,10 +8,10 @@ export const escapeSpecialChars = (text: string): string => {
 
     }
 
-    const RegExpCarriageReturnAtEnd = /\r$/;
+    const regExpCarriageReturnAtEnd = /\r$/;
 
-    if(RegExpCarriageReturnAtEnd.test(text)) {
-    safeText = safeText.replace(RegExpCarriageReturnAtEnd, '\\\\r');
+    if(regExpCarriageReturnAtEnd.test(text)) {
+    safeText = safeText.replace(regExpCarriageReturnAtEnd, '\\\\r');
     }
 
     return safeText;
@@ -19,7 +19,7 @@ export const escapeSpecialChars = (text: string): string => {
 
 export const useRegularExpressionSearch = (flags: string, expression: string, text: string): boolean => {
     const structureQuery = new RegExp(expression, flags);
-    let result = structureQuery.exec(escapeSpecialChars(text));
+    const result = structureQuery.exec(escapeSpecialChars(text));
     if (result === null)
         return false;
     else
@@ -31,7 +31,7 @@ export const useRegularExpressionSearch = (flags: string, expression: string, te
 export const returnSearchIndices = (rows: string[][], columnIndex: number, searchText: string, reSearchBool: boolean, wholeSearchBool: boolean, caseSearchBool: boolean): number[] => {
     let loglineText: string;
     let searchTerms: string[]
-    let indices: number[] = [];
+    const indices: number[] = [];
     if (!caseSearchBool && !reSearchBool)
         searchText = searchText.toLowerCase();
     if ((searchText.charAt(0) === "\"") && (searchText.slice(-1) === "\""))
@@ -44,7 +44,7 @@ export const returnSearchIndices = (rows: string[][], columnIndex: number, searc
                 for (let i = 0; i < rows.length; i++) {
                     loglineText = rows[i].join(" ").toLowerCase();
                     let found = true;
-                    for (var term of searchTerms) {
+                    for (const term of searchTerms) {
                         if (loglineText.indexOf(term) == -1) {
                             found = false;
                             break;
@@ -58,7 +58,7 @@ export const returnSearchIndices = (rows: string[][], columnIndex: number, searc
                 for (let i = 0; i < rows.length; i++) {
                     loglineText = rows[i].join(" ");
                     let found = true;
-                    for (var term of searchTerms) {
+                    for (const term of searchTerms) {
                         if (loglineText.indexOf(term) == -1) {
                             found = false;
                             break;
@@ -74,7 +74,7 @@ export const returnSearchIndices = (rows: string[][], columnIndex: number, searc
                 for (let i = 0; i < rows.length; i++) {
                     loglineText = rows[i][columnIndex].toLowerCase();
                     let found = true;
-                    for (var term of searchTerms) {
+                    for (const term of searchTerms) {
                         if (loglineText.indexOf(term) == -1) {
                             found = false;
                             break;
@@ -88,7 +88,7 @@ export const returnSearchIndices = (rows: string[][], columnIndex: number, searc
                 for (let i = 0; i < rows.length; i++) {
                     loglineText = rows[i][columnIndex];
                     let found = true;
-                    for (var term of searchTerms) {
+                    for (const term of searchTerms) {
                         if (loglineText.indexOf(term) == -1) {
                             found = false;
                             break;
@@ -108,13 +108,13 @@ export const returnSearchIndices = (rows: string[][], columnIndex: number, searc
         else
             flags = 'gs';
         if (wholeSearchBool)
-            for (var i = 0; i < searchTerms.length; i++)
+            for (let i = 0; i < searchTerms.length; i++)
                 searchTerms[i] = '\\b' + searchTerms[i] + '\\b'
         if (columnIndex === -1) {
             for (let i = 0; i < rows.length; i++) {
                 loglineText = rows[i].join(" ")
                 let found = true;
-                for (var term of searchTerms) {
+                for (const term of searchTerms) {
                     if (useRegularExpressionSearch(flags, term, loglineText) === false) {
                         found = false;
                         break;
@@ -128,7 +128,7 @@ export const returnSearchIndices = (rows: string[][], columnIndex: number, searc
             for (let i = 0; i < rows.length; i++) {
                 loglineText = rows[i][columnIndex] //Lowercase?
                 let found = true;
-                for (var term of searchTerms) {
+                for (const term of searchTerms) {
                     if (useRegularExpressionSearch(flags, term, loglineText) === false) {
                         found = false;
                         break;
@@ -149,7 +149,7 @@ export const getRegularExpressionMatches = (expression: string, logFileAsString:
     const flags = 'gs'
     const query = new RegExp(expression, flags);
     let result;
-    let current_index = 0;
+    let currentIndex = 0;
 
     while ((result = query.exec(logFileAsString)) !== null) {
         searchIndices.push(result.index);
@@ -157,12 +157,12 @@ export const getRegularExpressionMatches = (expression: string, logFileAsString:
 
     if (searchIndices.length > 0) {
         for (let i = 0; i < logEntryRanges.length; i++) {
-            if (searchIndices[current_index] >= logEntryRanges[i][0]) {
-                if (searchIndices[current_index] <= logEntryRanges[i][1]) {
-                    current_index += 1;
+            if (searchIndices[currentIndex] >= logEntryRanges[i][0]) {
+                if (searchIndices[currentIndex] <= logEntryRanges[i][1]) {
+                    currentIndex += 1;
                     if (i != resultingMatches[-1])
                         resultingMatches.push(i);
-                    if (current_index === searchIndices.length)
+                    if (currentIndex === searchIndices.length)
                         break;
                 }
             }

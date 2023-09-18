@@ -26,8 +26,8 @@ import {
 	removeWildcardFromCellContent,
 } from "../hooks/useWildcardManager";
 import {
-	StructureDialogBackdropStyle,
-	StructureDialogDialogStyle,
+	structureDialogBackdropStyle,
+	structureDialogDialogStyle,
 } from "../hooks/useStyleManager";
 import isEqual from "lodash/isEqual";
 import cloneDeep from "lodash/cloneDeep";
@@ -544,8 +544,8 @@ export default class StructureDialog extends React.Component<Props, State> {
           });
 
 		return (
-			<div style={StructureDialogBackdropStyle}>
-				<div className="dialog" style={StructureDialogDialogStyle}>
+			<div style={structureDialogBackdropStyle}>
+				<div className="dialog" style={structureDialogDialogStyle}>
 					<div
 						style={{
 							display: "flex",
@@ -569,9 +569,9 @@ export default class StructureDialog extends React.Component<Props, State> {
                                             <ul>
                                             <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Ignoring cells</b>: Hold <b>CTRL</b> and click on a cell to ignore it or stop ignoring it. Hold <b>SHIFT+CTRL</b> to ignore the cell and stop ignoring all others, or ignore all other cells instead. </li>
                                             <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Constraining distance between structure rows</b>: Change the constraint on the distance between two rows by clicking on the link icon between them. This icon is three horizontal dots by default.</li>
-                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Creating wildcards</b>: Selecting a part of the text in a cell, right click and select "<i>Create wildcard</i>" to create a new wildcard. A wildcard can be used to abstract away any specific data.</li>
-                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Using wildcards</b>: Selecting a part of the text in a cell, right click and select "<i>Use wildcard wildcard id</i>". Any value could be abstracted by the wildcard, but the value has to be the same in all places where this wildcard is used.</li>
-                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Removing wildcards</b>: Hover over a wildcard, right click and select "<i>Remove wildcard</i>". If the wildcard is used in multiple places, only the selected one will be removed.</li>
+                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Creating wildcards</b>: Selecting a part of the text in a cell, right click and select &quot;<i>Create wildcard</i>&quot; to create a new wildcard. A wildcard can be used to abstract away any specific data.</li>
+                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Using wildcards</b>: Selecting a part of the text in a cell, right click and select &quot;<i>Use wildcard wildcard id</i>&quot;. Any value could be abstracted by the wildcard, but the value has to be the same in all places where this wildcard is used.</li>
+                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Removing wildcards</b>: Hover over a wildcard, right click and select &quot;<i>Remove wildcard</i>&quot;. If the wildcard is used in multiple places, only the selected one will be removed.</li>
                                             <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Removing rows</b>: Click on the <b>Remove rows</b> button on the bottom right of the dialogue. A red cross will appear to the left of every row in the structure, by clicking on a cross, the row will be removed from the structure. Click the<b>Done</b> button afterwards.</li>
                                             </ul>
 										</>
@@ -662,7 +662,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 										? 0
 										: this.props
 												.currentStructureMatchIndex! +
-										  1}{" "}
+										1}{" "}
 									of {this.props.numberOfMatches}
 								</div>
 								{this.props.numberOfMatches > 1 && (

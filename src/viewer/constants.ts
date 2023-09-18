@@ -34,15 +34,15 @@ export const BACKGROUND_COLOR_MATCHED_ROW_OTHER = `rgba(${RGB_OFFICE_GREEN}, 0.5
 
 export const BORDER_SELECTED_ROW_RADIUS = `5px`;
 
-export const RGB_Annotation0 = `rgb(223, 90, 90)`;
+export const RGB_ANNOTATION0 = `rgb(223, 90, 90)`;
 
-export const RGB_Annotation1 = `rgb(71, 186, 89)`;
+export const RGB_ANNOTATION1 = `rgb(71, 186, 89)`;
 
-export const RGB_Annotation2 = `rgb(46, 111, 179)`;
+export const RGB_ANNOTATION2 = `rgb(46, 111, 179)`;
 
-export const RGB_Annotation3 = `rgb(255, 165, 0)`;
+export const RGB_ANNOTATION3 = `rgb(255, 165, 0)`;
 
-export const RGB_Annotation4 = `rgb(128, 0, 128)`;
+export const RGB_ANNOTATION4 = `rgb(128, 0, 128)`;
 
 // TODO: determine column width automatically, not hardcoded
 export const LOG_COLUMN_WIDTH_LOOKUP = {
