@@ -138,7 +138,7 @@ export default class LogView extends React.Component<Props, State> {
                         <div key={r} style={rowStyle} onClick={(event) => this.props.onSelectedRowsChanged(r, event)}>
                             {logFile.headers.map((h, c) => 
                             logFile.selectedColumns[c]== true &&
-                                this.renderColumn(logFile.rows[r][c], c, false, this.columnWidth(h.name), logFile.columnsColors[c][r]))
+                                this.renderColumn(logFile.rows[r][c], c, false, this.state.columnWidth[h.name], logFile.columnsColors[c][r]))
                             }
                         </div>
                     </div>
@@ -257,8 +257,6 @@ export default class LogView extends React.Component<Props, State> {
             columnWidth[name] = width;
             return {columnWidth};
         });
-        //update the width values 
-        LOG_COLUMN_WIDTH_LOOKUP[name] = width;
     }
 
     columnWidth(name: string) {
@@ -328,7 +326,7 @@ export default class LogView extends React.Component<Props, State> {
         const {logFile} = this.props;
         const containerHeight = this.getVisibleRows() * LOG_ROW_HEIGHT;
         const containerWidth = (logFile.amountOfColumns() * BORDER_SIZE) +
-            logFile.headers.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
+            logFile.headers.reduce((partialSum: number, h) => partialSum + this.state.columnWidth[h.name], 0);
         return (
                 <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
                     {this.renderHeader(containerWidth)}
