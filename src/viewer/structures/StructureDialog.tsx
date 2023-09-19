@@ -44,6 +44,7 @@ interface Props {
 	onStructureUpdate: () => void;
 	onNavigateStructureMatches: (isGoingForward: boolean) => void;
 	onMatchStructure: (expression: string) => void;
+	onDefineSegment: (entryExpression: string, exitExpression: string) => void;
 }
 
 interface State {
@@ -306,6 +307,23 @@ export default class StructureDialog extends React.Component<Props, State> {
 		this.props.onMatchStructure(structureRegExp);
 		this.setState({ isStructureMatching: true });
 	}
+
+	defineSegment(){
+        // TODO: Add functionality with wildcard
+        const entryRegExp = useStructureQueryConstructor(
+            this.props.logHeaderColumns,
+            this.state.structureHeaderColumnsTypes,
+            this.state.structureEntries.slice(0, 1),
+			[]
+            );
+        const exitRegExp = useStructureQueryConstructor(
+            this.props.logHeaderColumns,
+            this.state.structureHeaderColumnsTypes,
+            this.state.structureEntries.slice(-1),
+			[]
+            );
+        this.props.onDefineSegment(entryRegExp, exitRegExp);
+    }
 
 	createWildcard() {
 		const selection = getSelection();
@@ -602,6 +620,14 @@ export default class StructureDialog extends React.Component<Props, State> {
 						parentDivId="StructureDialog"
 					/>
 					<div style={{ textAlign: "right", padding: "5px" }}>
+						<VSCodeButton 
+							className='structure-result-element' 
+							onClick={() => {
+								this.defineSegment();
+							}}
+							disabled={this.state.structureEntries.length === 1}>
+							Create Segment
+						</VSCodeButton>
 						<VSCodeButton
 							className="structure-result-element"
 							onClick={() => {

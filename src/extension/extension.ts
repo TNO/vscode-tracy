@@ -30,9 +30,9 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 		};
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
-		function updateWebview() {
+		function updateWebview(message_type: string) {
 			webviewPanel.webview.postMessage({
-				type: 'update',
+				type: message_type,
 				text: document.getText(),
 				rules: fs.existsSync(rulesFile) ? JSON.parse(fs.readFileSync(rulesFile, {encoding: 'utf8'})) : [],
 			});
@@ -48,7 +48,7 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 
 		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
 			if (e.document.uri.toString() === document.uri.toString()) {
-				updateWebview();
+				updateWebview('readFile');
 			}
 		});
 
@@ -59,9 +59,9 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 
 		// Receive message from the webview.
 		webviewPanel.webview.onDidReceiveMessage(e => {
-			if (e.type === 'update') {
-				updateWebview();
-			} else if (e.type === 'save_rules') {
+			if (e.type === 'readFile') {
+				updateWebview('readFile');
+			} else if (e.type === 'saveRules') {
 				fs.writeFileSync(rulesFile, JSON.stringify(e.rules));
 			}
 		});
