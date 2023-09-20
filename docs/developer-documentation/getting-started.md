@@ -6,9 +6,9 @@
 - [Visual Studio Code](https://code.visualstudio.com/)
 
 ## Useful links
-- [Architecture](developer-documentation/architecture.md)
-- [Developer responsibilities](developer-documentation/responsibilities.md)
-- [Debugging](developer-documentation/debugging.md)
+- [Architecture](architecture.md)
+- [Developer Guidelines](dev-guidlines.md)
+- [Debugging](debugging.md)
 
 ## Developing
 To develop Tracy:

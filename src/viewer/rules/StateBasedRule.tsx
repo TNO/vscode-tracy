@@ -6,6 +6,7 @@ import Table from './Tables/Table';
 import StateTable from './Tables/StateTable';
 import TransitionTable from './Tables/TransitionTable';
 import { VSCodeTextField, VSCodeDropdown, VSCodeOption, VSCodePanels, VSCodePanelTab, VSCodePanelView } from '@vscode/webview-ui-toolkit/react';
+import { useRegularExpressionSearch } from '../hooks/useLogSearchManager';
 
 
 interface State {name: string, transitions: Transition[]}
@@ -14,8 +15,8 @@ interface TransitionCondition {Column: string, Operation: string, Text: string}
 
 
 export default class StateBasedRule extends Rule {
-    static friendlyType = "State based rule";
-    friendlyType = StateBasedRule.friendlyType;
+    static ruleType = "State based rule";
+    ruleType = StateBasedRule.ruleType;
 
     readonly ruleStates: State[];
     readonly initialStateIndex: number;
@@ -66,10 +67,7 @@ export default class StateBasedRule extends Rule {
 
         const stateRows = this.ruleStates.map((r, i) => {
             return [
-                <VSCodeTextField 
-                    initialValue={r.name}
-                    key='Text'
-                    onInput={(e) => editStateName(i, e.target.value)}/>,
+                <VSCodeTextField value={r.name} key='Text' onInput={(e) => editStateName(i, e.target.value)}/>,
             ]
         })
 
@@ -117,15 +115,12 @@ export default class StateBasedRule extends Rule {
                                 key={col_i}>{col}
                             </VSCodeOption>)}
                         </VSCodeDropdown>,
-                        <VSCodeDropdown  
-                            style={{width: '100%'}} 
-                            value={r.Operation}  
-                            key='Dropdown'
-                            onChange={(e) => editTransition(transitionIndex, c_i, 'Operation', e.target.value)}>
-                            <VSCodeOption value='contains' key='0'>contains</VSCodeOption>
-                            <VSCodeOption value='equals' key='1'>equals</VSCodeOption>
-                            <VSCodeOption value='startsWith' key='2'>startsWith</VSCodeOption>
-                            <VSCodeOption value='endsWith'key='3'>endsWith</VSCodeOption>
+                        <VSCodeDropdown  style={{width: '100%'}} value={r.Operation} key='Operators' onChange={(e) => editTransition(transitionIndex, c_i, 'Operation', e.target.value)}>
+                            <VSCodeOption key='0' value='contains'>contains</VSCodeOption>
+                            <VSCodeOption key='1' value='equals'>equals</VSCodeOption>
+                            <VSCodeOption key='2' value='startsWith'>startsWith</VSCodeOption>
+                            <VSCodeOption key='3' value='endsWith'>endsWith</VSCodeOption>
+                            <VSCodeOption key='4' value='regexSearch'>regex search</VSCodeOption>
                         </VSCodeDropdown>,
                         <VSCodeTextField  
                             style={{width: '100%'}} 
@@ -292,6 +287,12 @@ export default class StateBasedRule extends Rule {
                             }
                             else if (condition.Operation === 'endsWith') {
                                 if (!logValue.endsWith(condition.Text)) {
+                                    allConditionsSatisfied = false;
+                                    break;
+                                }
+                            }
+                            else if (condition.Operation === 'regexSearch') {
+                                if (useRegularExpressionSearch('gs', condition.Text, logValue) === false) {
                                     allConditionsSatisfied = false;
                                     break;
                                 }

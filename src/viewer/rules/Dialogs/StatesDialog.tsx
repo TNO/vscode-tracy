@@ -37,18 +37,18 @@ export default class StatesDialog extends React.Component<Props, State> {
         const rules = [...this.state.rules];
         if (rules[index].column != rule.column) {
             for (let i = 0; i < rules.length; i++){
-                if (rules[i].friendlyType === 'Flag rule') {
+                if (rules[i].ruleType === 'Flag rule') {
                     const updatedRule = rules[i] as FlagRule;
                     const updatedFlags = updatedRule.flags;
                     for (let j = 0; j < updatedFlags.length; j++)
                         for (let k = 0; k < updatedFlags[j].conditions.length; k++)
                             for (let l = 0; l < updatedFlags[j].conditions[k].length; l++)
-                                if (updatedFlags[j].conditions[k][l].searchColumn === rules[index].column)
-                                    updatedFlags[j].conditions[k][l].searchColumn = rule.column;
+                                if (updatedFlags[j].conditions[k][l].Column === rules[index].column)
+                                    updatedFlags[j].conditions[k][l].Column = rule.column;
                     updatedRule.setFlags(updatedFlags);
                     rules[i] = updatedRule;
                 }
-                else if (rules[i].friendlyType === 'State based rule') {
+                else if (rules[i].ruleType === 'State based rule') {
                     const updatedRule = rules[i] as StateBasedRule;
                     const updatedStates = updatedRule.ruleStates;
                     for (let j = 0; j < updatedStates.length; j++) {
@@ -56,7 +56,7 @@ export default class StatesDialog extends React.Component<Props, State> {
                             for (let l = 0; l < updatedStates[j].transitions[k].conditions.length; l++) {
                                 for (let m = 0; m < updatedStates[j].transitions[k].conditions[l].length; m++) {
                                     if (updatedStates[j].transitions[k].conditions[l][m].Column === rules[index].column)
-                                        updatedStates[j].transitions[k].conditions[l][m].Column = rule.column;
+                                    updatedStates[j].transitions[k].conditions[l][m].Column = rule.column;
 
                                 }
                             }
@@ -85,17 +85,17 @@ export default class StatesDialog extends React.Component<Props, State> {
 
     renderManage() {
         const onAddAction = () => {
-            const newRule = new StateBasedRule(`StateRule${this.state.rules.filter(r => r.friendlyType === 'State based rule').length + 1}`, '', 0, 0, 0, []);
+            const newRule = new StateBasedRule(`StateRule${this.state.rules.filter(r => r.ruleType === 'State based rule').length + 1}`, '', 0, 0, 0, []);
             this.setState({rules: [...this.state.rules, newRule], selectedRule: this.state.rules.length, showEdit: true});
         }
 
         const onEditAction = (table_index: number) => {
-            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'State based rule')[table_index]);
+            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.ruleType === 'State based rule')[table_index]);
             this.setState({showEdit: true, selectedRule: index});
         }
 
         const onDeleteAction = (table_index: number) => {
-            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'State based rule')[table_index]);
+            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.ruleType === 'State based rule')[table_index]);
             if (this.state.selectedRule === index) this.setState({selectedRule: -1});
             this.setState({rules: this.state.rules.filter((r, i) => i !== index)});
         }
@@ -105,7 +105,7 @@ export default class StatesDialog extends React.Component<Props, State> {
                 <Table
                     // title='Manage rules'
                     columns={[{name: 'Name', width: '150px'}, {name: 'Type', width: '150px'}, {name: 'Description', width: ''}]}
-                    rows={this.state.rules.filter(r => r.friendlyType === 'State based rule').map((rule) => [rule.column, rule.friendlyType, rule.description])} 
+                    rows={this.state.rules.filter(r => r.ruleType === 'State based rule').map((rule) => [rule.column, rule.ruleType, rule.description])} 
                     noRowsText={'No rules have been defined (click + to add)'}
                     onAddAction={onAddAction}
                     onEditAction={onEditAction}
@@ -128,25 +128,19 @@ export default class StatesDialog extends React.Component<Props, State> {
             [
                 ('Name'),
                 <VSCodeTextField 
-                    style={{width: textFieldWidth}}
-                    initialValue={rule.column} 
-                    key='name'
+                    style={{width: textFieldWidth, marginBottom: '2px'}}
+                    value={rule.column} 
+                    key='Name'
                     onInput={(e) => this.updateRule(rule.setColumn(e.target.value || defaultRuleColumn), ruleIndex)}/>
             ],
             [
                 ('Description'),
                 <VSCodeTextField 
-                    style={{width: textFieldWidth}}
-                    initialValue={rule.description} 
+                    style={{width: textFieldWidth, marginBottom: '2px'}}
+                    value={rule.description} 
                     key='Description'
                     onInput={(e) => this.updateRule(rule.setDescription(e.target.value), ruleIndex)}/>
-            ],
-            // [
-            //     ('Type'),
-            //     <VSCodeDropdown disabled style={{width: textFieldWidth, marginBottom: '2px'}} value={typeOptions.findIndex(o => rule instanceof o).toString()} onChange={() => 'TODO'}>
-            //         {typeOptions.map((o, i) => <VSCodeOption key={i} value={i.toString()}>{o.friendlyType}</VSCodeOption>)}
-            //     </VSCodeDropdown>
-            // ],
+            ]
         ];
 
         return (

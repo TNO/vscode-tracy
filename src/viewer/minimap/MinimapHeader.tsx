@@ -1,5 +1,5 @@
 import React from 'react';
-import { LOG_HEADER_HEIGHT, MINIMAP_COLUMN_WIDTH, BORDER, BORDER_SIZE } from '../constants';
+import { MINIMAP_COLUMN_WIDTH } from '../constants';
 import LogFile from '../LogFile';
 interface Props {
     logFile: LogFile;

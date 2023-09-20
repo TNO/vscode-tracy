@@ -31,14 +31,24 @@ export const BACKGROUND_COLOR_MATCHED_ROW_CURRENT = `rgba(${RGB_LIME_GREEN}, 0.5
 export const BORDER_STRUCTURE_MATCH_OTHER = `${STRUCUTURE_MATCH_BORDER_SIZE}px solid rgb(${RGB_OFFICE_GREEN})`;
 
 export const BACKGROUND_COLOR_MATCHED_ROW_OTHER = `rgba(${RGB_OFFICE_GREEN}, 0.5)`;
- 
+
 export const BORDER_SELECTED_ROW_RADIUS = `5px`;
+
+export const RGB_ANNOTATION0 = `rgb(223, 90, 90)`;
+
+export const RGB_ANNOTATION1 = `rgb(71, 186, 89)`;
+
+export const RGB_ANNOTATION2 = `rgb(46, 111, 179)`;
+
+export const RGB_ANNOTATION3 = `rgb(255, 165, 0)`;
+
+export const RGB_ANNOTATION4 = `rgb(128, 0, 128)`;
 
 // TODO: determine column width automatically, not hardcoded
 export const LOG_COLUMN_WIDTH_LOOKUP = {
-    timestamp: 180, 
-    level: 50, 
-    threadID: 80, 
+    timestamp: 180,
+    level: 50,
+    threadID: 80,
     location: 200,
     message: 400,
 };

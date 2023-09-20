@@ -129,8 +129,6 @@ export const useStructureQueryConstructor = (logHeaders: Header[], headerColumnT
         }
     }
 
-    console.log(regularExp);
-
     return regularExp;
 }
 
@@ -153,6 +151,7 @@ export const useJsonObjectToTextRangesMap = (logFileAsString: string): number[][
 
     return textRanges;
 }
+
 
 export const useStructureRegularExpressionSearch = (expression: string, logFileAsString: string, logEntryRanges: number[][]): number[][] => {
     console.log('Starting Structure Matching');

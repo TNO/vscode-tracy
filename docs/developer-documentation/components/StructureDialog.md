@@ -6,14 +6,14 @@
 ---
 This component contains the dialog that allows users to search for occurrences of a structure (i.e., pattern) in the opened log and navigate through the results of the search.
 
-### Relations to other components
+## Relations to other components
 
 - **Parent:** App
 - **Children:**
 	- [`StructureTable`](StructureTable.md)
 	- [`ContextMenu`](ContextMenu.md)
 
-### Props
+## Props
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -27,7 +27,8 @@ This component contains the dialog that allows users to search for occurrences o
 | `onNavigateStructureMatches` | `function` | A function that updates the `currentStructureMatchingIndex` |
 | `onMatchStructure` | `function` | A function passing a regular expression of the structure definition to be run over the log. |
 
-### State
+## State
+
 | Name | Type | Initial Value | Description |
 | ---- | ---- | ------------- | ----------- |
 | `wildcards` | [`Wildcard`](../types/Wildcard.md)`[]` | `[]` | Keeps track of all wildcards used in structure definition displayed in the Structure Table. |
@@ -36,19 +37,19 @@ This component contains the dialog that allows users to search for occurrences o
 | `isStructureMatching` | `boolean` | `false` | Is set to true after the user searches for structure occurrences. It is then reset to false when the structure definition is modified. |
 | `structureHeaderColumnsTypes` | [`StructureHeaderColumnType`](../constants/enums/StructureHeaderColumnType.md)`[]` | `logHeaderColumnsTypes` (prop) | Keeps track of which columns are used during the structure matching (e.g., **Timestamp** is not used by default). |
 
-### Functions
-#### Component lifecycle functions
-- `constructor(...)`
+## Functions
+### Component lifecycle functions
+-  ### `constructor(...)`
 	- **Params:** 
 		- `props: Props`
 	- **Description:**  Is invoked the first time the dialog is opened. It constructs an array containing [`StructureEntry`](../types/StructureEntry.md) from the `logSelectedRows` props and updates the state accordingly.
 	- **Returns:** -
 
-- `componentDidMount()`
+- ### `componentDidMount()`
 	- **Description:**  This function is invoked after the component is mounted (inserted into the DOM tree). It calls the `onStructureUpdate` function from the props because the first time the component is rendered the `componentDidUpdate` function is not invoked.
 	- **Returns:** -
 
-- `shouldComponentUpdate(...)`
+- ### `shouldComponentUpdate(...)`
 	- **Params:**
 		- `nextProps: Readonly<Props>`
 		- `nextState: Readonly<State>`
@@ -56,33 +57,33 @@ This component contains the dialog that allows users to search for occurrences o
 	- **Description:** This function returns a boolean value that indicates whether or not rendering should be skipped.
 	- **Returns:** `boolean`
 
-- `componentDidUpdate(...)`
+- ### `componentDidUpdate(...)`
 	- **Params:**
 		- `prevProps: Readonly<Props>`
 		- `_prevState: Readonly<State>`
 	- **Description:** This function is invoked immediately after updating occurs.
 	**Returns:** -
 
-- `render()`
+- ### `render()`
 	- **Description:**
 	- **Returns:** Div of type `JSX.Element` containing the [`StructureTable`](StructureTable.md), ContextMenu and several labels and buttons.
 
-#### Structure-related functions
-- `updateStructure()`
+### Structure-related functions
+- ### `updateStructure()`
 	- **Description:** Updates the `structureEntries` in the component state after a user has modified the structure definition by adding new rows from the [`LogView`](LogView.md).
 	- **Returns:** -
 
-- `removeStructureEntry(...)`
+- ### `removeStructureEntry(...)`
 	- **Params:**
 		- `rowIndex: number`
 	- **Description:** Removes a [`StructureEntry`](../types/StructureEntry.md) at the given `rowIndex` from the `structureEntries` array in the component state and calls the `onStructureUpdate()` function from the props to update the state of the parent component accordingly.
 	**Returns:** -
 
-- `toggleIsRemovingStructureEntries()`
+- ### `toggleIsRemovingStructureEntries()`
 	- **Description:** Toggles the `isRemovingStructureEntries` `boolean` in the state.
 	- **Returns:** -
 
-- `toggleIsCellSelected(...)`
+- ### `toggleIsCellSelected(...)`
 	- **Params:**
 		- `structureEntryIndex: number`
 		- `cellIndex: number`
@@ -91,27 +92,27 @@ This component contains the dialog that allows users to search for occurrences o
 	- **Description:** Modifies the `cellCelection` of a [`StructureEntry`](../types/StructureEntry.md) based on the `structureEntryIndex` and the `cellIndex`. The two `boolean` values are used to indicate whether one cell needs to be (un)selected (i.e., when **Ctrl** is pressed) or all other cells (i.e., when **Ctrl** + **Shift** is pressed).
 	- **Returns:** -
 
-- `toggleStructureLink(...)`
+- ### `toggleStructureLink(...)`
 	- **Params:** 
 		- `structureEntryIndex: number`
-	**Description:** Toggles the [`StructureLinkDistance`](../constants/enums/StructureLinkDistance.md) of a[`StructureEntry`](../types/StructureEntry.md) at the given index.
+	- **Description:** Toggles the [`StructureLinkDistance`](../constants/enums/StructureLinkDistance.md) of a[`StructureEntry`](../types/StructureEntry.md) at the given index.
 	- **Returns:** -
 
-- `matchStructure()`
+- ### `matchStructure()`
 	- **Description:** Creates a regular expression based on the structure definition and passes it to the parent component so that the structure can be matched. Then in modifies the state by setting `isStructureMatching` to `true`.
 	- **Returns:** -
 
-- `createWildcard()`
+- ### `createWildcard()`
 	- **Description:** Creates a [`Wildcard`](../types/Wildcard.md) based on the user selection and updates the state accordingly.
 	- **Returns:** -
 
-- `useWildcard(...)`
+- ### `useWildcard(...)`
 	- **Params:**
 		- `wildcardIndex: number`
 	- **Description:**  Replaces part of a structure entry field with a wildcard, based on the text selection and ``WildcardIndex`` updates the state accordingly.
 	- **Returns:** -
 
-- `removeWildcard(...)`
+- ### `removeWildcard(...)`
 	- **Params:** 
 		- `anchorDivId: string`
 	- **Description:** Removes a wildcard from a single place in the structure definition based on the `anchorDivId`, and updates the state accordingly.

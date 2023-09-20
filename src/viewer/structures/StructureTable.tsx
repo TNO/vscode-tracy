@@ -93,7 +93,7 @@ export default class StructureTable extends React.Component<Props, State> {
 	}
 
 	columnWidth(name: string) {
-		return this.state.columnWidth[name] ?? LOG_DEFAULT_COLUMN_WIDTH;
+		return LOG_COLUMN_WIDTH_LOOKUP[name] ?? LOG_DEFAULT_COLUMN_WIDTH;
 	}
 
 	renderHeaderColumn(value: string, columnIndex: number, width: number) {
@@ -224,7 +224,7 @@ export default class StructureTable extends React.Component<Props, State> {
 						</div>
 					)}
 					{headerColumns.map((h, c) =>
-						this.renderColumn(r, c, this.columnWidth(h.name)),
+						this.renderColumn(r, c, this.state.columnWidth[h.name]),
 					)}
 				</div>,
 			);

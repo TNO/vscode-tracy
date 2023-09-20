@@ -4,7 +4,7 @@ import LogFile from '../../LogFile';
 import FlagRule from '../FlagRule';
 import StateBasedRule from '../StateBasedRule';
 import Table from '../Tables/Table';
-import { VSCodeButton, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeButton, VSCodeTextField, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 
 
 interface Props {
@@ -37,18 +37,18 @@ export default class FlagsDialog extends React.Component<Props, State> {
         const rules = [...this.state.rules];
         if (rules[index].column != rule.column) {
             for (let i = 0; i < rules.length; i++){
-                if (rules[i].friendlyType === 'Flag rule') {
-                    const updatedRule = rules[i] as FlagRule;
-                    const updatedFlags = updatedRule.flags;
+                if (rules[i].ruleType === 'Flag rule') {
+                    const updateRule = rules[i] as FlagRule;
+                    const updatedFlags = updateRule.flags;
                     for (let j = 0; j < updatedFlags.length; j++)
                         for (let k = 0; k < updatedFlags[j].conditions.length; k++)
                             for (let l = 0; l < updatedFlags[j].conditions[k].length; l++)
-                                if (updatedFlags[j].conditions[k][l].searchColumn === rules[index].column)
-                                updatedFlags[j].conditions[k][l].searchColumn = rule.column;
-                    updatedRule.setFlags(updatedFlags);
-                    rules[i] = updatedRule;
+                                if (updatedFlags[j].conditions[k][l].Column === rules[index].column)
+                                    updatedFlags[j].conditions[k][l].Column = rule.column;
+                    updateRule.setFlags(updatedFlags);
+                    rules[i] = updateRule;
                 }
-                else if (rules[i].friendlyType === 'State based rule') {
+                else if (rules[i].ruleType === 'State based rule') {
                     const updatedRule = rules[i] as StateBasedRule;
                     const updatedStates = updatedRule.ruleStates;
                     for (let j = 0; j < updatedStates.length; j++) {
@@ -71,10 +71,13 @@ export default class FlagsDialog extends React.Component<Props, State> {
         this.setState({rules});
     }
 
-    updateDefault(rule: Rule, val: string, index: number) {
+    updateFlagProperty(rule: Rule, property: string, new_value: string, index: number) {
         const rules = [...this.state.rules];
         const flagRule = rule as FlagRule;
-        rules[index] = flagRule.setDefault(val);
+        if (property === 'defaultValue')
+            rules[index] = flagRule.setDefault(new_value);
+        else if (property === 'flagType')
+            rules[index] = flagRule.setFlagType(new_value);
         this.setState({rules});
     }
 
@@ -92,27 +95,31 @@ export default class FlagsDialog extends React.Component<Props, State> {
 
     renderManage() {
         const onAddAction = () => {
-            const newRule = new FlagRule(`FlagRule${this.state.rules.filter(r => r.friendlyType === 'Flag rule').length + 1}`, '', '', 0, []);
+            const newRule = new FlagRule(`FlagRule${this.state.rules.filter(r => r.ruleType === 'Flag rule').length + 1}`, '', '', 'User Defined', 0, []);
             this.setState({rules: [...this.state.rules, newRule], selectedRule: this.state.rules.length, showEdit: true});
         }
 
         const onEditAction = (table_index: number) => {
-            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'Flag rule')[table_index]);
+            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.ruleType === 'Flag rule')[table_index]);
             this.setState({showEdit: true, selectedRule: index});
         }
 
         const onDeleteAction = (table_index: number) => {
-            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.friendlyType === 'Flag rule')[table_index]);
+            const index = this.state.rules.findIndex(x => x === this.state.rules.filter(r => r.ruleType === 'Flag rule')[table_index]);
             if (this.state.selectedRule === index) this.setState({selectedRule: -1});
             this.setState({rules: this.state.rules.filter((r, i) => i !== index)});
         }
+
+        const tableRows = this.state.rules.filter(r => r.ruleType === 'Flag rule').map((rule) => {
+                const flagRule = rule as FlagRule;
+                return [rule.column, flagRule.flagType, rule.description]})
 
         return (
             <div style={{marginTop: '10px'}}>
                 <Table
                     // title='Manage flags'
                     columns={[{name: 'Name', width: '150px'}, {name: 'Type', width: '150px'}, {name: 'Description', width: ''}]}
-                    rows={this.state.rules.filter(r => r.friendlyType === 'Flag rule').map((rule) => [rule.column, rule.friendlyType, rule.description])} 
+                    rows={tableRows} 
                     noRowsText={'No flags have been defined (click + to add)'}
                     onAddAction={onAddAction}
                     onEditAction={onEditAction}
@@ -126,8 +133,9 @@ export default class FlagsDialog extends React.Component<Props, State> {
         if (this.state.selectedRule === -1) return;
         const ruleIndex = this.state.selectedRule;
         const rule = this.state.rules[ruleIndex];
-        const tmp = rule as FlagRule;
-        const defValue = tmp.defaultValue;
+        const ruleAsFlag = rule as FlagRule;
+        const defaultValue = ruleAsFlag.defaultValue;
+        const flagType = ruleAsFlag.flagType;
         const userColumns = this.state.rules.map((r, i) => r.column).filter(name => name != rule.column)
         const defaultRuleColumn = `FlagRule${ruleIndex + 1}`;
         const keyWidth = '100px';
@@ -136,33 +144,34 @@ export default class FlagsDialog extends React.Component<Props, State> {
             [
                 ('Name'),
                 <VSCodeTextField 
-                    style={{width: textFieldWidth}}
-                    initialValue={rule.column} 
+                    style={{width: textFieldWidth, marginBottom: '2px'}}
+                    value={rule.column} 
                     key='Name'
                     onInput={(e) => this.updateRule(rule.setColumn(e.target.value || defaultRuleColumn), ruleIndex)}/>
             ],
             [
                 ('Description'),
                 <VSCodeTextField 
-                    style={{width: textFieldWidth}}
-                    initialValue={rule.description} 
-                    key='Description'
+                    style={{width: textFieldWidth, marginBottom: '2px'}}
+                    value={rule.description}
+                    key='Name' 
                     onInput={(e) => this.updateRule(rule.setDescription(e.target.value), ruleIndex)}/>
+            ],
+            [
+                ('Type'),
+                <VSCodeDropdown disabled={ruleAsFlag.flags.length > 0?true: false} style={{width: textFieldWidth, marginBottom: '2px'}} value={flagType} key='Type' onChange={(e) => this.updateFlagProperty(rule, 'flagType', e.target.value, ruleIndex)}>
+                    <VSCodeOption value={'User Defined'} key={0}>User Defined</VSCodeOption>
+                    <VSCodeOption value={'Capture Match'} key={1}>Capture Match</VSCodeOption>
+                </VSCodeDropdown>
             ],
             [
                 ('Default Value'),
                 <VSCodeTextField 
-                    style={{width: textFieldWidth}}
-                    initialValue={defValue} 
+                    style={{width: textFieldWidth, marginBottom: '2px'}}
+                    value={defaultValue} 
                     key='Default'
-                    onInput={(e) => this.updateDefault(rule, e.target.value, ruleIndex)}/>
+                    onInput={(e) => this.updateFlagProperty(rule, 'defaultValue', e.target.value, ruleIndex)}/>
             ],
-            // [
-            //     ('Type'),
-            //     <VSCodeDropdown disabled style={{width: textFieldWidth, marginBottom: '2px'}} value={typeOptions.findIndex(o => rule instanceof o).toString()} onChange={() => 'TODO'}>
-            //         {typeOptions.map((o, i) => <VSCodeOption key={i} value={i.toString()}>{o.friendlyType}</VSCodeOption>)}
-            //     </VSCodeDropdown>
-            // ],
         ];
 
         return (

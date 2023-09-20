@@ -1,14 +1,14 @@
 import React from 'react';
-import { LogViewState } from '../types';
-import { MINIMAP_COLUMN_WIDTH } from '../constants';
 import LogFile from '../LogFile';
-import { log } from 'console';
+import { LogViewState, RowProperty } from '../types';
+import { MINIMAP_COLUMN_WIDTH } from '../constants';
 
 interface Props {
     logFile: LogFile;
     logViewState: LogViewState;
     onLogViewStateChanged: (value: LogViewState) => void;
     forwardRef: React.RefObject<HTMLDivElement>;
+    rowProperties: RowProperty[];
 }
 interface State {
     state: LogViewState | undefined;
@@ -35,12 +35,10 @@ export default class MinimapView extends React.Component<Props, State> {
     }
 
     componentDidUpdate(prevProps: Readonly<Props>, prevState: State): void {
-        this.draw();
-        // console.log("draw");
-        // if (prevProps.logViewState !== this.props.logViewState || prevState.scale !== this.state.scale || 
-        //     prevProps.logFile !== this.props.logFile) {
-        //     this.draw();
-        // }
+        if (prevProps.logViewState !== this.props.logViewState || prevState.scale !== this.state.scale || 
+            prevProps.logFile !== this.props.logFile) {
+            this.draw();
+        }
     }
 
     draw() {
@@ -86,11 +84,15 @@ export default class MinimapView extends React.Component<Props, State> {
         for (let columnIndex = 0; columnIndex < logFile.selectedColumnsMini.length; columnIndex++) {
             if (logFile.selectedColumnsMini[columnIndex]) {
                 const colors = logFile.columnsColors[columnIndex];
+                let counter = 0; //increase only when row is rendered
                 for (let i = 0; i < colors.length; i++) {
-                    ctx.beginPath();
-                    ctx.fillStyle = colors[i];
-                    ctx.fillRect(index * MINIMAP_COLUMN_WIDTH, i * logRowHeight, MINIMAP_COLUMN_WIDTH, logRowHeight);
-                    ctx.stroke();
+                    if (this.props.rowProperties[i].isSearchResult && this.props.rowProperties[i].isRendered) {
+                        ctx.beginPath();
+                        ctx.fillStyle = colors[i];
+                        ctx.fillRect(index * MINIMAP_COLUMN_WIDTH, counter * logRowHeight, MINIMAP_COLUMN_WIDTH, logRowHeight);
+                        ctx.stroke();
+                        counter++;
+                    }
                 }
                 index++;
             }
@@ -135,8 +137,9 @@ export default class MinimapView extends React.Component<Props, State> {
             nrOfRows =  (y - scrollTopBox*scaleItem)/(height/visibleItems);//number of rows to move, can be positive or negative
             scrollTop = (logStart + nrOfRows)*ROW_HEIGHT;
         }
-
-        //set scrollTop of the log to the new value
+        //when grey box meet the bottom of the log, the scroll top will not increase.
+        const maximumScrollTop = (maxVisibleItems - logVisibleItems)*ROW_HEIGHT;
+        scrollTop = Math.min(maximumScrollTop, scrollTop);
         if (!this.props.forwardRef.current) return;
         const scrollLeft = this.props.forwardRef.current.scrollLeft;
         const start = scrollTop / ROW_HEIGHT;
@@ -145,8 +148,7 @@ export default class MinimapView extends React.Component<Props, State> {
         this.props.forwardRef.current.scrollTop = scrollTop;
         const state = {height, scrollLeft, scrollTop, startFloor, start, endCeil, visibleItems: logVisibleItems, rowHeight: ROW_HEIGHT};
         const scale = this.state.scale
-        this.setState({state});
-        this.setState({scale});
+        this.setState({state, scale});
         this.draw();
         this.props.onLogViewStateChanged(state);
     }
