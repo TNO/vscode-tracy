@@ -1,8 +1,8 @@
-const RGB_LIME_GREEN = '0, 208, 0';
+const RGB_LIME_GREEN = "0, 208, 0";
 
-const RGB_TURQUOISE = '69, 205, 191';
+const RGB_TURQUOISE = "69, 205, 191";
 
-const RGB_OFFICE_GREEN = '0, 100, 0';
+const RGB_OFFICE_GREEN = "0, 100, 0";
 
 export const MINIMAP_COLUMN_WIDTH = 15;
 
@@ -46,11 +46,11 @@ export const RGB_ANNOTATION4 = `rgb(128, 0, 128)`;
 
 // TODO: determine column width automatically, not hardcoded
 export const LOG_COLUMN_WIDTH_LOOKUP = {
-    timestamp: 180,
-    level: 50,
-    threadID: 80,
-    location: 200,
-    message: 400,
+	timestamp: 180,
+	level: 50,
+	threadID: 80,
+	location: 200,
+	message: 400,
 };
 
 export const STRUCTURE_WIDTH = 28;
@@ -58,19 +58,19 @@ export const STRUCTURE_WIDTH = 28;
 export const STRUCTURE_LINK_HEIGHT = 16;
 
 export enum StructureLinkDistance {
-    None = "NONE",
-    Min = "MIN",
-    Max = "MAX"
+	None = "NONE",
+	Min = "MIN",
+	Max = "MAX",
 }
 
 export enum StructureHeaderColumnType {
-    Unselected = "UNSELECTED",
-    Selected = "SELECTED",
-    Custom = "CUSTOM"
+	Unselected = "UNSELECTED",
+	Selected = "SELECTED",
+	Custom = "CUSTOM",
 }
 
 export enum SelectedRowType {
-    None = "NONE",
-    UserSelect = "SELECTED",
-    QueryResult = "QUERY_RESULT"
+	None = "NONE",
+	UserSelect = "SELECTED",
+	QueryResult = "QUERY_RESULT",
 }
