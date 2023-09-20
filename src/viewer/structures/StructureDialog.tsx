@@ -25,10 +25,7 @@ import {
 	getWildcardIndex,
 	removeWildcardFromCellContent,
 } from "../hooks/useWildcardManager";
-import {
-	structureDialogBackdropStyle,
-	structureDialogDialogStyle,
-} from "../hooks/useStyleManager";
+import { structureDialogBackdropStyle, structureDialogDialogStyle } from "../hooks/useStyleManager";
 import isEqual from "lodash/isEqual";
 import cloneDeep from "lodash/cloneDeep";
 import ContextMenu from "../contextMenu/contextMenu";
@@ -59,10 +56,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 	constructor(props: Props) {
 		super(props);
 		const { logHeaderColumnsTypes, logSelectedRows } = this.props;
-		let structureEntries = constructStructureEntriesArray(
-			logHeaderColumnsTypes,
-			logSelectedRows,
-		);
+		let structureEntries = constructStructureEntriesArray(logHeaderColumnsTypes, logSelectedRows);
 		structureEntries = removeLastStructureLink(structureEntries);
 
 		this.state = {
@@ -115,10 +109,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 			this.state.structureEntries,
 			nextState.structureEntries,
 		);
-		const areWildcardsUpdating = !isEqual(
-			this.state.wildcards,
-			nextState.wildcards,
-		);
+		const areWildcardsUpdating = !isEqual(this.state.wildcards, nextState.wildcards);
 		const isRemovingStructureEntriesUpdating = !isEqual(
 			this.state.isRemovingStructureEntries,
 			nextState.isRemovingStructureEntries,
@@ -146,10 +137,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		return false;
 	}
 
-	componentDidUpdate(
-		prevProps: Readonly<Props>,
-		_prevState: Readonly<State>,
-	): void {
+	componentDidUpdate(prevProps: Readonly<Props>, _prevState: Readonly<State>): void {
 		if (this.props.logSelectedRows !== prevProps.logSelectedRows) {
 			this.updateStructure();
 		}
@@ -159,10 +147,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		const { structureHeaderColumnsTypes, structureEntries } = this.state;
 		const structureEntriesCopy = cloneDeep(structureEntries);
 		const newSelectedRows = this.props.logSelectedRows.filter(
-			(entry) =>
-				!structureEntriesCopy.some((value) =>
-					isEqual(value.row, entry),
-				),
+			(entry) => !structureEntriesCopy.some((value) => isEqual(value.row, entry)),
 		);
 
 		if (newSelectedRows.length !== 0) {
@@ -218,27 +203,17 @@ export default class StructureDialog extends React.Component<Props, State> {
 		const { structureEntries, wildcards } = this.state;
 		const wildcardsCopy = cloneDeep(wildcards);
 
-		const wildcardRemovalResults =
-			removeWildcardSubstitutionsForStructureEntry(
-				wildcardsCopy,
-				rowIndex,
-			);
-		const modifiedWildcards = wildcardRemovalResults.modifiedWildcards;
-
-		const remainingEntries = removeStructureEntryFromList(
-			structureEntries,
+		const wildcardRemovalResults = removeWildcardSubstitutionsForStructureEntry(
+			wildcardsCopy,
 			rowIndex,
 		);
+		const modifiedWildcards = wildcardRemovalResults.modifiedWildcards;
 
-		wildcardRemovalResults.indicesOfWildcardsToBeRemoved.forEach(
-			(index) => {
-				updateStructureEntriesAfterWildcardDeletion(
-					remainingEntries,
-					modifiedWildcards,
-					index,
-				);
-			},
-		);
+		const remainingEntries = removeStructureEntryFromList(structureEntries, rowIndex);
+
+		wildcardRemovalResults.indicesOfWildcardsToBeRemoved.forEach((index) => {
+			updateStructureEntriesAfterWildcardDeletion(remainingEntries, modifiedWildcards, index);
+		});
 
 		if (remainingEntries.length === 0) {
 			this.props.onClose();
@@ -253,8 +228,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	toggleIsRemovingStructureEntries() {
-		const isRemovingStructureEntries =
-			this.state.isRemovingStructureEntries;
+		const isRemovingStructureEntries = this.state.isRemovingStructureEntries;
 		this.setState({
 			isRemovingStructureEntries: !isRemovingStructureEntries,
 		});
@@ -267,8 +241,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		isShiftPressed: boolean,
 	) {
 		if (isCtrlPressed) {
-			const { structureHeaderColumnsTypes, structureEntries } =
-				this.state;
+			const { structureHeaderColumnsTypes, structureEntries } = this.state;
 			let structureEntriesCopy = cloneDeep(structureEntries);
 
 			structureEntriesCopy = toggleCellSelection(
@@ -287,10 +260,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		let { structureEntries } = this.state;
 		const structureEntriesCopy = cloneDeep(structureEntries);
 
-		structureEntries = toggleStructureLink(
-			structureEntriesCopy,
-			structureEntryIndex,
-		);
+		structureEntries = toggleStructureLink(structureEntriesCopy, structureEntryIndex);
 
 		this.setState({ structureEntries: structureEntries });
 	}
@@ -308,22 +278,22 @@ export default class StructureDialog extends React.Component<Props, State> {
 		this.setState({ isStructureMatching: true });
 	}
 
-	defineSegment(){
-        // TODO: Add functionality with wildcard
-        const entryRegExp = useStructureQueryConstructor(
-            this.props.logHeaderColumns,
-            this.state.structureHeaderColumnsTypes,
-            this.state.structureEntries.slice(0, 1),
-			[]
-            );
-        const exitRegExp = useStructureQueryConstructor(
-            this.props.logHeaderColumns,
-            this.state.structureHeaderColumnsTypes,
-            this.state.structureEntries.slice(-1),
-			[]
-            );
-        this.props.onDefineSegment(entryRegExp, exitRegExp);
-    }
+	defineSegment() {
+		// TODO: Add functionality with wildcard
+		const entryRegExp = useStructureQueryConstructor(
+			this.props.logHeaderColumns,
+			this.state.structureHeaderColumnsTypes,
+			this.state.structureEntries.slice(0, 1),
+			[],
+		);
+		const exitRegExp = useStructureQueryConstructor(
+			this.props.logHeaderColumns,
+			this.state.structureHeaderColumnsTypes,
+			this.state.structureEntries.slice(-1),
+			[],
+		);
+		this.props.onDefineSegment(entryRegExp, exitRegExp);
+	}
 
 	createWildcard() {
 		const selection = getSelection();
@@ -334,27 +304,18 @@ export default class StructureDialog extends React.Component<Props, State> {
 		const endOffset = range.endOffset;
 		const parentDivId = (startNode.parentNode as Element).id;
 
-		if (
-			startNode.textContent === endNode.textContent &&
-			startOffset !== endOffset
-		) {
+		if (startNode.textContent === endNode.textContent && startOffset !== endOffset) {
 			const { structureEntries, wildcards } = this.state;
-			const structureEntriesCopy: StructureEntry[] =
-				cloneDeep(structureEntries);
+			const structureEntriesCopy: StructureEntry[] = cloneDeep(structureEntries);
 			let wildcardsCopy: Wildcard[] = cloneDeep(wildcards);
 
-			const indicesForWildcard =
-				getIndicesForWildcardFromDivId(parentDivId);
+			const indicesForWildcard = getIndicesForWildcardFromDivId(parentDivId);
 
 			const entryIndex = +indicesForWildcard[1];
 			const cellIndex = +indicesForWildcard[2];
 			const contentsIndex = +indicesForWildcard[3];
 
-			const newWildcard = createWildcard(
-				entryIndex,
-				cellIndex,
-				contentsIndex,
-			);
+			const newWildcard = createWildcard(entryIndex, cellIndex, contentsIndex);
 
 			wildcardsCopy.push(newWildcard);
 
@@ -376,13 +337,10 @@ export default class StructureDialog extends React.Component<Props, State> {
 				startOffset,
 				endOffset,
 			);
-			structureEntriesCopy[entryIndex].row[cellIndex] =
-				insertionResults.cellContents;
+			structureEntriesCopy[entryIndex].row[cellIndex] = insertionResults.cellContents;
 			wildcardsCopy = insertionResults.wildcards;
 
-			wildcardsCopy[
-				wildcardIndex
-			].wildcardSubstitutions[0].contentsIndex =
+			wildcardsCopy[wildcardIndex].wildcardSubstitutions[0].contentsIndex =
 				insertionResults.insertedWildcardContentsIndex;
 
 			this.setState({
@@ -401,17 +359,12 @@ export default class StructureDialog extends React.Component<Props, State> {
 		const endOffset = range.endOffset;
 		const parentDivId = (startNode.parentNode as Element).id;
 
-		if (
-			startNode.textContent === endNode.textContent &&
-			startOffset !== endOffset
-		) {
+		if (startNode.textContent === endNode.textContent && startOffset !== endOffset) {
 			const { structureEntries, wildcards } = this.state;
-			const structureEntriesCopy: StructureEntry[] =
-				cloneDeep(structureEntries);
+			const structureEntriesCopy: StructureEntry[] = cloneDeep(structureEntries);
 			let wildcardsCopy: Wildcard[] = cloneDeep(wildcards);
 
-			const indicesForWildcard =
-				getIndicesForWildcardFromDivId(parentDivId);
+			const indicesForWildcard = getIndicesForWildcardFromDivId(parentDivId);
 
 			const entryIndex = +indicesForWildcard[1];
 			const cellIndex = +indicesForWildcard[2];
@@ -434,8 +387,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 				startOffset,
 				endOffset,
 			);
-			structureEntriesCopy[entryIndex].row[cellIndex] =
-				insertionResults.cellContents;
+			structureEntriesCopy[entryIndex].row[cellIndex] = insertionResults.cellContents;
 			wildcardsCopy = insertionResults.wildcards;
 
 			const newWildcardSubstitution = {
@@ -443,9 +395,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 				cellIndex: cellIndex,
 				contentsIndex: insertionResults.insertedWildcardContentsIndex,
 			};
-			wildcardsCopy[wildcardIndex].wildcardSubstitutions.push(
-				newWildcardSubstitution,
-			);
+			wildcardsCopy[wildcardIndex].wildcardSubstitutions.push(newWildcardSubstitution);
 
 			this.setState({
 				structureEntries: modifiedStructureEntries,
@@ -464,16 +414,10 @@ export default class StructureDialog extends React.Component<Props, State> {
 			const contentsIndex = +indicesForWildcard[3];
 
 			const { structureEntries, wildcards } = this.state;
-			const structureEntriesCopy: StructureEntry[] =
-				cloneDeep(structureEntries);
+			const structureEntriesCopy: StructureEntry[] = cloneDeep(structureEntries);
 			let wildcardsCopy: Wildcard[] = cloneDeep(wildcards);
 
-			const wildcardIndex = getWildcardIndex(
-				wildcardsCopy,
-				entryIndex,
-				cellIndex,
-				contentsIndex,
-			);
+			const wildcardIndex = getWildcardIndex(wildcardsCopy, entryIndex, cellIndex, contentsIndex);
 
 			const wildcardsUpdateResult = removeWildcardSubstitution(
 				wildcardsCopy,
@@ -498,50 +442,42 @@ export default class StructureDialog extends React.Component<Props, State> {
 				cellIndex,
 				contentsIndex,
 			);
-			structureEntriesCopy[entryIndex].row[cellIndex] =
-				removalResults.cellContents;
+			structureEntriesCopy[entryIndex].row[cellIndex] = removalResults.cellContents;
 
 			wildcardsCopy = removalResults.wildcards;
 
 			if (wildcardsUpdateResult.isWildcardDeleted) {
-				modifiedStructureEntries =
-					updateStructureEntriesAfterWildcardDeletion(
-						modifiedStructureEntries,
-						wildcardsCopy,
-						wildcardIndex,
-					);
+				modifiedStructureEntries = updateStructureEntriesAfterWildcardDeletion(
+					modifiedStructureEntries,
+					wildcardsCopy,
+					wildcardIndex,
+				);
 			}
 
-            this.props.onStructureUpdate();
+			this.props.onStructureUpdate();
 
 			this.setState({
 				structureEntries: modifiedStructureEntries,
 				wildcards: wildcardsCopy,
-                isStructureMatching: false
+				isStructureMatching: false,
 			});
 		}
 	}
 
-
-
 	render() {
-		const {
-			structureEntries,
-			wildcards,
-			isRemovingStructureEntries,
-			isStructureMatching,
-		} = this.state;
+		const { structureEntries, wildcards, isRemovingStructureEntries, isStructureMatching } =
+			this.state;
 		const structureEntriesCopy = cloneDeep(structureEntries);
 		const wildcardsCopy = cloneDeep(wildcards);
 		const contextMenuItems = this.getContextMenuItems();
 
-        const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
-            <Tooltip {...props} classes={{ popper: className }} />
-          ))({
-            [`& .${tooltipClasses.tooltip}`]: {
-              maxWidth: 900,
-            },
-          });
+		const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
+			<Tooltip {...props} classes={{ popper: className }} />
+		))({
+			[`& .${tooltipClasses.tooltip}`]: {
+				maxWidth: 900,
+			},
+		});
 
 		return (
 			<div style={structureDialogBackdropStyle}>
@@ -562,30 +498,53 @@ export default class StructureDialog extends React.Component<Props, State> {
 								alignItems: "center",
 							}}
 						>
-								<CustomWidthTooltip
-									title={
-										<>
-                                            <h2 style={{fontSize: '32px', fontWeight: 'bold'}}>Help</h2>
-                                            <ul>
-                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Ignoring cells</b>: Hold <b>CTRL</b> and click on a cell to ignore it or stop ignoring it. Hold <b>SHIFT+CTRL</b> to ignore the cell and stop ignoring all others, or ignore all other cells instead. </li>
-                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Constraining distance between structure rows</b>: Change the constraint on the distance between two rows by clicking on the link icon between them. This icon is three horizontal dots by default.</li>
-                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Creating wildcards</b>: Selecting a part of the text in a cell, right click and select &quot;<i>Create wildcard</i>&quot; to create a new wildcard. A wildcard can be used to abstract away any specific data.</li>
-                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Using wildcards</b>: Selecting a part of the text in a cell, right click and select &quot;<i>Use wildcard wildcard id</i>&quot;. Any value could be abstracted by the wildcard, but the value has to be the same in all places where this wildcard is used.</li>
-                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Removing wildcards</b>: Hover over a wildcard, right click and select &quot;<i>Remove wildcard</i>&quot;. If the wildcard is used in multiple places, only the selected one will be removed.</li>
-                                            <li style={{fontSize: '14px', padding: "10px", listStyleType: "circle"}}><b>Removing rows</b>: Click on the <b>Remove rows</b> button on the bottom right of the dialogue. A red cross will appear to the left of every row in the structure, by clicking on a cross, the row will be removed from the structure. Click the<b>Done</b> button afterwards.</li>
-                                            </ul>
-										</>
-									}
-                                    sx={{m: 1}}
-									placement="right"
-									arrow
-								>
-									<i className="codicon codicon-question" />
-								</CustomWidthTooltip>
-							<VSCodeButton
-								appearance="icon"
-								onClick={() => this.props.onClose()}
+							<CustomWidthTooltip
+								title={
+									<>
+										<h2 style={{ fontSize: "32px", fontWeight: "bold" }}>Help</h2>
+										<ul>
+											<li style={{ fontSize: "14px", padding: "10px", listStyleType: "circle" }}>
+												<b>Ignoring cells</b>: Hold <b>CTRL</b> and click on a cell to ignore it or
+												stop ignoring it. Hold <b>SHIFT+CTRL</b> to ignore the cell and stop
+												ignoring all others, or ignore all other cells instead.{" "}
+											</li>
+											<li style={{ fontSize: "14px", padding: "10px", listStyleType: "circle" }}>
+												<b>Constraining distance between structure rows</b>: Change the constraint
+												on the distance between two rows by clicking on the link icon between them.
+												This icon is three horizontal dots by default.
+											</li>
+											<li style={{ fontSize: "14px", padding: "10px", listStyleType: "circle" }}>
+												<b>Creating wildcards</b>: Selecting a part of the text in a cell, right
+												click and select &quot;<i>Create wildcard</i>&quot; to create a new
+												wildcard. A wildcard can be used to abstract away any specific data.
+											</li>
+											<li style={{ fontSize: "14px", padding: "10px", listStyleType: "circle" }}>
+												<b>Using wildcards</b>: Selecting a part of the text in a cell, right click
+												and select &quot;<i>Use wildcard wildcard id</i>&quot;. Any value could be
+												abstracted by the wildcard, but the value has to be the same in all places
+												where this wildcard is used.
+											</li>
+											<li style={{ fontSize: "14px", padding: "10px", listStyleType: "circle" }}>
+												<b>Removing wildcards</b>: Hover over a wildcard, right click and select
+												&quot;<i>Remove wildcard</i>&quot;. If the wildcard is used in multiple
+												places, only the selected one will be removed.
+											</li>
+											<li style={{ fontSize: "14px", padding: "10px", listStyleType: "circle" }}>
+												<b>Removing rows</b>: Click on the <b>Remove rows</b> button on the bottom
+												right of the dialogue. A red cross will appear to the left of every row in
+												the structure, by clicking on a cross, the row will be removed from the
+												structure. Click the<b>Done</b> button afterwards.
+											</li>
+										</ul>
+									</>
+								}
+								sx={{ m: 1 }}
+								placement="right"
+								arrow
 							>
+								<i className="codicon codicon-question" />
+							</CustomWidthTooltip>
+							<VSCodeButton appearance="icon" onClick={() => this.props.onClose()}>
 								<i className="codicon codicon-close" />
 							</VSCodeButton>
 						</div>
@@ -615,17 +574,15 @@ export default class StructureDialog extends React.Component<Props, State> {
 							this.removeStructureEntry(structureEntryIndex)
 						}
 					/>
-					<ContextMenu
-						items={contextMenuItems}
-						parentDivId="StructureDialog"
-					/>
+					<ContextMenu items={contextMenuItems} parentDivId="StructureDialog" />
 					<div style={{ textAlign: "right", padding: "5px" }}>
-						<VSCodeButton 
-							className='structure-result-element' 
+						<VSCodeButton
+							className="structure-result-element"
 							onClick={() => {
 								this.defineSegment();
 							}}
-							disabled={this.state.structureEntries.length === 1}>
+							disabled={this.state.structureEntries.length === 1}
+						>
 							Create Segment
 						</VSCodeButton>
 						<VSCodeButton
@@ -634,9 +591,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 								this.toggleIsRemovingStructureEntries();
 							}}
 						>
-							{isRemovingStructureEntries
-								? "Done"
-								: "Remove rows"}
+							{isRemovingStructureEntries ? "Done" : "Remove rows"}
 						</VSCodeButton>
 						<VSCodeButton
 							className="structure-result-element"
@@ -657,12 +612,9 @@ export default class StructureDialog extends React.Component<Props, State> {
 									}}
 								>
 									{" "}
-									{this.props.currentStructureMatchIndex ===
-									null
+									{this.props.currentStructureMatchIndex === null
 										? 0
-										: this.props
-												.currentStructureMatchIndex! +
-										1}{" "}
+										: this.props.currentStructureMatchIndex! + 1}{" "}
 									of {this.props.numberOfMatches}
 								</div>
 								{this.props.numberOfMatches > 1 && (
@@ -670,22 +622,14 @@ export default class StructureDialog extends React.Component<Props, State> {
 										<VSCodeButton
 											className="structure-result-element"
 											appearance="icon"
-											onClick={() =>
-												this.props.onNavigateStructureMatches(
-													false,
-												)
-											}
+											onClick={() => this.props.onNavigateStructureMatches(false)}
 										>
 											<i className="codicon codicon-chevron-up" />
 										</VSCodeButton>
 										<VSCodeButton
 											className="structure-result-element"
 											appearance="icon"
-											onClick={() =>
-												this.props.onNavigateStructureMatches(
-													true,
-												)
-											}
+											onClick={() => this.props.onNavigateStructureMatches(true)}
 										>
 											<i className="codicon codicon-chevron-down" />
 										</VSCodeButton>
