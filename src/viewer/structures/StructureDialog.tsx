@@ -29,7 +29,7 @@ import {
 	structureDialogBackdropStyle,
 	structureDialogDialogStyle,
 } from "../hooks/useStyleManager";
-import isEqual from "lodash/isEqual";
+import isEqual from "react-fast-compare";
 import cloneDeep from "lodash/cloneDeep";
 import ContextMenu from "../contextMenu/contextMenu";
 import { styled } from "@mui/material/styles";

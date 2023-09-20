@@ -23,7 +23,7 @@ import {
 	getStructureTableLinkStyle,
 } from "../hooks/useStyleManager";
 import { getReactElementsFromCellContents } from "../hooks/useWildcardManager";
-import isEqual from "lodash/isEqual";
+import isEqual from "react-fast-compare";
 
 interface Props {
 	headerColumns: Header[];
