@@ -67,12 +67,13 @@ export default class ContextMenu extends React.PureComponent<Props, State> {
 
 	handleContextMenu = (e) => {
 		e.preventDefault();
+		const path = e.composedPath();
 
 		this.setState({
 			xPos: e.pageX,
 			yPos: e.pageY,
 			showMenu: true,
-			anchorDivId: e.path[0].id,
+			anchorDivId: path[0].id,
 		});
 	};
 
