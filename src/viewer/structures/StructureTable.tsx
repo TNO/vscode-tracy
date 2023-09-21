@@ -79,6 +79,7 @@ export default class StructureTable extends React.Component<Props, State> {
 	}
 
 	setColumnWidth(name: string, width: number) {
+		//update the state for triggering the render
 		this.setState((prevState) => {
 			const columnWidth = { ...prevState.columnWidth };
 			columnWidth[name] = width;
@@ -86,8 +87,22 @@ export default class StructureTable extends React.Component<Props, State> {
 		});
 	}
 
-	columnWidth(name: string) {
-		return LOG_COLUMN_WIDTH_LOOKUP[name] ?? LOG_DEFAULT_COLUMN_WIDTH;
+	getInitialColumnWidth(name: string) {
+		return LOG_COLUMN_WIDTH_LOOKUP[name.toLowerCase()] ?? LOG_DEFAULT_COLUMN_WIDTH;
+	}
+
+	renderHeader(containerWidth: number) {
+		const style = getStructureTableHeaderStyle(containerWidth);
+
+		return (
+			<div id="structureHeader" style={style}>
+				<div className="header-background">
+					{this.props.headerColumns.map((h, i) =>
+						this.renderHeaderColumn(h.name, i, this.getInitialColumnWidth(h.name)),
+					)}
+				</div>
+			</div>
+		);
 	}
 
 	renderHeaderColumn(value: string, columnIndex: number, width: number) {
@@ -105,20 +120,6 @@ export default class StructureTable extends React.Component<Props, State> {
 					<div style={headerColumnInnerStyle}>{value}</div>
 				</div>
 			</ReactResizeDetector>
-		);
-	}
-
-	renderHeader(containerWidth: number) {
-		const style = getStructureTableHeaderStyle(containerWidth);
-
-		return (
-			<div id="structureHeader" style={style}>
-				<div className="header-background">
-					{this.props.headerColumns.map((h, i) =>
-						this.renderHeaderColumn(h.name, i, this.columnWidth(h.name)),
-					)}
-				</div>
-			</div>
 		);
 	}
 
@@ -254,7 +255,7 @@ export default class StructureTable extends React.Component<Props, State> {
 			numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * STRUCTURE_LINK_HEIGHT;
 		const containerWidth =
 			headerColumns.length * BORDER_SIZE +
-			headerColumns.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
+			headerColumns.reduce((partialSum: number, h) => partialSum + this.state.columnWidth[h.name], 0);
 
 		return (
 			<div
