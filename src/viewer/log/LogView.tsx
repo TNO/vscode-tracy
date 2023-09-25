@@ -95,7 +95,7 @@ export default class LogView extends React.Component<Props, State> {
 		colorMap: string,
 	) {
 		const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
-		const widthNew = width + BORDER_SIZE; //increase width with 1px, because the border is 1px
+		
 		let color = "transparent";
 		let fontColor = "";
 
@@ -107,8 +107,7 @@ export default class LogView extends React.Component<Props, State> {
 				fontColor = "#ffffff";
 			}
 		}
-
-		const columnHeaderStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
+		const columnHeaderStyle = getHeaderColumnStyle(width, columnIndex, height);
 		const columnHeaderInnerStyle = getHeaderColumnInnerStyle(height, isHeader);
 		const colorStyle: React.CSSProperties = { backgroundColor: color, color: fontColor };
 		const innerStyle = { ...columnHeaderInnerStyle, ...colorStyle };
@@ -415,8 +414,7 @@ export default class LogView extends React.Component<Props, State> {
 
 	renderHeaderColumn(value: string, columnIndex: number, isHeader: boolean, width: number) {
 		const height = isHeader ? LOG_HEADER_HEIGHT : LOG_ROW_HEIGHT;
-		const widthNew = width + BORDER_SIZE; //increase width with 1px, because the border is 1px
-		const columnHeaderStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
+		const columnHeaderStyle = getHeaderColumnStyle(width, columnIndex, height);
 		const columnHeaderInnerStyle = getHeaderColumnInnerStyle(height, isHeader);
 
 		return (

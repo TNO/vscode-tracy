@@ -107,8 +107,7 @@ export default class StructureTable extends React.Component<Props, State> {
 
 	renderHeaderColumn(value: string, columnIndex: number, width: number) {
 		const height = LOG_HEADER_HEIGHT;
-		const widthNew = width + BORDER_SIZE;
-		const headerColumnStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
+		const headerColumnStyle = getHeaderColumnStyle(width, columnIndex, height);
 		const headerColumnInnerStyle = getHeaderColumnInnerStyle(height, true);
 		return (
 			<ReactResizeDetector
@@ -125,8 +124,7 @@ export default class StructureTable extends React.Component<Props, State> {
 
 	renderColumn(rowIndex: number, cellIndex: number, width: number) {
 		const { structureEntries } = this.props;
-		const widthNew = width + BORDER_SIZE;
-		const columnStyle = getStructureTableColumnStyle(widthNew, cellIndex);
+		const columnStyle = getStructureTableColumnStyle(width, cellIndex);
 		const columnInnerStyle = getStructureTableCellSelectionStyle(
 			structureEntries,
 			rowIndex,
