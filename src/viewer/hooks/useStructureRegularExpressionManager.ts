@@ -1,4 +1,4 @@
-import { CellContents, Header, StructureEntry, Wildcard } from "../types";
+import { CellContents, Header, LogEntryCharRanges, StructureEntry, Wildcard } from "../types";
 import { StructureHeaderColumnType, StructureLinkDistance } from "../constants";
 import { isSubstitutionFirstForWildcard } from "./useWildcardManager";
 
@@ -182,29 +182,33 @@ export const useStructureQueryConstructor = (
 	return regularExp;
 };
 
-export const useJsonObjectToTextRangesMap = (logFileAsString: string): number[][] => {
+export const useGetCharIndicesForLogEntries = (logFileAsString: string): LogEntryCharRanges => {
 	const perfStart = performance.now();
-	const textRanges: number[][] = [];
 	const jsonObjectsRegExp = new RegExp(regExpjsonObject, flags);
+	const firstCharIndexMap = new Map();
+	const lastCharIndexMap = new Map();
+	let logEntryIndex = 0;
 
 	let result = jsonObjectsRegExp.exec(logFileAsString);
 
 	if (result !== null) {
 		do {
-			textRanges.push([result.index, jsonObjectsRegExp.lastIndex]);
+			firstCharIndexMap.set(result.index, logEntryIndex);
+			lastCharIndexMap.set(jsonObjectsRegExp.lastIndex, logEntryIndex);
+			logEntryIndex++;
 		} while ((result = jsonObjectsRegExp.exec(logFileAsString)) !== null);
 	}
 
 	const perfEnd = performance.now();
 	console.log(`Execution time (mapLogFileTextIndicesToObject()): ${perfEnd - perfStart} ms`);
 
-	return textRanges;
+	return { firstCharIndexMap: firstCharIndexMap, lastCharIndexMap: lastCharIndexMap };
 };
 
 export const useStructureRegularExpressionSearch = (
 	expression: string,
 	logFileAsString: string,
-	logEntryRanges: number[][],
+	logEntryCharRanges: LogEntryCharRanges,
 ): number[][] => {
 	console.log("Starting Structure Matching");
 	const perfStart = performance.now();
@@ -213,35 +217,31 @@ export const useStructureRegularExpressionSearch = (
 	const structureQuery = new RegExp(expression, flags);
 	let result;
 
+
 	while ((result = structureQuery.exec(logFileAsString)) !== null) {
 		textRanges.push([result.index, structureQuery.lastIndex]);
 	}
 
 	const perfEnd = performance.now();
-	console.log(`Execution time (useStructureRegularExpressionSearch()): ${perfEnd - perfStart} ms`);
+	console.log(`Execution time (regular expression run): ${perfEnd - perfStart} ms`);
+
+	const transStart = performance.now();
 
 	textRanges.forEach((matchRanges) => {
 		const indexesOfEntriesInMatch: number[] = [];
-		let startingIndexOfMatch = 0;
-		let endingIndexOfMatch = -1;
 
-		for (let i = 0; i < logEntryRanges.length; i++) {
-			if (matchRanges[0] === logEntryRanges[i][0]) {
-				startingIndexOfMatch = i;
-			}
+		const indexOfFirstObjectInMatch = logEntryCharRanges.firstCharIndexMap.get(matchRanges[0]);
+		const indexOfLastObjectInMatch = logEntryCharRanges.lastCharIndexMap.get(matchRanges[1]);
 
-			if (matchRanges[1] === logEntryRanges[i][1]) {
-				endingIndexOfMatch = i;
-				break;
-			}
-		}
-
-		for (let o = startingIndexOfMatch; o <= endingIndexOfMatch; o++) {
-			indexesOfEntriesInMatch.push(o);
+		for (let i = indexOfFirstObjectInMatch; i <= indexOfLastObjectInMatch; i++) {
+			indexesOfEntriesInMatch.push(i);
 		}
 
 		resultingMatches.push(indexesOfEntriesInMatch);
 	});
+
+	const transEnd = performance.now();
+	console.log(`Execution time (translation from char indices to logFile.rows indices): ${transEnd - transStart} ms`);
 
 	return resultingMatches;
 };
