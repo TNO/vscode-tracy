@@ -59,18 +59,12 @@ export default class StructureTable extends React.Component<Props, State> {
 			this.props.structureEntries,
 			nextProps.structureEntries,
 		);
-		const areWildcardsUpdating = !isEqual(
-			this.props.wildcards,
-			nextProps.wildcards,
-		);
+		const areWildcardsUpdating = !isEqual(this.props.wildcards, nextProps.wildcards);
 		const isRemovingStructureEntriesUpdating = !isEqual(
 			this.props.isRemovingStructureEntries,
 			nextProps.isRemovingStructureEntries,
 		);
-		const isColumnWidthUpdating = !isEqual(
-			this.state.columnWidth,
-			nextState.columnWidth,
-		);
+		const isColumnWidthUpdating = !isEqual(this.state.columnWidth, nextState.columnWidth);
 
 		if (
 			areStructureEntriesUpdating ||
@@ -99,11 +93,7 @@ export default class StructureTable extends React.Component<Props, State> {
 	renderHeaderColumn(value: string, columnIndex: number, width: number) {
 		const height = LOG_HEADER_HEIGHT;
 		const widthNew = columnIndex !== 0 ? width + BORDER_SIZE : width;
-		const headerColumnStyle = getHeaderColumnStyle(
-			widthNew,
-			columnIndex,
-			height,
-		);
+		const headerColumnStyle = getHeaderColumnStyle(widthNew, columnIndex, height);
 		const headerColumnInnerStyle = getHeaderColumnInnerStyle(height, true);
 		return (
 			<ReactResizeDetector
@@ -111,11 +101,7 @@ export default class StructureTable extends React.Component<Props, State> {
 				key={columnIndex}
 				onResize={(width) => this.setColumnWidth(value, width!)}
 			>
-				<div
-					className="resizable-content"
-					style={headerColumnStyle}
-					key={columnIndex}
-				>
+				<div className="resizable-content" style={headerColumnStyle} key={columnIndex}>
 					<div style={headerColumnInnerStyle}>{value}</div>
 				</div>
 			</ReactResizeDetector>
@@ -129,11 +115,7 @@ export default class StructureTable extends React.Component<Props, State> {
 			<div id="structureHeader" style={style}>
 				<div className="header-background">
 					{this.props.headerColumns.map((h, i) =>
-						this.renderHeaderColumn(
-							h.name,
-							i,
-							this.columnWidth(h.name),
-						),
+						this.renderHeaderColumn(h.name, i, this.columnWidth(h.name)),
 					)}
 				</div>
 			</div>
@@ -169,12 +151,7 @@ export default class StructureTable extends React.Component<Props, State> {
 					id={`${rowIndex}-${cellIndex}`}
 					style={columnInnerStyle}
 					onClick={(event) =>
-						this.props.onToggleIsCellSelected(
-							rowIndex,
-							cellIndex,
-							event.ctrlKey,
-							event.shiftKey,
-						)
+						this.props.onToggleIsCellSelected(rowIndex, cellIndex, event.ctrlKey, event.shiftKey)
 					}
 				>
 					{allCellContents.map((value) => value)}
@@ -186,15 +163,9 @@ export default class StructureTable extends React.Component<Props, State> {
 	renderRows(containerWidth: number, containerHeight: number) {
 		const newContainerWidth = containerWidth + STRUCTURE_WIDTH;
 		const result: ReactNode[] = [];
-		const {
-			structureEntries,
-			isRemovingStructureEntries,
-			headerColumns,
-			onStructureEntryRemoved,
-		} = this.props;
-		const structureEntryIconStyle = getStructureTableEntryIconStyle(
-			isRemovingStructureEntries,
-		);
+		const { structureEntries, isRemovingStructureEntries, headerColumns, onStructureEntryRemoved } =
+			this.props;
+		const structureEntryIconStyle = getStructureTableEntryIconStyle(isRemovingStructureEntries);
 		let structureLinkIndex = 0;
 
 		for (let r = 0; r < structureEntries.length; r++) {
@@ -204,10 +175,7 @@ export default class StructureTable extends React.Component<Props, State> {
 				<div key={r} style={rowStyle}>
 					{!isRemovingStructureEntries && (
 						<div style={structureEntryIconStyle}>
-							<i
-								style={{ padding: "6px" }}
-								className="codicon codicon-circle-filled"
-							/>
+							<i style={{ padding: "6px" }} className="codicon codicon-circle-filled" />
 						</div>
 					)}
 					{isRemovingStructureEntries && (
@@ -217,23 +185,15 @@ export default class StructureTable extends React.Component<Props, State> {
 								onStructureEntryRemoved(r);
 							}}
 						>
-							<i
-								style={{ padding: "6px", cursor: "pointer" }}
-								className="codicon codicon-close"
-							/>
+							<i style={{ padding: "6px", cursor: "pointer" }} className="codicon codicon-close" />
 						</div>
 					)}
-					{headerColumns.map((h, c) =>
-						this.renderColumn(r, c, this.state.columnWidth[h.name]),
-					)}
+					{headerColumns.map((h, c) => this.renderColumn(r, c, this.state.columnWidth[h.name]))}
 				</div>,
 			);
 
 			if (r !== structureEntries.length - 1) {
-				const structureLinkStyle = getStructureTableLinkStyle(
-					r,
-					structureLinkIndex,
-				);
+				const structureLinkStyle = getStructureTableLinkStyle(r, structureLinkIndex);
 
 				const structureLinkDistance = structureEntries[r].structureLink;
 
@@ -243,38 +203,23 @@ export default class StructureTable extends React.Component<Props, State> {
 						style={structureLinkStyle}
 						onClick={() => this.props.onToggleStructureLink(r)}
 					>
-						{structureLinkDistance ===
-							StructureLinkDistance.Max && (
+						{structureLinkDistance === StructureLinkDistance.Max && (
 							<Tooltip
-								title={
-									<h3>
-										Allow maximal number of rows in-between
-									</h3>
-								}
+								title={<h3>Allow maximal number of rows in-between</h3>}
 								placement="right"
 								arrow
 							>
 								<i className="codicon codicon-kebab-vertical" />
 							</Tooltip>
 						)}
-						{structureLinkDistance ===
-							StructureLinkDistance.None && (
-							<Tooltip
-								title={<h3>Disallow rows in-between</h3>}
-								placement="right"
-								arrow
-							>
+						{structureLinkDistance === StructureLinkDistance.None && (
+							<Tooltip title={<h3>Disallow rows in-between</h3>} placement="right" arrow>
 								<i className="codicon codicon-arrow-down" />
 							</Tooltip>
 						)}
-						{structureLinkDistance ===
-							StructureLinkDistance.Min && (
+						{structureLinkDistance === StructureLinkDistance.Min && (
 							<Tooltip
-								title={
-									<h3>
-										Allow minimal number of rows in-between
-									</h3>
-								}
+								title={<h3>Allow minimal number of rows in-between</h3>}
 								placement="right"
 								arrow
 							>
@@ -306,15 +251,10 @@ export default class StructureTable extends React.Component<Props, State> {
 		const { headerColumns, structureEntries } = this.props;
 		const numberOfRows = structureEntries.length;
 		const containerHeight =
-			numberOfRows * LOG_ROW_HEIGHT +
-			(numberOfRows - 1) * STRUCTURE_LINK_HEIGHT;
+			numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * STRUCTURE_LINK_HEIGHT;
 		const containerWidth =
 			(headerColumns.length - 1) * BORDER_SIZE +
-			headerColumns.reduce(
-				(partialSum: number, h) =>
-					partialSum + this.columnWidth(h.name),
-				0,
-			);
+			headerColumns.reduce((partialSum: number, h) => partialSum + this.columnWidth(h.name), 0);
 
 		return (
 			<div

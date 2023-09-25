@@ -6,6 +6,7 @@ module.exports = {
   root: true,
   rules: {
     "no-useless-escape": "off",
+    "no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/naming-convention": [
       "error",

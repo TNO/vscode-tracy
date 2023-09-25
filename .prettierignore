@@ -11,11 +11,3 @@ README.md
 webpack.config.ts
 tsconfig.json
 src/extension
-src/viewer/hooks/
-src/viewer/rules/
-src/viewer/minimap/
-src/viewer/log/
-src/viewer/App.tsx
-src/viewer/index.tsx
-src/viewer/LogFile.tsx
-src/viewer/types.d.ts
