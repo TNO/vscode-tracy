@@ -30,7 +30,7 @@ import Rule from "./rules/Rule";
 import MinimapHeader from "./minimap/MinimapHeader";
 import SelectColDialog from "./log/SelectColDialog";
 
-interface Props {}
+interface Props { }
 interface State {
 	logFile: LogFile;
 	logViewState: LogViewState | undefined;
@@ -105,7 +105,7 @@ export default class App extends React.Component<Props, State> {
 			caseSearch: false,
 			selectedLogRows: [],
 			rowProperties: [],
-			logEntryCharRanges: {firstCharIndexMap: null, lastCharIndexMap: null},
+			logEntryCharRanges: { firstCharIndexMap: null, lastCharIndexMap: null },
 			showStructureDialog: false,
 			structureMatches: [],
 			structureMatchesLogRows: [],
@@ -118,6 +118,9 @@ export default class App extends React.Component<Props, State> {
 
 		this.onMessage = this.onMessage.bind(this);
 		window.addEventListener("message", this.onMessage);
+		document.addEventListener("contextmenu", (event) => {
+			event.preventDefault();
+		});
 		this.vscode.postMessage({ type: "readFile" });
 	}
 
