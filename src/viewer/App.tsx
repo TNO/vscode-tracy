@@ -380,8 +380,6 @@ export default class App extends React.Component<Props, State> {
 	handleSegmentation(entryExpression: string, exitExpression: string) {
 		const { logFileAsString, logEntryCharRanges } = this.state;
 		const { collapsibleRows } = this.state;
-		console.log(entryExpression);
-		console.log(exitExpression);
 
 		const entryMatches = getRegularExpressionMatches(
 			entryExpression,
