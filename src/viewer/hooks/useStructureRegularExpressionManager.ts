@@ -1,4 +1,4 @@
-import { CellContents, Header, LogEntryCharRanges, StructureEntry, Wildcard } from "../types";
+import { CellContents, Header, LogEntryCharMaps, StructureEntry, Wildcard } from "../types";
 import { StructureHeaderColumnType, StructureLinkDistance } from "../constants";
 import { isSubstitutionFirstForWildcard } from "./useWildcardManager";
 
@@ -182,7 +182,7 @@ export const useStructureQueryConstructor = (
 	return regularExp;
 };
 
-export const useGetCharIndicesForLogEntries = (logFileAsString: string): LogEntryCharRanges => {
+export const useGetCharIndicesForLogEntries = (logFileAsString: string): LogEntryCharMaps => {
 	const perfStart = performance.now();
 	const jsonObjectsRegExp = new RegExp(regExpjsonObject, flags);
 	const firstCharIndexMap = new Map();
@@ -208,7 +208,7 @@ export const useGetCharIndicesForLogEntries = (logFileAsString: string): LogEntr
 export const useStructureRegularExpressionSearch = (
 	expression: string,
 	logFileAsString: string,
-	logEntryCharRanges: LogEntryCharRanges,
+	logEntryCharIndexMaps: LogEntryCharMaps,
 ): number[][] => {
 	console.log("Starting Structure Matching");
 	const perfStart = performance.now();
@@ -230,8 +230,8 @@ export const useStructureRegularExpressionSearch = (
 	textRanges.forEach((matchRanges) => {
 		const indexesOfEntriesInMatch: number[] = [];
 
-		const indexOfFirstObjectInMatch = logEntryCharRanges.firstCharIndexMap.get(matchRanges[0]);
-		const indexOfLastObjectInMatch = logEntryCharRanges.lastCharIndexMap.get(matchRanges[1]);
+		const indexOfFirstObjectInMatch = logEntryCharIndexMaps.firstCharIndexMap.get(matchRanges[0]);
+		const indexOfLastObjectInMatch = logEntryCharIndexMaps.lastCharIndexMap.get(matchRanges[1]);
 
 		for (let i = indexOfFirstObjectInMatch; i <= indexOfLastObjectInMatch; i++) {
 			indexesOfEntriesInMatch.push(i);

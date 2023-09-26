@@ -58,7 +58,7 @@ export interface Segment {
 	level: number;
 }
 
-export interface LogEntryCharRanges {
+export interface LogEntryCharMaps {
 	firstCharIndexMap;
 	lastCharIndexMap;
 }

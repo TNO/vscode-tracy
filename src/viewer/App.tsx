@@ -3,7 +3,7 @@ import LogFile from "./LogFile";
 import LogView from "./log/LogView";
 import MinimapView from "./minimap/MinimapView";
 import Tooltip from "@mui/material/Tooltip";
-import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharRanges } from "./types";
+import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps } from "./types";
 import {
 	LOG_HEADER_HEIGHT,
 	MINIMAP_COLUMN_WIDTH,
@@ -49,7 +49,7 @@ interface State {
 
 	// Structure related
 	logFileAsString: string;
-	logEntryCharRanges: LogEntryCharRanges;
+	logEntryCharIndexMaps: LogEntryCharMaps;
 	selectedLogRows: string[][];
 	// selectedRowsTypes: RowType[];
 	rowProperties: RowProperty[];
@@ -105,7 +105,7 @@ export default class App extends React.Component<Props, State> {
 			caseSearch: false,
 			selectedLogRows: [],
 			rowProperties: [],
-			logEntryCharRanges: { firstCharIndexMap: null, lastCharIndexMap: null },
+			logEntryCharIndexMaps: { firstCharIndexMap: null, lastCharIndexMap: null },
 			showStructureDialog: false,
 			structureMatches: [],
 			structureMatchesLogRows: [],
@@ -136,7 +136,7 @@ export default class App extends React.Component<Props, State> {
 			const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
 			const lines = JSON.parse(message.text);
 			const logFileText = JSON.stringify(lines, null, 2);
-			const charRangesMaps = useGetCharIndicesForLogEntries(logFileText);
+			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
 			const logFile = LogFile.create(lines, rules);
 			const newRowsProps = logFile.rows.map(() =>
 				constructNewRowProperty(true, true, SelectedRowType.None),
@@ -144,7 +144,7 @@ export default class App extends React.Component<Props, State> {
 			this.setState({
 				logFile,
 				logFileAsString: logFileText,
-				logEntryCharRanges: charRangesMaps,
+				logEntryCharIndexMaps: logEntryCharIndexMaps,
 				rules,
 				rowProperties: newRowsProps,
 			});
@@ -184,11 +184,11 @@ export default class App extends React.Component<Props, State> {
 						return constructNewRowProperty(true, true, SelectedRowType.None);
 					else return constructNewRowProperty(false, false, SelectedRowType.None);
 				});
-				const charRangesMaps = useGetCharIndicesForLogEntries(logFileText);
+				const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
 				this.setState({
 					logFile,
 					logFileAsString: logFileText,
-					logEntryCharRanges: charRangesMaps,
+					logEntryCharIndexMaps: logEntryCharIndexMaps,
 					rules,
 					rowProperties: newRowsProps,
 				});
@@ -322,13 +322,13 @@ export default class App extends React.Component<Props, State> {
 
 	handleStructureMatching(expression: string) {
 		const rowProperties = this.clearSelectedRowsTypes();
-		const { logFileAsString, logEntryCharRanges } = this.state;
+		const { logFileAsString, logEntryCharIndexMaps } = this.state;
 		let { currentStructureMatch, currentStructureMatchIndex } = this.state;
 
 		const structureMatches = useStructureRegularExpressionSearch(
 			expression,
 			logFileAsString,
-			logEntryCharRanges,
+			logEntryCharIndexMaps,
 		);
 		let structureMatchesLogRows: number[] = [];
 
@@ -381,18 +381,18 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	handleSegmentation(entryExpression: string, exitExpression: string) {
-		const { logFileAsString, logEntryCharRanges } = this.state;
+		const { logFileAsString, logEntryCharIndexMaps } = this.state;
 		const { collapsibleRows } = this.state;
 
 		const entryMatches = getRegularExpressionMatches(
 			entryExpression,
 			logFileAsString,
-			logEntryCharRanges,
+			logEntryCharIndexMaps,
 		);
 		const exitMatches = getRegularExpressionMatches(
 			exitExpression,
 			logFileAsString,
-			logEntryCharRanges,
+			logEntryCharIndexMaps,
 		);
 
 		const stack: number[] = [];
