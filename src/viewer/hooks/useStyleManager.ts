@@ -76,7 +76,6 @@ export const getHeaderColumnStyle = (
 		display: "inline-block",
 		height,
 		width: columnWidth,
-		borderLeft: BORDER,
 	};
 
 	return headerColumnStyle;
@@ -104,6 +103,7 @@ export const getHeaderColumnInnerStyle = (
 		alignItems: "center",
 		justifyContent: isHeader ? "center" : "left",
 		paddingLeft: "2px",
+		borderLeft: BORDER,
 	};
 
 	return headerColumnInnerStyle;
