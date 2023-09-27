@@ -3,7 +3,7 @@ import LogFile from "./LogFile";
 import LogView from "./log/LogView";
 import MinimapView from "./minimap/MinimapView";
 import Tooltip from "@mui/material/Tooltip";
-import { LogViewState, StructureMatchId, RowProperty, Segment } from "./types";
+import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps } from "./types";
 import {
 	LOG_HEADER_HEIGHT,
 	MINIMAP_COLUMN_WIDTH,
@@ -18,7 +18,7 @@ import {
 	VSCodeOption,
 } from "@vscode/webview-ui-toolkit/react";
 import {
-	useJsonObjectToTextRangesMap,
+	useGetCharIndicesForLogEntries,
 	useStructureRegularExpressionSearch,
 } from "./hooks/useStructureRegularExpressionManager";
 import { getRegularExpressionMatches, returnSearchIndices } from "./hooks/useLogSearchManager";
@@ -30,7 +30,7 @@ import Rule from "./rules/Rule";
 import MinimapHeader from "./minimap/MinimapHeader";
 import SelectColDialog from "./log/SelectColDialog";
 
-interface Props {}
+interface Props { }
 interface State {
 	logFile: LogFile;
 	logViewState: LogViewState | undefined;
@@ -49,7 +49,7 @@ interface State {
 
 	// Structure related
 	logFileAsString: string;
-	logEntryRanges: number[][];
+	logEntryCharIndexMaps: LogEntryCharMaps;
 	selectedLogRows: string[][];
 	// selectedRowsTypes: RowType[];
 	rowProperties: RowProperty[];
@@ -105,7 +105,7 @@ export default class App extends React.Component<Props, State> {
 			caseSearch: false,
 			selectedLogRows: [],
 			rowProperties: [],
-			logEntryRanges: [],
+			logEntryCharIndexMaps: { firstCharIndexMap: null, lastCharIndexMap: null },
 			showStructureDialog: false,
 			structureMatches: [],
 			structureMatchesLogRows: [],
@@ -118,6 +118,9 @@ export default class App extends React.Component<Props, State> {
 
 		this.onMessage = this.onMessage.bind(this);
 		window.addEventListener("message", this.onMessage);
+		document.addEventListener("contextmenu", (event) => {
+			event.preventDefault();
+		});
 		this.vscode.postMessage({ type: "readFile" });
 	}
 
@@ -133,7 +136,7 @@ export default class App extends React.Component<Props, State> {
 			const rules = message.rules.map((r) => Rule.fromJSON(r)).filter((r) => r);
 			const lines = JSON.parse(message.text);
 			const logFileText = JSON.stringify(lines, null, 2);
-			const textRanges = useJsonObjectToTextRangesMap(logFileText);
+			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
 			const logFile = LogFile.create(lines, rules);
 			const newRowsProps = logFile.rows.map(() =>
 				constructNewRowProperty(true, true, SelectedRowType.None),
@@ -141,7 +144,7 @@ export default class App extends React.Component<Props, State> {
 			this.setState({
 				logFile,
 				logFileAsString: logFileText,
-				logEntryRanges: textRanges,
+				logEntryCharIndexMaps: logEntryCharIndexMaps,
 				rules,
 				rowProperties: newRowsProps,
 			});
@@ -181,11 +184,11 @@ export default class App extends React.Component<Props, State> {
 						return constructNewRowProperty(true, true, SelectedRowType.None);
 					else return constructNewRowProperty(false, false, SelectedRowType.None);
 				});
-				const textRanges = useJsonObjectToTextRangesMap(logFileText);
+				const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
 				this.setState({
 					logFile,
 					logFileAsString: logFileText,
-					logEntryRanges: textRanges,
+					logEntryCharIndexMaps: logEntryCharIndexMaps,
 					rules,
 					rowProperties: newRowsProps,
 				});
@@ -319,13 +322,13 @@ export default class App extends React.Component<Props, State> {
 
 	handleStructureMatching(expression: string) {
 		const rowProperties = this.clearSelectedRowsTypes();
-		const { logFileAsString, logEntryRanges } = this.state;
+		const { logFileAsString, logEntryCharIndexMaps } = this.state;
 		let { currentStructureMatch, currentStructureMatchIndex } = this.state;
 
 		const structureMatches = useStructureRegularExpressionSearch(
 			expression,
 			logFileAsString,
-			logEntryRanges,
+			logEntryCharIndexMaps,
 		);
 		let structureMatchesLogRows: number[] = [];
 
@@ -378,18 +381,18 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	handleSegmentation(entryExpression: string, exitExpression: string) {
-		const { logFileAsString, logEntryRanges } = this.state;
+		const { logFileAsString, logEntryCharIndexMaps } = this.state;
 		const { collapsibleRows } = this.state;
 
 		const entryMatches = getRegularExpressionMatches(
 			entryExpression,
 			logFileAsString,
-			logEntryRanges,
+			logEntryCharIndexMaps,
 		);
 		const exitMatches = getRegularExpressionMatches(
 			exitExpression,
 			logFileAsString,
-			logEntryRanges,
+			logEntryCharIndexMaps,
 		);
 
 		const stack: number[] = [];

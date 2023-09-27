@@ -21,7 +21,7 @@ const getLogViewRowStyle = (rowIndex: number, leftPadding: number): React.CSSPro
 		height: LOG_ROW_HEIGHT,
 		overflow: "hidden",
 		top: rowIndex * LOG_ROW_HEIGHT,
-		userSelect: "none",
+		userSelect: "text",
 		borderRadius: "5px",
 	};
 

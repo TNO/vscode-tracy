@@ -71,6 +71,7 @@
     "@mui/material": "^5.14.0",
     "framer-motion": "^10.15.1",
     "lodash": "^4.17.21",
+    "react-fast-compare": "^3.2.2",
     "react-resize-detector": "^8.0.4"
   }
 }

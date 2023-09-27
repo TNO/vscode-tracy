@@ -1,3 +1,5 @@
+import { LogEntryCharRanges } from "../types";
+
 export const escapeSpecialChars = (text: string): string => {
 	let safeText = "";
 
@@ -135,29 +137,24 @@ export const returnSearchIndices = (
 export const getRegularExpressionMatches = (
 	expression: string,
 	logFileAsString: string,
-	logEntryRanges: number[][],
+	logEntryCharRanges: LogEntryCharRanges,
 ): number[] => {
 	const searchIndices: number[] = [];
 	const resultingMatches: number[] = [];
 	const flags = "gs";
 	const query = new RegExp(expression, flags);
 	let result;
-	let currentIndex = 0;
 
 	while ((result = query.exec(logFileAsString)) !== null) {
 		searchIndices.push(result.index);
 	}
 
 	if (searchIndices.length > 0) {
-		for (let i = 0; i < logEntryRanges.length; i++) {
-			if (searchIndices[currentIndex] >= logEntryRanges[i][0]) {
-				if (searchIndices[currentIndex] <= logEntryRanges[i][1]) {
-					currentIndex += 1;
-					if (i != resultingMatches[-1]) resultingMatches.push(i);
-					if (currentIndex === searchIndices.length) break;
-				}
-			}
-		}
+		searchIndices.forEach((searchIndex) => {
+			const indexOfMatchedEntry = logEntryCharRanges.firstCharIndexMap.get(searchIndex);
+			resultingMatches.push(indexOfMatchedEntry);
+		});
 	}
+
 	return resultingMatches;
 };
