@@ -1,0 +1,90 @@
+# useStructureEntryManager
+
+This file contains custom hooks which are used for styling `JSX.Element`(s) used in different React components.
+
+
+## Dependencies
+- `constants`
+- `types`
+
+## Custom hooks
+- `getLogViewRowStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `structureDialogBackdropStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `structureDialogDialogStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `wildcardStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getStructureTableHeaderStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getHeaderColumnStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getHeaderColumnInnerStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getStructureTableEntryIconStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getStructureTableRowStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getStructureTableLinkStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getStructureTableColumnStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getStructureTableCellSelectionStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getLogViewRowSelectionStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getLogViewStructureMatchStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getContextMenuStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
+- `getContextMenuItemStyle(...)`
+    - **Params:** 
+		- `props: Props`
+	- **Description:**
+	- **Returns:**
