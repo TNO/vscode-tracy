@@ -154,7 +154,6 @@ export default class StatesDialog extends React.Component<Props, State> {
 		const userColumns = this.state.rules
 			.map((r, i) => r.column)
 			.filter((name) => name != rule.column);
-		const defaultRuleColumn = `StateRule${ruleIndex + 1}`;
 		const keyWidth = "100px";
 		const textFieldWidth = "250px";
 		const rows = [
@@ -165,7 +164,7 @@ export default class StatesDialog extends React.Component<Props, State> {
 					value={rule.column}
 					key="Name"
 					onInput={(e) =>
-						this.updateRule(rule.setColumn(e.target.value || defaultRuleColumn), ruleIndex)
+						this.updateRule(rule.setColumn(e.target.value), ruleIndex)
 					}
 				/>,
 			],
@@ -219,14 +218,19 @@ export default class StatesDialog extends React.Component<Props, State> {
 						)}
 						{this.state.showEdit && (
 							<VSCodeButton
-								style={{ marginLeft: "auto" }}
 								appearance="icon"
+								style={{ marginLeft: "auto" }}
+								disabled={this.state.rules[this.state.selectedRule].column === '' ? true : false}
 								onClick={() => this.onDialogClick(false)}
 							>
 								<i className="codicon codicon-arrow-left" />
 							</VSCodeButton>
 						)}
-						<VSCodeButton appearance="icon" onClick={() => this.onDialogClick(true)}>
+						<VSCodeButton
+							appearance="icon"
+							disabled={(this.state.selectedRule === -1) || ((this.state.selectedRule !== -1) && (this.state.rules[this.state.selectedRule].column !== '')) ? false : true}
+							onClick={() => this.onDialogClick(true)}
+						>
 							<i className="codicon codicon-close" />
 						</VSCodeButton>
 					</div>
