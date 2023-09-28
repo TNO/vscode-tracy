@@ -49,7 +49,7 @@ interface State {
 
 	// Structure related
 	logFileAsString: string;
-	logEntryCharIndexMaps: LogEntryCharMaps;
+	logEntryCharIndexMaps: LogEntryCharMaps | null;
 	selectedLogRows: string[][];
 	// selectedRowsTypes: RowType[];
 	rowProperties: RowProperty[];
@@ -105,7 +105,7 @@ export default class App extends React.Component<Props, State> {
 			caseSearch: false,
 			selectedLogRows: [],
 			rowProperties: [],
-			logEntryCharIndexMaps: { firstCharIndexMap: null, lastCharIndexMap: null },
+			logEntryCharIndexMaps: null,
 			showStructureDialog: false,
 			structureMatches: [],
 			structureMatchesLogRows: [],
@@ -328,7 +328,7 @@ export default class App extends React.Component<Props, State> {
 		const structureMatches = useStructureRegularExpressionSearch(
 			expression,
 			logFileAsString,
-			logEntryCharIndexMaps,
+			logEntryCharIndexMaps!,
 		);
 		let structureMatchesLogRows: number[] = [];
 
@@ -387,12 +387,12 @@ export default class App extends React.Component<Props, State> {
 		const entryMatches = getRegularExpressionMatches(
 			entryExpression,
 			logFileAsString,
-			logEntryCharIndexMaps,
+			logEntryCharIndexMaps!,
 		);
 		const exitMatches = getRegularExpressionMatches(
 			exitExpression,
 			logFileAsString,
-			logEntryCharIndexMaps,
+			logEntryCharIndexMaps!,
 		);
 
 		const stack: number[] = [];
