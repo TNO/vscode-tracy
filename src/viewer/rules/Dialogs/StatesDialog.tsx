@@ -163,6 +163,7 @@ export default class StatesDialog extends React.Component<Props, State> {
 					style={{ width: textFieldWidth, marginBottom: "2px" }}
 					value={rule.column}
 					key="Name"
+					placeholder="Required"
 					onInput={(e) =>
 						this.updateRule(rule.setColumn(e.target.value), ruleIndex)
 					}
