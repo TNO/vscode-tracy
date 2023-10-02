@@ -40,6 +40,13 @@ export default class LogFile {
 	}
 
 	updateRules(rules: Rule[]): LogFile {
+		// Slow solution
+		// const headers = LogFile.getHeaders(this.contentHeaders, rules);
+		// let logFile = new LogFile(this.contentHeaders, headers, this.rows);
+		// logFile = this.copyDefaultColumnColors(logFile, this.columnsColors);
+		// logFile.computeRulesValuesAndColors(rules);
+		// return logFile;
+
 		this.updateSelectedColumns(rules);
 		this.updateHeaders(rules);
 		this.computeRulesValuesAndColors(rules);
@@ -116,6 +123,13 @@ export default class LogFile {
 			const values = this.rows.map((r) => r[i]);
 			this.columnsColors[i] = LogFile.computeColors(this.headers[i], values);
 		}
+	}
+
+	private copyDefaultColumnColors(logFile: LogFile, colours: string[][]) {
+		for (let i = 0; i < this.contentHeaders.length; i++) {
+			logFile.columnsColors[i] = colours[i];
+		}
+		return logFile
 	}
 
 	private computeRulesValuesAndColors(rules: Rule[]) {
