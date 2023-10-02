@@ -39,11 +39,30 @@ export default class LogFile {
 		return logFile;
 	}
 
-	update(rules: Rule[]): LogFile {
+	updateRules(rules: Rule[]): LogFile {
+		this.updateSelectedColumns(rules);
 		this.updateHeaders(rules);
 		this.computeRulesValuesAndColors(rules);
-		this.setSelectedColumns(this.selectedColumns, this.selectedColumnsMini); //only show the selected columns after updating the rules
 		return this;
+	}
+
+	updateSelectedColumns(rules: Rule[]) {
+		let existingHeaders = this.headers.map(h => h.name);
+		let updatedSelected = this.selectedColumns.slice(0, this.contentHeaders.length);
+		let updatedSelectedMini = this.selectedColumnsMini.slice(0, this.contentHeaders.length);
+
+		for (let i = 0; i < rules.length; i++) {
+			let existingIndex = existingHeaders.indexOf(rules[i].column);
+			if (existingIndex > -1) {
+				updatedSelected.push(this.selectedColumns[existingIndex]);
+				updatedSelectedMini.push(this.selectedColumnsMini[existingIndex]);
+			}
+			else {
+				updatedSelected.push(true);
+				updatedSelectedMini.push(true);
+			}
+		}
+		this.setSelectedColumns(updatedSelected, updatedSelectedMini);
 	}
 
 	setSelectedColumns(selected: boolean[], selectedMini: boolean[]) {
