@@ -195,12 +195,12 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	handleDialogActions(newRules: Rule[], is_close: boolean) {
+	handleAnnotationDialog(newRules: Rule[], is_close: boolean) {
 		this.vscode.postMessage({ type: "saveRules", rules: newRules.map((r) => r.toJSON()) });
 		if (is_close === true)
 			this.setState({
 				rules: newRules,
-				logFile: this.state.logFile.update(newRules),
+				logFile: this.state.logFile.updateRules(newRules),
 				showStatesDialog: false,
 				showFlagsDialog: false,
 			});
@@ -217,7 +217,7 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	handleStructureDialogActions(isClosing: boolean) {
+	handleStructureDialog(isClosing: boolean) {
 		if (isClosing === true) {
 			logHeaderColumnTypes = [];
 			this.handleStructureUpdate(isClosing);
@@ -605,7 +605,7 @@ export default class App extends React.Component<Props, State> {
 							>
 								<VSCodeButton
 									appearance="icon"
-									onClick={() => this.handleStructureDialogActions(false)}
+									onClick={() => this.handleStructureDialog(false)}
 								>
 									<i className="codicon codicon-three-bars" />
 								</VSCodeButton>
@@ -655,16 +655,16 @@ export default class App extends React.Component<Props, State> {
 						<StatesDialog
 							logFile={this.state.logFile}
 							initialRules={this.state.rules}
-							onClose={(newRules) => this.handleDialogActions(newRules, true)}
-							onReturn={(newRules) => this.handleDialogActions(newRules, false)}
+							onClose={(newRules) => this.handleAnnotationDialog(newRules, true)}
+							onReturn={(newRules) => this.handleAnnotationDialog(newRules, false)}
 						/>
 					)}
 					{this.state.showFlagsDialog && (
 						<FlagsDialog
 							logFile={this.state.logFile}
 							initialRules={this.state.rules}
-							onClose={(newRules) => this.handleDialogActions(newRules, true)}
-							onReturn={(newRules) => this.handleDialogActions(newRules, false)}
+							onClose={(newRules) => this.handleAnnotationDialog(newRules, true)}
+							onReturn={(newRules) => this.handleAnnotationDialog(newRules, false)}
 						/>
 					)}
 					{this.state.showSelectDialog && (
@@ -687,7 +687,7 @@ export default class App extends React.Component<Props, State> {
 							logSelectedRows={this.state.selectedLogRows}
 							currentStructureMatchIndex={this.state.currentStructureMatchIndex}
 							numberOfMatches={this.state.structureMatches.length}
-							onClose={() => this.handleStructureDialogActions(true)}
+							onClose={() => this.handleStructureDialog(true)}
 							onStructureUpdate={() => this.handleStructureUpdate(false)}
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
 							onDefineSegment={(entryExpression, exitExpression) =>
