@@ -211,6 +211,7 @@ export default class App extends React.Component<Props, State> {
 		if (is_close === true) {
 			this.setState({
 				selectedColumns: selectedCols,
+				selectedColumnsMini: selectedColsMini,
 				logFile: this.state.logFile.setSelectedColumns(selectedCols, selectedColsMini),
 				showSelectDialog: false,
 			});
