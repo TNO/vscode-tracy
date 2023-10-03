@@ -17,7 +17,11 @@ export const constructNewSegment = (start: number, end: number, level: number) =
 
 export const getSegmentMaxLevel = (segments: { [key: number]: Segment }) => {
 	const levels = Object.values(segments).map((segment) => segment.level);
-	return Math.max(...levels);
+	if (levels !== undefined && levels.length > 0) {
+		return Math.min(4, Math.max(...levels));
+	} else {
+		return -1;
+	}
 };
 
 export const getSegment = (segments: Segment[], start: number) => {
