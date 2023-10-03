@@ -24,6 +24,7 @@ import LogFile from "../LogFile";
 import ReactResizeDetector from "react-resize-detector";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { getSegmentMaxLevel } from "../hooks/useRowProperty";
+import Tooltip from "@mui/material/Tooltip";
 
 interface Props {
 	logFile: LogFile;
@@ -37,6 +38,7 @@ interface Props {
 	structureMatches: number[][];
 	structureMatchesLogRows: number[];
 	collapsibleRows: { [key: number]: Segment };
+	clearSegmentation: () => void;
 }
 interface State {
 	state: LogViewState | undefined;
@@ -82,9 +84,6 @@ export default class LogView extends React.Component<Props, State> {
 		if (prevProps.currentStructureMatch[0] !== this.props.currentStructureMatch[0]) {
 			this.updateState(this.props.currentStructureMatch[0]);
 		}
-		// if (prevState.columnWidth !== this.state.columnWidth) {
-		//     this.render(); //TODO: Discuss whether this is redundant.
-		// }
 	}
 
 	renderColumn(
@@ -149,7 +148,7 @@ export default class LogView extends React.Component<Props, State> {
 
 		let counter = firstRender;
 		const maxLevel = Math.min(4, getSegmentMaxLevel(collapsibleRows));
-		const segmentWidth: number = (this.getMaxLevel() + 1) * 30 + BORDER_SIZE;
+		const segmentWidth: number = (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE;
 		for (let r = firstRender; counter <= lastRender; r++) {
 			if (rowProperties[r].isSearchResult && rowProperties[r].isRendered) {
 				let rowStyle;
@@ -388,8 +387,9 @@ export default class LogView extends React.Component<Props, State> {
 		return visibleRows.length;
 	}
 
-	getMaxLevel() {
-		return Math.min(4, getSegmentMaxLevel(this.props.collapsibleRows));
+	deleteSegmentAnnotations(){
+		this.setState({collapsed : []});
+		this.props.clearSegmentation();
 	}
 
 	renderHeader(width: number) {
@@ -399,11 +399,28 @@ export default class LogView extends React.Component<Props, State> {
 			position: "absolute",
 			left: this.state.state ? this.state.state.scrollLeft * -1 : 0,
 		};
-		const segmentWidth: number = (this.getMaxLevel() + 1) * 30 + BORDER_SIZE;
+		const segmentWidth: number = (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE;
 		return (
 			<div style={HEADER_STYLE} className="header-background">
 				<div style={style}>
-					<div style={getSegmentStyle(segmentWidth, LOG_HEADER_HEIGHT)}></div>
+					<div style={getSegmentStyle(segmentWidth, LOG_HEADER_HEIGHT)}>
+						{Object.keys(this.props.collapsibleRows).length > 0 && 
+						<div className="box">
+							<Tooltip
+									title={<h3>Delete all the segment annotations</h3>}
+									placement="bottom"
+									arrow
+								>
+									<VSCodeButton
+										appearance="icon"
+										key={"delete"}
+										onClick={() => {this.deleteSegmentAnnotations()}}
+									>
+										<i className="codicon codicon-close" />
+									</VSCodeButton>
+							</Tooltip>
+						</div>}
+					</div>
 					{this.props.logFile
 						.getSelectedHeader()
 						.map((h, i) => this.renderHeaderColumn(h.name, i, true, this.columnWidth(h.name)))}
@@ -433,7 +450,12 @@ export default class LogView extends React.Component<Props, State> {
 	render() {
 		const { logFile } = this.props;
 		const containerHeight = this.getVisibleRows() * LOG_ROW_HEIGHT;
-		const containerWidth =
+		const containerWidth = Object.keys(this.props.collapsibleRows).length > 0 ?
+			logFile.amountOfColumns() * BORDER_SIZE +
+			logFile.headers.reduce(
+				(partialSum: number, h) => partialSum + this.state.columnWidth[h.name],
+				0,
+			) + (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE : 
 			logFile.amountOfColumns() * BORDER_SIZE +
 			logFile.headers.reduce(
 				(partialSum: number, h) => partialSum + this.state.columnWidth[h.name],

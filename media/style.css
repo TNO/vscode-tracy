@@ -83,3 +83,10 @@ div.vertical-line {
       You can instead use position:absolute or display:inline-block
       if this fits better with your design */
 }
+
+.box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+}

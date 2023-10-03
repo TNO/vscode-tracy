@@ -124,7 +124,8 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	componentDidUpdate(prevProps: Props, prevState: State) {
-		if (this.state.logFile !== prevState.logFile) {
+		if (this.state.logFile !== prevState.logFile ||
+			this.state.collapsibleRows !== prevState.collapsibleRows) {
 			this.render();
 		}
 	}
@@ -420,6 +421,10 @@ export default class App extends React.Component<Props, State> {
 		this.setState({ collapsibleRows });
 	}
 
+	clearSegmentation() {
+		this.setState({ collapsibleRows : {} });
+	}
+
 	switchBooleanState(name: string) {
 		if (name === "coloredTable")
 			this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
@@ -588,6 +593,7 @@ export default class App extends React.Component<Props, State> {
 							onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
 							onRowPropsChanged={(index, isRendered) => this.handleRowCollapse(index, isRendered)}
 							collapsibleRows={this.state.collapsibleRows}
+							clearSegmentation={() => this.clearSegmentation()}
 						/>
 					</div>
 					<div
