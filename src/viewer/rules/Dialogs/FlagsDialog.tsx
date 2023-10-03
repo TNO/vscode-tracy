@@ -98,7 +98,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
 	onDialogClick(isClose: boolean) {
 		const ruleIndex = this.state.selectedRule;
 		if (ruleIndex !== -1) {
-			const rule = this.state.rules[ruleIndex].reset();
+			const rule = FlagRule.cleanConditions(this.state.rules[ruleIndex].reset());
 			this.updateRule(rule, ruleIndex);
 		}
 		this.setState({ selectedRule: -1, showEdit: false }, () => {

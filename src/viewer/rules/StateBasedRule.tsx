@@ -125,6 +125,19 @@ export default class StateBasedRule extends Rule {
 		);
 	}
 
+	static cleanConditions(rule: Rule) {
+		const stateRule = rule as StateBasedRule;
+		let newStates = stateRule.ruleStates;
+		for (let i = 0; i < newStates.length; i++) {
+			for (let j = 0; j < newStates[i].transitions.length; j++) {
+				for (let k = 0; k < newStates[i].transitions[j].conditions.length; k++) 
+					newStates[i].transitions[j].conditions[k] = newStates[i].transitions[j].conditions[k].filter(subCondition => ((subCondition.Column !== "") && (subCondition.Text !== "")))
+				newStates[i].transitions[j].conditions = newStates[i].transitions[j].conditions.filter(li => li.length !== 0)
+			}
+		}
+		return stateRule.setStates(newStates, stateRule.initialStateIndex);
+	}
+
 	public renderEdit(
 		onEdit: (newRule: Rule) => void,
 		keyWidth: string,
