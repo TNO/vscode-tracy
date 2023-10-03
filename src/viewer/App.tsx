@@ -196,9 +196,9 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	handleAnnotationDialog(newRules: Rule[], is_close: boolean) {
+	handleAnnotationDialog(newRules: Rule[], isClose: boolean) {
 		this.vscode.postMessage({ type: "saveRules", rules: newRules.map((r) => r.toJSON()) });
-		if (is_close === true)
+		if (isClose === true)
 			this.setState({
 				rules: newRules,
 				logFile: this.state.logFile.updateRules(newRules),
@@ -208,8 +208,8 @@ export default class App extends React.Component<Props, State> {
 		else this.setState({ rules: newRules });
 	}
 
-	handleSelectDialog(selectedCols: boolean[], selectedColsMini: boolean[], is_close: boolean) {
-		if (is_close === true) {
+	handleSelectDialog(selectedCols: boolean[], selectedColsMini: boolean[], isClose: boolean) {
+		if (isClose === true) {
 			this.setState({
 				selectedColumns: selectedCols,
 				selectedColumnsMini: selectedColsMini,

@@ -94,9 +94,9 @@ export default class SelectColDialog extends React.Component<Props, State> {
 		);
 	}
 
-	onDialogClick(is_close: boolean) {
+	onDialogClick(isClose: boolean) {
 		this.setState({ showDialog: false }, () => {
-			if (is_close === true) this.props.onClose(this.state.selectedCol, this.state.selectedColMini);
+			if (isClose === true) this.props.onClose(this.state.selectedCol, this.state.selectedColMini);
 		});
 	}
 

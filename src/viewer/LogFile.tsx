@@ -41,13 +41,12 @@ export default class LogFile {
 
 	updateRules(rules: Rule[]): LogFile {
 		// Slower solution
-		let [updatedSelected, updatedSelectedMini] = this.updateSelectedColumns(rules)
+		const [updatedSelected, updatedSelectedMini] = this.updateSelectedColumns(rules)
 		const headers = LogFile.getHeaders(this.contentHeaders, rules);
-		let logFile = new LogFile(this.contentHeaders, headers, this.rows);
+		const logFile = new LogFile(this.contentHeaders, headers, this.rows);
 		logFile.copyDefaultColumnColors(this.columnsColors);
 		logFile.computeRulesValuesAndColors(rules);
-		logFile = logFile.setSelectedColumns(updatedSelected, updatedSelectedMini);
-		return logFile;
+		return logFile.setSelectedColumns(updatedSelected, updatedSelectedMini);
 
 		// Old solution
 		// this.updateSelectedColumns(rules);
@@ -57,12 +56,12 @@ export default class LogFile {
 	}
 
 	updateSelectedColumns(rules: Rule[]) {
-		let existingHeaders = this.headers.map(h => h.name);
-		let updatedSelected = this.selectedColumns.slice(0, this.contentHeaders.length);
-		let updatedSelectedMini = this.selectedColumnsMini.slice(0, this.contentHeaders.length);
+		const existingHeaders = this.headers.map(h => h.name);
+		const updatedSelected = this.selectedColumns.slice(0, this.contentHeaders.length);
+		const updatedSelectedMini = this.selectedColumnsMini.slice(0, this.contentHeaders.length);
 
 		for (let i = 0; i < rules.length; i++) {
-			let existingIndex = existingHeaders.indexOf(rules[i].column);
+			const existingIndex = existingHeaders.indexOf(rules[i].column);
 			if (existingIndex > -1) {
 				updatedSelected.push(this.selectedColumns[existingIndex]);
 				updatedSelectedMini.push(this.selectedColumnsMini[existingIndex]);

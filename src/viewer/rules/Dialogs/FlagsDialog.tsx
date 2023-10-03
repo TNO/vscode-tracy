@@ -95,14 +95,14 @@ export default class FlagsDialog extends React.Component<Props, State> {
 		this.setState({ rules });
 	}
 
-	onDialogClick(is_close: boolean) {
+	onDialogClick(isClose: boolean) {
 		const ruleIndex = this.state.selectedRule;
 		if (ruleIndex !== -1) {
 			const rule = this.state.rules[ruleIndex].reset();
 			this.updateRule(rule, ruleIndex);
 		}
 		this.setState({ showEdit: false }, () => {
-			if (is_close === true) this.props.onClose(this.state.rules);
+			if (isClose === true) this.props.onClose(this.state.rules);
 			else this.props.onReturn(this.state.rules);
 		});
 	}
@@ -124,16 +124,16 @@ export default class FlagsDialog extends React.Component<Props, State> {
 			});
 		};
 
-		const onEditAction = (table_index: number) => {
+		const onEditAction = (tableIndex: number) => {
 			const index = this.state.rules.findIndex(
-				(x) => x === this.state.rules.filter((r) => r.ruleType === "Flag rule")[table_index],
+				(x) => x === this.state.rules.filter((r) => r.ruleType === "Flag rule")[tableIndex],
 			);
 			this.setState({ showEdit: true, selectedRule: index });
 		};
 
-		const onDeleteAction = (table_index: number) => {
+		const onDeleteAction = (tableIndex: number) => {
 			const index = this.state.rules.findIndex(
-				(x) => x === this.state.rules.filter((r) => r.ruleType === "Flag rule")[table_index],
+				(x) => x === this.state.rules.filter((r) => r.ruleType === "Flag rule")[tableIndex],
 			);
 			if (this.state.selectedRule === index) this.setState({ selectedRule: -1 });
 			this.setState({ rules: this.state.rules.filter((r, i) => i !== index) });
@@ -202,7 +202,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
 			[
 				"Type",
 				<VSCodeDropdown
-					disabled={ruleAsFlag.flags.length > 0 ? true : false}
+					disabled={ruleAsFlag.flags.length > 0}
 					style={{ width: textFieldWidth, marginBottom: "2px" }}
 					value={flagType}
 					key="Type"
@@ -264,7 +264,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
 							<VSCodeButton
 								appearance="icon"
 								style={{ marginLeft: "auto" }}
-								disabled={this.state.rules[this.state.selectedRule].column === '' ? true : false}
+								disabled={this.state.rules[this.state.selectedRule].column === ''}
 								onClick={() => this.onDialogClick(false)}
 							>
 								<i className="codicon codicon-arrow-left" />
