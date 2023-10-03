@@ -40,17 +40,20 @@ export default class LogFile {
 	}
 
 	updateRules(rules: Rule[]): LogFile {
-		// Slow solution
-		// const headers = LogFile.getHeaders(this.contentHeaders, rules);
-		// let logFile = new LogFile(this.contentHeaders, headers, this.rows);
-		// logFile = this.copyDefaultColumnColors(logFile, this.columnsColors);
-		// logFile.computeRulesValuesAndColors(rules);
-		// return logFile;
+		// Slower solution
+		let [updatedSelected, updatedSelectedMini] = this.updateSelectedColumns(rules)
+		const headers = LogFile.getHeaders(this.contentHeaders, rules);
+		let logFile = new LogFile(this.contentHeaders, headers, this.rows);
+		logFile.copyDefaultColumnColors(this.columnsColors);
+		logFile.computeRulesValuesAndColors(rules);
+		logFile = logFile.setSelectedColumns(updatedSelected, updatedSelectedMini);
+		return logFile;
 
-		this.updateSelectedColumns(rules);
-		this.updateHeaders(rules);
-		this.computeRulesValuesAndColors(rules);
-		return this;
+		// Old solution
+		// this.updateSelectedColumns(rules);
+		// this.updateHeaders(rules);
+		// this.computeRulesValuesAndColors(rules);
+		// return this;
 	}
 
 	updateSelectedColumns(rules: Rule[]) {
@@ -69,7 +72,7 @@ export default class LogFile {
 				updatedSelectedMini.push(true);
 			}
 		}
-		this.setSelectedColumns(updatedSelected, updatedSelectedMini);
+		return [updatedSelected, updatedSelectedMini]
 	}
 
 	setSelectedColumns(selected: boolean[], selectedMini: boolean[]) {
@@ -125,11 +128,10 @@ export default class LogFile {
 		}
 	}
 
-	private copyDefaultColumnColors(logFile: LogFile, colours: string[][]) {
+	private copyDefaultColumnColors(colours: string[][]) {
 		for (let i = 0; i < this.contentHeaders.length; i++) {
-			logFile.columnsColors[i] = colours[i];
+			this.columnsColors[i] = colours[i];
 		}
-		return logFile
 	}
 
 	private computeRulesValuesAndColors(rules: Rule[]) {
