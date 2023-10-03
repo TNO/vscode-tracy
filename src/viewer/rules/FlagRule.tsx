@@ -122,6 +122,19 @@ export default class FlagRule extends Rule {
 		);
 	}
 
+	static cleanConditions(rule: Rule) {
+		const flagRule = rule as FlagRule;
+		let newFlags = flagRule.flags;
+		for (let i = 0; i < newFlags.length; i++) {
+			for (let j = 0; j < newFlags[i].conditions.length; j++) 
+				newFlags[i].conditions[j] = newFlags[i].conditions[j].filter(subCondition => ((subCondition.Column !== "") && (subCondition.Text !== "")))
+			newFlags[i].conditions = newFlags[i].conditions.filter(li => li.length !== 0)
+		}
+		// Could also remove flags without any conditions
+		// newFlags = newFlags.filter(i => i.conditions.length !== 0)
+		return flagRule.setFlags(newFlags);
+	}
+
 	public renderEdit(
 		onEdit: (newRule: Rule) => void,
 		keyWidth: string,
