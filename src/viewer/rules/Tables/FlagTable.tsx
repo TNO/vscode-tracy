@@ -7,10 +7,10 @@ interface Props {
 	hideHeader?: boolean;
 	noRowsText?: string;
 	highlightRow?: number | null;
-	onAddSubconditionAction?: (condition_index: number) => void;
-	onDeleteSubconditionAction?: (condition_index: number, sub_index: number) => void;
+	onAddSubconditionAction?: (conditionIndex: number) => void;
+	onDeleteSubconditionAction?: (conditionIndex: number, subconditionIndex: number) => void;
 	onAddConditionAction?: () => void;
-	onDeleteConditionAction?: (condition_index: number) => void;
+	onDeleteConditionAction?: (conditionIndex: number) => void;
 }
 
 const ACTIONS_WIDTH = "50px";

@@ -132,16 +132,16 @@ export default class StateBasedRule extends Rule {
 		user_columns: string[],
 		logFile: LogFile,
 	) {
-		const editStateName = (state_index: number, value: string) => {
+		const editStateName = (stateIndex: number, value: string) => {
 			const states = [...this.ruleStates];
-			const previousName = states[state_index].name;
+			const previousName = states[stateIndex].name;
 			for (let i = 0; i < states.length; i++) {
 				for (let j = 0; j < states[i].transitions.length; j++) {
 					if (states[i].transitions[j].destination === previousName)
 						states[i].transitions[j].destination = value;
 				}
 			}
-			states[state_index] = { ...states[state_index], ["name"]: value };
+			states[stateIndex] = { ...states[stateIndex], ["name"]: value };
 			onEdit(this.setStates(states, this.initialStateIndex));
 		};
 

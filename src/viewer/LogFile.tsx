@@ -39,11 +39,39 @@ export default class LogFile {
 		return logFile;
 	}
 
-	update(rules: Rule[]): LogFile {
-		this.updateHeaders(rules);
-		this.computeRulesValuesAndColors(rules);
-		this.setSelectedColumns(this.selectedColumns, this.selectedColumnsMini); //only show the selected columns after updating the rules
-		return this;
+	updateRules(rules: Rule[]): LogFile {
+		// Slower solution
+		const [updatedSelected, updatedSelectedMini] = this.updateSelectedColumns(rules)
+		const headers = LogFile.getHeaders(this.contentHeaders, rules);
+		const logFile = new LogFile(this.contentHeaders, headers, this.rows);
+		logFile.copyDefaultColumnColors(this.columnsColors);
+		logFile.computeRulesValuesAndColors(rules);
+		return logFile.setSelectedColumns(updatedSelected, updatedSelectedMini);
+
+		// Old solution
+		// this.updateSelectedColumns(rules);
+		// this.updateHeaders(rules);
+		// this.computeRulesValuesAndColors(rules);
+		// return this;
+	}
+
+	updateSelectedColumns(rules: Rule[]) {
+		const existingHeaders = this.headers.map(h => h.name);
+		const updatedSelected = this.selectedColumns.slice(0, this.contentHeaders.length);
+		const updatedSelectedMini = this.selectedColumnsMini.slice(0, this.contentHeaders.length);
+
+		for (let i = 0; i < rules.length; i++) {
+			const existingIndex = existingHeaders.indexOf(rules[i].column);
+			if (existingIndex > -1) {
+				updatedSelected.push(this.selectedColumns[existingIndex]);
+				updatedSelectedMini.push(this.selectedColumnsMini[existingIndex]);
+			}
+			else {
+				updatedSelected.push(true);
+				updatedSelectedMini.push(true);
+			}
+		}
+		return [updatedSelected, updatedSelectedMini]
 	}
 
 	setSelectedColumns(selected: boolean[], selectedMini: boolean[]) {
@@ -96,6 +124,12 @@ export default class LogFile {
 		for (let i = 0; i < this.contentHeaders.length; i++) {
 			const values = this.rows.map((r) => r[i]);
 			this.columnsColors[i] = LogFile.computeColors(this.headers[i], values);
+		}
+	}
+
+	private copyDefaultColumnColors(colours: string[][]) {
+		for (let i = 0; i < this.contentHeaders.length; i++) {
+			this.columnsColors[i] = colours[i];
 		}
 	}
 

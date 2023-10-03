@@ -113,7 +113,6 @@ export default class App extends React.Component<Props, State> {
 			currentStructureMatch: [],
 			lastSelectedRow: undefined,
 			collapsibleRows: {},
-			// collapsibleRows: { 1: constructNewSegment(1, 10, 0), 2: constructNewSegment(2, 6, 1), 5: constructNewSegment(5, 15, 0), 7: constructNewSegment(7, 10, 1), 0 : constructNewSegment(0, 20, 2)},
 		};
 
 		this.onMessage = this.onMessage.bind(this);
@@ -197,29 +196,30 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	handleDialogActions(newRules: Rule[], is_close: boolean) {
+	handleAnnotationDialog(newRules: Rule[], isClose: boolean) {
 		this.vscode.postMessage({ type: "saveRules", rules: newRules.map((r) => r.toJSON()) });
-		if (is_close === true)
+		if (isClose === true)
 			this.setState({
 				rules: newRules,
-				logFile: this.state.logFile.update(newRules),
+				logFile: this.state.logFile.updateRules(newRules),
 				showStatesDialog: false,
 				showFlagsDialog: false,
 			});
 		else this.setState({ rules: newRules });
 	}
 
-	handleSelectDialog(selectedCols: boolean[], selectedColsMini: boolean[], is_close: boolean) {
-		if (is_close === true) {
+	handleSelectDialog(selectedCols: boolean[], selectedColsMini: boolean[], isClose: boolean) {
+		if (isClose === true) {
 			this.setState({
 				selectedColumns: selectedCols,
+				selectedColumnsMini: selectedColsMini,
 				logFile: this.state.logFile.setSelectedColumns(selectedCols, selectedColsMini),
 				showSelectDialog: false,
 			});
 		}
 	}
 
-	handleStructureDialogActions(isClosing: boolean) {
+	handleStructureDialog(isClosing: boolean) {
 		if (isClosing === true) {
 			logHeaderColumnTypes = [];
 			this.handleStructureUpdate(isClosing);
@@ -612,7 +612,7 @@ export default class App extends React.Component<Props, State> {
 							>
 								<VSCodeButton
 									appearance="icon"
-									onClick={() => this.handleStructureDialogActions(false)}
+									onClick={() => this.handleStructureDialog(false)}
 								>
 									<i className="codicon codicon-three-bars" />
 								</VSCodeButton>
@@ -662,16 +662,16 @@ export default class App extends React.Component<Props, State> {
 						<StatesDialog
 							logFile={this.state.logFile}
 							initialRules={this.state.rules}
-							onClose={(newRules) => this.handleDialogActions(newRules, true)}
-							onReturn={(newRules) => this.handleDialogActions(newRules, false)}
+							onClose={(newRules) => this.handleAnnotationDialog(newRules, true)}
+							onReturn={(newRules) => this.handleAnnotationDialog(newRules, false)}
 						/>
 					)}
 					{this.state.showFlagsDialog && (
 						<FlagsDialog
 							logFile={this.state.logFile}
 							initialRules={this.state.rules}
-							onClose={(newRules) => this.handleDialogActions(newRules, true)}
-							onReturn={(newRules) => this.handleDialogActions(newRules, false)}
+							onClose={(newRules) => this.handleAnnotationDialog(newRules, true)}
+							onReturn={(newRules) => this.handleAnnotationDialog(newRules, false)}
 						/>
 					)}
 					{this.state.showSelectDialog && (
@@ -694,7 +694,7 @@ export default class App extends React.Component<Props, State> {
 							logSelectedRows={this.state.selectedLogRows}
 							currentStructureMatchIndex={this.state.currentStructureMatchIndex}
 							numberOfMatches={this.state.structureMatches.length}
-							onClose={() => this.handleStructureDialogActions(true)}
+							onClose={() => this.handleStructureDialog(true)}
 							onStructureUpdate={() => this.handleStructureUpdate(false)}
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
 							onDefineSegment={(entryExpression, exitExpression) =>
