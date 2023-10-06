@@ -88,11 +88,27 @@ export const getSegmentStyle = (columnWidth: number, height: number): React.CSSP
 		display: "inline-block",
 		height,
 		width: columnWidth,
+		position: "sticky",
+		left: 0,
+		borderRight: 1,
+		borderColor: "black"
 	};
 
 	return headerColumnStyle;
 };
 
+export const getSegmentRowStyle = (segmentWidth: number, top: number): React.CSSProperties => {
+	const segmentRowStyle: React.CSSProperties = {
+		position: "sticky",
+		height: LOG_ROW_HEIGHT,
+		top: top,
+		width: segmentWidth,
+		left: 0,
+		zIndex: 100,
+		borderRight: 1
+	}
+	return segmentRowStyle;
+}
 export const getHeaderColumnInnerStyle = (
 	height: number,
 	isHeader: boolean,
