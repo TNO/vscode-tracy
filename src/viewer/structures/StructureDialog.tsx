@@ -479,6 +479,13 @@ export default class StructureDialog extends React.Component<Props, State> {
 			},
 		});
 
+        const selection = getSelection();
+
+		if(selection !== null){
+			// empty unwanted text selection resulting from Shift-click
+			selection.empty();
+		}
+
 		return (
 			<div style={structureDialogBackdropStyle}>
 				<div className="dialog" style={structureDialogDialogStyle}>
