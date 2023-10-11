@@ -85,17 +85,16 @@ div.vertical-line {
     align-items: center;
     justify-content: center;
     height: 40px;
-    border-right: 1px;
+    border-right: 1px solid var(--vscode-menu-foreground);
+    z-index: 100;
 }
 
 .box1 {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    /* align-items: center;
+    justify-content: center; */
     height: 28px;
-    border-right: 1px;
-    border-color: black;
+    border-right: 1px solid var(--vscode-menu-foreground);
     background-color: white;
-    position: sticky;
     z-index: 100;
 }

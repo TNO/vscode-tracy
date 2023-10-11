@@ -90,8 +90,6 @@ export const getSegmentStyle = (columnWidth: number, height: number): React.CSSP
 		width: columnWidth,
 		position: "sticky",
 		left: 0,
-		borderRight: 1,
-		borderColor: "black"
 	};
 
 	return headerColumnStyle;
@@ -105,7 +103,6 @@ export const getSegmentRowStyle = (segmentWidth: number, top: number): React.CSS
 		width: segmentWidth,
 		left: 0,
 		zIndex: 100,
-		borderRight: 1
 	}
 	return segmentRowStyle;
 }
@@ -119,7 +116,7 @@ export const getHeaderColumnInnerStyle = (
 		alignItems: "center",
 		justifyContent: isHeader ? "center" : "left",
 		paddingLeft: "2px",
-		borderLeft: BORDER,
+		borderRight: BORDER,
 	};
 
 	return headerColumnInnerStyle;

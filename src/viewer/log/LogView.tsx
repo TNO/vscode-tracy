@@ -210,10 +210,13 @@ export default class LogView extends React.Component<Props, State> {
 	renderSegmentForRow(r: number, level: number) {
 		const { collapsibleRows } = this.props;
 		const style: React.CSSProperties = {
+			display: "inline-block",
+			position: "relative",
 			textAlign: "center",
 			alignContent: "center",
 			justifyContent: "center",
 			height: LOG_ROW_HEIGHT,
+			width: 30
 		};
 		let annotation = false;
 		if (collapsibleRows[r] != undefined && collapsibleRows[r].level == level) {
@@ -245,12 +248,12 @@ export default class LogView extends React.Component<Props, State> {
 		}
 		if (annotation) {
 			return (
-				<div style={ style } key={r + "_" + level} className="box1">
+				<div style={ style } key={r + "_" + level}>
 					<div style={{ backgroundColor: this.getRGB(level) }} className="vertical-line"></div>
 				</div>
 			);
 		} else {
-			return <div style={ style } key={r + "_" + level} className="box1"></div>;
+			return <div style={ style } key={r + "_" + level}></div>;
 		}
 	}
 

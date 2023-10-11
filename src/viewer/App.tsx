@@ -112,7 +112,8 @@ export default class App extends React.Component<Props, State> {
 			currentStructureMatchIndex: null,
 			currentStructureMatch: [],
 			lastSelectedRow: undefined,
-			collapsibleRows: {},
+			// collapsibleRows: {},
+			collapsibleRows: { 1: constructNewSegment(1, 10, 0), 2: constructNewSegment(2, 6, 1), 5: constructNewSegment(5, 15, 0), 7: constructNewSegment(7, 10, 1), 0 : constructNewSegment(0, 20, 2)},
 		};
 
 		this.onMessage = this.onMessage.bind(this);
