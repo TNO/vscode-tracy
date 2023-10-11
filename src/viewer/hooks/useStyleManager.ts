@@ -97,12 +97,10 @@ export const getSegmentStyle = (columnWidth: number, height: number): React.CSSP
 
 export const getSegmentRowStyle = (segmentWidth: number, top: number): React.CSSProperties => {
 	const segmentRowStyle: React.CSSProperties = {
-		position: "sticky",
+		position: "absolute",
 		height: LOG_ROW_HEIGHT,
 		top: top,
 		width: segmentWidth,
-		left: 0,
-		zIndex: 100,
 	}
 	return segmentRowStyle;
 }

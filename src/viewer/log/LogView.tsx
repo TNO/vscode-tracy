@@ -174,12 +174,14 @@ export default class LogView extends React.Component<Props, State> {
 				result.push(
 					<div style={{ display: "flex", flexDirection: "row", flexWrap: "nowrap" }}>
 						{Object.keys(this.props.collapsibleRows).length > 0 &&
-						<div
-							style={segmentStyle}
-							key={"seg" + r}
-							className="box1"
-						>
-							{rowResult}
+						<div style= {{ position: "sticky", left: 0 , zIndex: 100}}>
+							<div
+								style={segmentStyle}
+								key={"seg" + r}
+								className="box1"
+							>
+								{rowResult}
+							</div>
 						</div>}
 						<div
 							key={r}
