@@ -95,6 +95,6 @@ div.vertical-line {
     justify-content: center; */
     height: 28px;
     border-right: 1px solid var(--vscode-menu-foreground);
-    background-color: white;
+    background-color: var(--vscode-menu-background);
     z-index: 100;
 }
