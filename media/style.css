@@ -86,7 +86,7 @@ div.vertical-line {
     justify-content: center;
     height: 40px;
     border-right: 1px solid var(--vscode-menu-foreground);
-    z-index: 100;
+    z-index: 1;
 }
 
 .box1 {
@@ -96,5 +96,5 @@ div.vertical-line {
     height: 28px;
     border-right: 1px solid var(--vscode-menu-foreground);
     background-color: var(--vscode-menu-background);
-    z-index: 100;
+    z-index: 1;
 }

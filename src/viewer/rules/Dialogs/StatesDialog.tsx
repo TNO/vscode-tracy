@@ -36,6 +36,7 @@ const DIALOG_STYLE: React.CSSProperties = {
 	display: "flex",
 	flexDirection: "column",
 	overflow: "auto",
+	zIndex: 100
 };
 
 export default class StatesDialog extends React.Component<Props, State> {

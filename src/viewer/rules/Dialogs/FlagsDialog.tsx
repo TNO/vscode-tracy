@@ -41,6 +41,7 @@ const DIALOG_STYLE: React.CSSProperties = {
 	display: "flex",
 	flexDirection: "column",
 	overflow: "auto",
+	zIndex: 100
 };
 
 export default class FlagsDialog extends React.Component<Props, State> {
