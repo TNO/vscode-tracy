@@ -446,6 +446,13 @@ export default class LogView extends React.Component<Props, State> {
 	}
 
 	render() {
+		const selection = getSelection();
+
+		if(selection !== null){
+			// empty unwanted text selection resulting from Shift-click
+			selection.empty();
+		}
+
 		const { logFile } = this.props;
 		const containerHeight = this.getVisibleRows() * LOG_ROW_HEIGHT;
 		const containerWidth = Object.keys(this.props.collapsibleRows).length > 0 ?
