@@ -1,6 +1,7 @@
 // When adding new rules, don't forget to update the lookup in Rule.fromJSON
 import React from "react";
 import Rule from "./Rule";
+import StateBasedRule from "./StateBasedRule";
 import LogFile from "../LogFile";
 import Table from "./Tables/Table";
 import FlagTable from "./Tables/FlagTable";
@@ -141,6 +142,7 @@ export default class FlagRule extends Rule {
 		textFieldWidth: string,
 		user_columns: string[],
 		logFile: LogFile,
+		rules: Rule[]
 	) {
 		const allColumns = ["", ...logFile.contentHeaders, ...user_columns];
 
@@ -278,48 +280,83 @@ export default class FlagRule extends Rule {
 					const conditionSet = this.flags[this.selectedFlag].conditions[columnIndex];
 					conditionRows.push(
 						conditionSet.map((sub, s_i) => {
-							return [
+							let setMap:any[] = [];
+							setMap.push(
 								<VSCodeDropdown
-									style={{ width: "100%", marginBottom: "2px" }}
-									value={sub.Column}
-									key="Dropdown"
-									onChange={(e) => editSubcondition(columnIndex, s_i, "Column", e.target.value)}
-								>
-									{allColumns.map((col, col_i) => (
-										<VSCodeOption key={col_i} value={col}>
-											{col}
+										style={{ width: "100%", marginBottom: "2px" }}
+										value={sub.Column}
+										key="Dropdown"
+										onChange={(e) => editSubcondition(columnIndex, s_i, "Column", e.target.value)}
+									>
+										{allColumns.map((col, col_i) => (
+											<VSCodeOption key={col_i} value={col}>
+												{col}
+											</VSCodeOption>
+										))}
+									</VSCodeDropdown>
+							);
+							setMap.push(
+								<VSCodeDropdown
+										style={{ width: "100%" }}
+										value={sub.Operation}
+										key="Dropdown"
+										onChange={(e) => editSubcondition(columnIndex, s_i, "Operation", e.target.value)}
+									>
+										<VSCodeOption key="0" value="contains">
+											contains
 										</VSCodeOption>
-									))}
-								</VSCodeDropdown>,
-								<VSCodeDropdown
-									style={{ width: "100%" }}
-									value={sub.Operation}
-									key="Dropdown"
-									onChange={(e) => editSubcondition(columnIndex, s_i, "Operation", e.target.value)}
-								>
-									<VSCodeOption key="0" value="contains">
-										contains
-									</VSCodeOption>
-									<VSCodeOption key="1" value="equals">
-										equals
-									</VSCodeOption>
-									<VSCodeOption key="2" value="startsWith">
-										startsWith
-									</VSCodeOption>
-									<VSCodeOption key="3" value="endsWith">
-										endsWith
-									</VSCodeOption>
-									<VSCodeOption key="4" value="regexSearch">
-										regex search
-									</VSCodeOption>
-								</VSCodeDropdown>,
-								<VSCodeTextField
+										<VSCodeOption key="1" value="equals">
+											equals
+										</VSCodeOption>
+										<VSCodeOption key="2" value="startsWith">
+											startsWith
+										</VSCodeOption>
+										<VSCodeOption key="3" value="endsWith">
+											endsWith
+										</VSCodeOption>
+										<VSCodeOption key="4" value="regexSearch">
+											regex search
+										</VSCodeOption>
+									</VSCodeDropdown>
+							);
+							if (!user_columns.includes(sub.Column)) {
+								setMap.push(
+									<VSCodeTextField
+										style={{ width: "100%" }}
+										value={sub.Text}
+										key="Text"
+										onInput={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
+									/>,
+								);
+							}
+							else {
+								let options:string[] = [];
+								const dropdownRule = rules.filter(r => r.column === sub.Column)[0];
+								if (dropdownRule.ruleType === 'Flag rule') {
+									let dropdownFlagRule = dropdownRule as FlagRule;
+									options = dropdownFlagRule.flags.map(f => f.name);
+								}
+								else if (dropdownRule.ruleType === 'State based rule') {
+									let dropdownStateRule = dropdownRule as StateBasedRule;
+									options = dropdownStateRule.ruleStates.map(s => s.name)
+								}
+								setMap.push(
+									<VSCodeDropdown
 									style={{ width: "100%" }}
 									value={sub.Text}
 									key="Text"
-									onInput={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
-								/>,
-							];
+									onChange={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
+									>
+									{options.map((opt, opt_i) => (
+										<VSCodeOption key={opt_i} value={opt}>
+											{opt}
+										</VSCodeOption>
+									))}
+								</VSCodeDropdown>
+									);
+							}
+							return setMap;
+							
 						}),
 					);
 				}

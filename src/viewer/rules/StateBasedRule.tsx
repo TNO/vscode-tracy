@@ -1,6 +1,7 @@
 // When adding new rules, don't forget to update the lookup in Rule.fromJSON
 import React from "react";
 import Rule from "./Rule";
+import FlagRule from "./FlagRule";
 import LogFile from "../LogFile";
 import Table from "./Tables/Table";
 import StateTable from "./Tables/StateTable";
@@ -144,6 +145,7 @@ export default class StateBasedRule extends Rule {
 		textFieldWidth: string,
 		user_columns: string[],
 		logFile: LogFile,
+		rules: Rule[]
 	) {
 		const editStateName = (stateIndex: number, value: string) => {
 			const states = [...this.ruleStates];
@@ -238,7 +240,8 @@ export default class StateBasedRule extends Rule {
 					];
 				transitionRows.push(
 					conditionSet.map((r, c_i) => {
-						return [
+						let setMap:any[] = [];
+						setMap.push(
 							<VSCodeDropdown
 								style={{ width: "100%", marginBottom: "2px" }}
 								value={r.Column}
@@ -250,7 +253,9 @@ export default class StateBasedRule extends Rule {
 										{col}
 									</VSCodeOption>
 								))}
-							</VSCodeDropdown>,
+							</VSCodeDropdown>
+						);
+						setMap.push(
 							<VSCodeDropdown
 								style={{ width: "100%" }}
 								value={r.Operation}
@@ -272,14 +277,46 @@ export default class StateBasedRule extends Rule {
 								<VSCodeOption key="4" value="regexSearch">
 									regex search
 								</VSCodeOption>
-							</VSCodeDropdown>,
-							<VSCodeTextField
+							</VSCodeDropdown>
+						);
+						if (!user_columns.includes(r.Column)) {
+							setMap.push(
+								<VSCodeTextField
+									style={{ width: "100%" }}
+									value={r.Text}
+									onInput={(e) => editTransition(transitionIndex, c_i, "Text", e.target.value)}
+									key="Text"
+								/>
+							);
+						}
+						else {
+							let options:string[] = [];
+							const dropdownRule = rules.filter(rule => rule.column === r.Column)[0];
+							if (dropdownRule.ruleType === 'Flag rule') {
+								let dropdownFlagRule = dropdownRule as FlagRule;
+								options = dropdownFlagRule.flags.map(f => f.name);
+							}
+							else if (dropdownRule.ruleType === 'State based rule') {
+								let dropdownStateRule = dropdownRule as StateBasedRule;
+								options = dropdownStateRule.ruleStates.map(s => s.name)
+							}
+							setMap.push(
+								<VSCodeDropdown
 								style={{ width: "100%" }}
 								value={r.Text}
-								onInput={(e) => editTransition(transitionIndex, c_i, "Text", e.target.value)}
 								key="Text"
-							/>,
-						];
+								onChange={(e) => editTransition(transitionIndex, c_i, "Text", e.target.value)}
+								>
+								{options.map((opt, opt_i) => (
+									<VSCodeOption key={opt_i} value={opt}>
+										{opt}
+									</VSCodeOption>
+								))}
+							</VSCodeDropdown>
+								);
+						}
+						return setMap;
+						
 					}),
 				);
 			}
