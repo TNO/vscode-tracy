@@ -127,7 +127,7 @@ export default class FlagRule extends Rule {
 		const flagRule = rule as FlagRule;
 		let newFlags = flagRule.flags;
 		for (let i = 0; i < newFlags.length; i++) {
-			for (let j = 0; j < newFlags[i].conditions.length; j++) 
+			for (let j = 0; j < newFlags[i].conditions.length; j++)
 				newFlags[i].conditions[j] = newFlags[i].conditions[j].filter(subCondition => ((subCondition.Column !== "") && (subCondition.Text !== "")))
 			newFlags[i].conditions = newFlags[i].conditions.filter(li => li.length !== 0)
 		}
@@ -280,46 +280,59 @@ export default class FlagRule extends Rule {
 					const conditionSet = this.flags[this.selectedFlag].conditions[columnIndex];
 					conditionRows.push(
 						conditionSet.map((sub, s_i) => {
-							let setMap:any[] = [];
+							let setMap: any[] = [];
 							setMap.push(
 								<VSCodeDropdown
-										style={{ width: "100%", marginBottom: "2px" }}
-										value={sub.Column}
-										key="Dropdown"
-										onChange={(e) => editSubcondition(columnIndex, s_i, "Column", e.target.value)}
-									>
-										{allColumns.map((col, col_i) => (
-											<VSCodeOption key={col_i} value={col}>
-												{col}
-											</VSCodeOption>
-										))}
-									</VSCodeDropdown>
+									style={{ width: "100%", marginBottom: "2px" }}
+									value={sub.Column}
+									key="Dropdown"
+									onChange={(e) => editSubcondition(columnIndex, s_i, "Column", e.target.value)}
+								>
+									{allColumns.map((col, col_i) => (
+										<VSCodeOption key={col_i} value={col}>
+											{col}
+										</VSCodeOption>
+									))}
+								</VSCodeDropdown>
 							);
 							setMap.push(
 								<VSCodeDropdown
-										style={{ width: "100%" }}
-										value={sub.Operation}
-										key="Dropdown"
-										onChange={(e) => editSubcondition(columnIndex, s_i, "Operation", e.target.value)}
-									>
-										<VSCodeOption key="0" value="contains">
-											contains
-										</VSCodeOption>
-										<VSCodeOption key="1" value="equals">
-											equals
-										</VSCodeOption>
-										<VSCodeOption key="2" value="startsWith">
-											startsWith
-										</VSCodeOption>
-										<VSCodeOption key="3" value="endsWith">
-											endsWith
-										</VSCodeOption>
-										<VSCodeOption key="4" value="regexSearch">
-											regex search
-										</VSCodeOption>
-									</VSCodeDropdown>
+									style={{ width: "100%" }}
+									value={sub.Operation}
+									key="Dropdown"
+									onChange={(e) => editSubcondition(columnIndex, s_i, "Operation", e.target.value)}
+								>
+									<VSCodeOption key="0" value="contains">
+										contains
+									</VSCodeOption>
+									<VSCodeOption key="1" value="equals">
+										equals
+									</VSCodeOption>
+									<VSCodeOption key="2" value="startsWith">
+										startsWith
+									</VSCodeOption>
+									<VSCodeOption key="3" value="endsWith">
+										endsWith
+									</VSCodeOption>
+									<VSCodeOption key="4" value="regexSearch">
+										regex search
+									</VSCodeOption>
+								</VSCodeDropdown>
 							);
-							if (!user_columns.includes(sub.Column)) {
+							let dropdownOptions: string[] = [];
+							if (user_columns.includes(sub.Column)) {
+								const dropdownRule = rules.filter(r => r.column === sub.Column)[0];
+								if (dropdownRule.ruleType === 'Flag rule') {
+									let dropdownFlagRule = dropdownRule as FlagRule;
+									dropdownOptions = dropdownFlagRule.flags.map(f => f.name);
+								}
+								else if (dropdownRule.ruleType === 'State based rule') {
+									let dropdownStateRule = dropdownRule as StateBasedRule;
+									dropdownOptions = dropdownStateRule.ruleStates.map(s => s.name)
+								}
+							}
+							console.log(dropdownOptions)
+							if (dropdownOptions.length === 0 || dropdownOptions[0] === '') {
 								setMap.push(
 									<VSCodeTextField
 										style={{ width: "100%" }}
@@ -330,33 +343,22 @@ export default class FlagRule extends Rule {
 								);
 							}
 							else {
-								let options:string[] = [];
-								const dropdownRule = rules.filter(r => r.column === sub.Column)[0];
-								if (dropdownRule.ruleType === 'Flag rule') {
-									let dropdownFlagRule = dropdownRule as FlagRule;
-									options = dropdownFlagRule.flags.map(f => f.name);
-								}
-								else if (dropdownRule.ruleType === 'State based rule') {
-									let dropdownStateRule = dropdownRule as StateBasedRule;
-									options = dropdownStateRule.ruleStates.map(s => s.name)
-								}
 								setMap.push(
 									<VSCodeDropdown
-									style={{ width: "100%" }}
-									value={sub.Text}
-									key="Text"
-									onChange={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
+										style={{ width: "100%" }}
+										value={sub.Text}
+										key="Text"
+										onChange={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
 									>
-									{options.map((opt, opt_i) => (
-										<VSCodeOption key={opt_i} value={opt}>
-											{opt}
-										</VSCodeOption>
-									))}
-								</VSCodeDropdown>
-									);
+										{dropdownOptions.map((option, optionIndex) => (
+											<VSCodeOption key={optionIndex} value={option}>
+												{option}
+											</VSCodeOption>
+										))}
+									</VSCodeDropdown>
+								);
 							}
 							return setMap;
-							
 						}),
 					);
 				}
