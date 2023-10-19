@@ -165,7 +165,6 @@ export default class App extends React.Component<Props, State> {
 		if (searchText === "")
 			this.clearSearch();
 		else {
-			console.log(this.state)
 			const rules = this.state.rules;
 			const logFile = this.state.logFile;
 			const logFileText = this.state.logFileAsString;
@@ -193,12 +192,11 @@ export default class App extends React.Component<Props, State> {
 				rowProperties: newRowsProps,
 			});
 		}
-		this.sea
 	}
 
 	searchCommand() {
 		clearTimeout(searchTimeoutId);
-    	searchTimeoutId = setTimeout(this.filterLog, 1000);
+		searchTimeoutId = setTimeout(this.filterLog, 1000);
 	}
 
 	handleAnnotationDialog(newRules: Rule[], isClose: boolean) {
@@ -427,7 +425,7 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	clearSegmentation() {
-		this.setState({ collapsibleRows : {} });
+		this.setState({ collapsibleRows: {} });
 	}
 
 	switchBooleanState(name: string) {
@@ -482,6 +480,7 @@ export default class App extends React.Component<Props, State> {
 					</div>
 					<div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
 						<VSCodeDropdown
+							key="searchDropdown"
 							style={{ marginRight: "5px" }}
 							onChange={(e) => (searchColumn = e.target.value)}
 						>
@@ -492,11 +491,12 @@ export default class App extends React.Component<Props, State> {
 							))}
 						</VSCodeDropdown>
 						<VSCodeTextField
+							key="searchTextField"
 							style={{ marginRight: "5px" }}
 							placeholder="Search Text"
 							value={searchText}
-							onInput={(e) => (searchText = e.target.value)}
-							onKeyUp={(e) => this.searchCommand()}
+							onInput={(e) => {searchText = e.target.value; this.searchCommand();}}
+							autofocus
 						>
 							<Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
 								<span
