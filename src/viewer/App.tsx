@@ -435,6 +435,20 @@ export default class App extends React.Component<Props, State> {
 			this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
 	}
 
+	exportSearchResults() {
+		var exportData: Object[] = []
+		const searchIndices = this.state.rowProperties.flatMap((row, index) => row.isSearchResult ? index : [])
+		const originalColumns = this.state.logFile.headers;
+		for (var index of searchIndices) {
+			var rowObject = {};
+			const row = this.state.logFile.rows[index]
+			for (var columnIndex = originalColumns.length-1; columnIndex >= 0; columnIndex--)
+				rowObject[originalColumns[columnIndex].name] = row[columnIndex];
+			exportData.push(rowObject)
+		}
+		this.vscode.postMessage({ type: "exportData", data: exportData });
+	}
+
 	render() {
 		const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
 		const minimapHeight = this.state.showMinimapHeader ? "12%" : "5%";
@@ -470,10 +484,12 @@ export default class App extends React.Component<Props, State> {
 						>
 							Choose Columns
 						</VSCodeButton>
-						{/* <label>
-                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.switchBooleanState('coloredTable')}/>
-                        Color Table
-                    </label> */}
+						<VSCodeButton
+							style={{ marginLeft: "5px", height: "25px", width: "150px" }}
+							onClick={() => this.exportSearchResults()}
+						>
+							Export
+						</VSCodeButton>
 					</div>
 					<div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
 						<VSCodeDropdown

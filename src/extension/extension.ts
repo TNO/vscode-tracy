@@ -64,6 +64,12 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 			} else if (e.type === 'saveRules') {
 				fs.writeFileSync(rulesFile, JSON.stringify(e.rules));
 			}
+			else if (e.type === 'exportData') {
+				const filename = document.fileName.split(".tracy")[0]
+				const datetime = new Date().toISOString().slice(0,10).replace(/-/g,"") as string;
+				const exportFile = `${filename}_export_${datetime}.tracy.json`;
+				fs.writeFileSync(exportFile, JSON.stringify(e.data));
+			}
 		});
 	}
 
