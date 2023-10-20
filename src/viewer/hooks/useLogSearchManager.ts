@@ -18,17 +18,6 @@ export const escapeSpecialChars = (text: string): string => {
     return safeText;
 };
 
-export const useRegularExpressionSearch = (
-    flags: string,
-    expression: string,
-    text: string,
-): boolean => {
-    const structureQuery = new RegExp(expression, flags);
-    const result = structureQuery.exec(escapeSpecialChars(text));
-    if (result === null) return false;
-    else return true;
-};
-
 // Long function to reduce number of checks
 export const returnSearchIndices = (
     rows: string[][],
@@ -39,63 +28,69 @@ export const returnSearchIndices = (
     caseSearchBool: boolean,
 ): number[] => {
     let loglineText: string;
-    let searchTerms: string[];
     const indices: number[] = [];
     if (!caseSearchBool && !reSearchBool) searchText = searchText.toLowerCase();
-    if (searchText.charAt(0) === '"' && searchText.slice(-1) === '"')
-        searchTerms = [searchText.slice(1, -1)];
-    else searchTerms = searchText.split(" ");
-    if (!reSearchBool && !wholeSearchBool) {
-        if (columnIndex === -1) {
-            if (!caseSearchBool) {
-                for (let i = 0; i < rows.length; i++) {
-                    loglineText = rows[i].join(" ").toLowerCase();
-                    let found = true;
-                    for (const term of searchTerms) {
-                        if (loglineText.indexOf(term) == -1) {
-                            found = false;
-                            break;
-                        }
+    if (!reSearchBool) {
+        if (!wholeSearchBool) {
+            console.log(searchText)
+            if (columnIndex === -1) {
+                if (!caseSearchBool) {
+                    for (let i = 0; i < rows.length; i++) {
+                        loglineText = rows[i].join(" ").toLowerCase();
+                        if (loglineText.indexOf(searchText) != -1)
+                            indices.push(i);
                     }
-                    if (found) indices.push(i);
+                } else {
+                    for (let i = 0; i < rows.length; i++) {
+                        loglineText = rows[i].join(" ");
+                        if (loglineText.indexOf(searchText) != -1)
+                            indices.push(i);
+                    }
                 }
             } else {
-                for (let i = 0; i < rows.length; i++) {
-                    loglineText = rows[i].join(" ");
-                    let found = true;
-                    for (const term of searchTerms) {
-                        if (loglineText.indexOf(term) == -1) {
-                            found = false;
-                            break;
-                        }
+                if (!caseSearchBool) {
+                    for (let i = 0; i < rows.length; i++) {
+                        loglineText = rows[i][columnIndex].toLowerCase();
+                        if (loglineText.indexOf(searchText) != -1)
+                            indices.push(i);
                     }
-                    if (found) indices.push(i);
+                } else {
+                    for (let i = 0; i < rows.length; i++) {
+                        loglineText = rows[i][columnIndex];
+                        if (loglineText.indexOf(searchText) != -1)
+                            indices.push(i);
+                    }
                 }
             }
-        } else {
-            if (!caseSearchBool) {
-                for (let i = 0; i < rows.length; i++) {
-                    loglineText = rows[i][columnIndex].toLowerCase();
-                    let found = true;
-                    for (const term of searchTerms) {
-                        if (loglineText.indexOf(term) == -1) {
-                            found = false;
-                            break;
-                        }
+        }
+        else {
+            if (columnIndex === -1) {
+                if (!caseSearchBool) {
+                    for (let i = 0; i < rows.length; i++) {
+                        loglineText = rows[i].join(" ").toLowerCase();
+                        if (matchWholeString(loglineText, searchText))
+                            indices.push(i);
                     }
-                    if (found) indices.push(i);
+                } else {
+                    for (let i = 0; i < rows.length; i++) {
+                        loglineText = rows[i].join(" ");
+                        if (matchWholeString(loglineText, searchText))
+                            indices.push(i);
+                    }
                 }
             } else {
-                for (let i = 0; i < rows.length; i++) {
-                    loglineText = rows[i][columnIndex];
-                    let found = true;
-                    for (const term of searchTerms) {
-                        if (loglineText.indexOf(term) == -1) {
-                            found = false;
-                            break;
-                        }
+                if (!caseSearchBool) {
+                    for (let i = 0; i < rows.length; i++) {
+                        loglineText = rows[i][columnIndex].toLowerCase();
+                        if (matchWholeString(loglineText, searchText))
+                            indices.push(i);
                     }
-                    if (found) indices.push(i);
+                } else {
+                    for (let i = 0; i < rows.length; i++) {
+                        loglineText = rows[i][columnIndex];
+                        if (matchWholeString(loglineText, searchText))
+                            indices.push(i);
+                    }
                 }
             }
         }
@@ -104,34 +99,33 @@ export const returnSearchIndices = (
         if (!caseSearchBool) flags = "gsi";
         else flags = "gs";
         if (wholeSearchBool)
-            for (let i = 0; i < searchTerms.length; i++) searchTerms[i] = "\\b" + searchTerms[i] + "\\b";
+            searchText = "\\b" + searchText + "\\b";
         if (columnIndex === -1) {
             for (let i = 0; i < rows.length; i++) {
                 loglineText = rows[i].join(" ");
-                let found = true;
-                for (const term of searchTerms) {
-                    if (useRegularExpressionSearch(flags, term, loglineText) === false) {
-                        found = false;
-                        break;
-                    }
-                }
-                if (found) indices.push(i);
+                if (useRegularExpressionSearch(flags, searchText, loglineText) === false)
+                    indices.push(i);
             }
         } else {
             for (let i = 0; i < rows.length; i++) {
                 loglineText = rows[i][columnIndex]; //Lowercase?
-                let found = true;
-                for (const term of searchTerms) {
-                    if (useRegularExpressionSearch(flags, term, loglineText) === false) {
-                        found = false;
-                        break;
-                    }
-                }
-                if (found) indices.push(i);
+                if (useRegularExpressionSearch(flags, searchText, loglineText) === false)
+                    indices.push(i);
             }
         }
     }
     return indices;
+};
+
+export const useRegularExpressionSearch = (
+    flags: string,
+    expression: string,
+    text: string,
+): boolean => {
+    const structureQuery = new RegExp(expression, flags);
+    const result = structureQuery.exec(escapeSpecialChars(text));
+    if (result === null) return false;
+    else return true;
 };
 
 export const getRegularExpressionMatches = (
@@ -161,3 +155,17 @@ export const getRegularExpressionMatches = (
 
     return resultingMatches;
 };
+
+
+
+function matchWholeString(text: any, searchText: any) {
+    if (text.indexOf(' ' + searchText + ' ') != -1)
+        return true
+    else if (text.indexOf(searchText + ' ') == 0)
+        return true
+    else if (text.indexOf(' ' + searchText) == (text.length - (searchText.length + 1)))
+        return true
+    else if (text === searchText)
+        return true
+    return false
+}
