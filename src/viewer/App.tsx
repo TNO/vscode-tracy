@@ -435,18 +435,17 @@ export default class App extends React.Component<Props, State> {
 			this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
 	}
 
-	exportSearchResults() {
-		var exportData: Object[] = []
-		const searchIndices = this.state.rowProperties.flatMap((row, index) => row.isSearchResult ? index : [])
+	exportData(exportIndices: number[]) {
+		var exportObjects: Object[] = []
 		const originalColumns = this.state.logFile.headers;
-		for (var index of searchIndices) {
+		for (var index of exportIndices) {
 			var rowObject = {};
 			const row = this.state.logFile.rows[index]
 			for (var columnIndex = originalColumns.length-1; columnIndex >= 0; columnIndex--)
 				rowObject[originalColumns[columnIndex].name] = row[columnIndex];
-			exportData.push(rowObject)
+			exportObjects.push(rowObject)
 		}
-		this.vscode.postMessage({ type: "exportData", data: exportData });
+		this.vscode.postMessage({ type: "exportData", data: exportObjects });
 	}
 
 	render() {
@@ -479,16 +478,27 @@ export default class App extends React.Component<Props, State> {
 				>
 					<div style={{ display: "flex" }}>
 						<VSCodeButton
-							style={{ marginLeft: "5px", height: "25px", width: "150px" }}
+							style={{ marginLeft: "5px", height: "25px", width: "125px" }}
 							onClick={() => this.setState({ showSelectDialog: true })}
 						>
 							Choose Columns
 						</VSCodeButton>
 						<VSCodeButton
-							style={{ marginLeft: "5px", height: "25px", width: "150px" }}
-							onClick={() => this.exportSearchResults()}
+							style={{ marginLeft: "5px", height: "25px", width: "110px" }}
+							onClick={() => {
+								const exportIndices = this.state.rowProperties.flatMap((row, index) => row.isSearchResult ? index : []);
+								this.exportData(exportIndices);}
+							}
 						>
-							Export
+							Export Search
+						</VSCodeButton>
+						<VSCodeButton
+							style={{ marginLeft: "5px", height: "25px", width: "110px" }}
+							onClick={() => {
+								this.exportData(this.state.structureMatchesLogRows);}
+							}
+						>
+							Export Struct
 						</VSCodeButton>
 					</div>
 					<div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
