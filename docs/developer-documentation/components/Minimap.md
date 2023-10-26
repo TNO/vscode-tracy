@@ -1,6 +1,6 @@
 # Minimap View
 (Screenshot of component - Optional)
-
+![](../../figures/minimap.PNG)
 ---
 This component contains the colored map which visualizes the log contents according to the value in every cell.
 
