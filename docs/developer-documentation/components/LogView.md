@@ -18,14 +18,14 @@ This component contains the table that shows the content of the log. Each row sh
 | `onLogViewStateChanged` | `function` | A function to update logview state to the parent component |
 | `onSelectedRowsChanged` | `function` | A function to pass the selected row to the parent component when it is changed |
 | `onRowPropsChanged` | `function` | A function to pass the property of the row when it is changed |
-| `forwardRef` | `React.RefObject<HTMLDivElement>` | `A ref object for update the scrolling between log view and minimap` |
-| `coloredTable` | `boolean` | `boolean for switching the colored table On/Off` |
-| `rowProperties` | `RowProperty[]` | `A interface to keep all the row related properties` |
-| `currentStructureMatch` | `number[]` | `The current selected structure` |
-| `structureMatches` | `number[][]` | `All the matched structures` |
-| `structureMatchesLogRows` | `number[]` | `The row number of all the matched structures` |
-| `collapsibleRows` | `{ [key: number]: Segment }` | `A map for the segment annotation, the key is the number of row where the segment starts, the value is the interface Segment contains the start row, end row and the nested level` |
-| `clearSegmentation` | `function` | `A function to delete all the segmentations` |
+| `forwardRef` | `React.RefObject<HTMLDivElement>` | A ref object for update the scrolling between log view and minimap |
+| `coloredTable` | `boolean` | boolean for switching the colored table On/Off |
+| `rowProperties` | `RowProperty[]` | A interface to keep all the row related properties |
+| `currentStructureMatch` | `number[]` | The current selected structure |
+| `structureMatches` | `number[][]` | All the matched structures |
+| `structureMatchesLogRows` | `number[]` | The row number of all the matched structures |
+| `collapsibleRows` | `{ [key: number]: Segment }` | A map for the segment annotation, the key is the number of row where the segment starts, the value is the interface Segment contains the start row, end row and the nested level |
+| `clearSegmentation` | `function` | A function to delete all the segmentations |
 
 ## State
 
