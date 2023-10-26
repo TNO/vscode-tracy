@@ -67,10 +67,6 @@ div.resizable-content {
     vertical-align: middle;
 }
 
-.segment {
-    border: lpx;
-}
-
 div.vertical-line {
     width: 2px;
     /* Line width */
@@ -89,4 +85,16 @@ div.vertical-line {
     align-items: center;
     justify-content: center;
     height: 40px;
+    border-right: 1px solid var(--vscode-menu-foreground);
+    z-index: 1;
+}
+
+.box1 {
+    display: flex;
+    /* align-items: center;
+    justify-content: center; */
+    height: 28px;
+    border-right: 1px solid var(--vscode-menu-foreground);
+    background-color: var(--vscode-menu-background);
+    z-index: 1;
 }
