@@ -42,6 +42,7 @@ interface Props {
 	onNavigateStructureMatches: (isGoingForward: boolean) => void;
 	onMatchStructure: (expression: string) => void;
 	onDefineSegment: (entryExpression: string, exitExpression: string) => void;
+	onExportStructureMatches: () => void;
 }
 
 interface State {
@@ -608,6 +609,15 @@ export default class StructureDialog extends React.Component<Props, State> {
 							disabled={isRemovingStructureEntries}
 						>
 							Search for Structure
+						</VSCodeButton>
+						<VSCodeButton
+							className="structure-result-element"
+							onClick={() => {
+								this.props.onExportStructureMatches();
+							}}
+							disabled={this.props.numberOfMatches == 0}
+						>
+							Export Structures
 						</VSCodeButton>
 						{isStructureMatching && (
 							<>

@@ -490,15 +490,7 @@ export default class App extends React.Component<Props, State> {
 								this.exportData(exportIndices);}
 							}
 						>
-							Export Search
-						</VSCodeButton>
-						<VSCodeButton
-							style={{ marginLeft: "5px", height: "25px", width: "110px" }}
-							onClick={() => {
-								this.exportData(this.state.structureMatchesLogRows);}
-							}
-						>
-							Export Struct
+							Export
 						</VSCodeButton>
 					</div>
 					<div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
@@ -729,6 +721,7 @@ export default class App extends React.Component<Props, State> {
 							onNavigateStructureMatches={(isGoingForward) =>
 								this.handleNavigateStructureMatches(isGoingForward)
 							}
+							onExportStructureMatches={() => this.exportData(this.state.structureMatchesLogRows)}
 						/>
 					)}
 				</div>
