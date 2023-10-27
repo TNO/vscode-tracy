@@ -441,7 +441,7 @@ export default class App extends React.Component<Props, State> {
 		for (var index of exportIndices) {
 			var rowObject = {};
 			const row = this.state.logFile.rows[index]
-			for (var columnIndex = originalColumns.length-1; columnIndex >= 0; columnIndex--)
+			for (var columnIndex = 0; columnIndex <= originalColumns.length-1; columnIndex++)
 				rowObject[originalColumns[columnIndex].name] = row[columnIndex];
 			exportObjects.push(rowObject)
 		}
