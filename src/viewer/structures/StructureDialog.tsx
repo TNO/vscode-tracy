@@ -41,7 +41,7 @@ interface Props {
 	onStructureUpdate: () => void;
 	onNavigateStructureMatches: (isGoingForward: boolean) => void;
 	onMatchStructure: (expression: string) => void;
-	onDefineSegment: (entryExpression: string, exitExpression: string) => void;
+	onDefineSegment: (expression: string) => void;
 }
 
 interface State {
@@ -279,20 +279,14 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	defineSegment() {
-		// TODO: Add functionality with wildcard
-		const entryRegExp = useStructureQueryConstructor(
+		const segmentRegExp = useStructureQueryConstructor(
 			this.props.logHeaderColumns,
 			this.state.structureHeaderColumnsTypes,
-			this.state.structureEntries.slice(0, 1),
-			[],
+			this.state.structureEntries,
+			this.state.wildcards,
 		);
-		const exitRegExp = useStructureQueryConstructor(
-			this.props.logHeaderColumns,
-			this.state.structureHeaderColumnsTypes,
-			this.state.structureEntries.slice(-1),
-			[],
-		);
-		this.props.onDefineSegment(entryRegExp, exitRegExp);
+
+		this.props.onDefineSegment(segmentRegExp);
 	}
 
 	createWildcard() {
