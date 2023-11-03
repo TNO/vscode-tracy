@@ -50,7 +50,8 @@ interface State {
 	caseSearch: boolean;
 	filterSearch: boolean;
 	searchMatches: number[];
-	currentSearchMatchIndex: number;
+	currentSearchMatch: number | null;
+	currentSearchMatchIndex: number | null;
 
 	// Structure related
 	logFileAsString: string;
@@ -112,7 +113,8 @@ export default class App extends React.Component<Props, State> {
 			caseSearch: false,
 			filterSearch: false,
 			searchMatches: [],
-			currentSearchMatchIndex: -1,
+			currentSearchMatch: null,
+			currentSearchMatchIndex: null,
 			selectedLogRows: [],
 			rowProperties: [],
 			logEntryCharIndexMaps: null,
@@ -152,10 +154,10 @@ export default class App extends React.Component<Props, State> {
 				constructNewRowProperty(true, SelectedRowType.None),
 			);
 			this.setState({
+				rules,
 				logFile,
 				logFileAsString: logFileText,
 				logEntryCharIndexMaps: logEntryCharIndexMaps,
-				rules,
 				rowProperties: newRowsProps,
 			});
 		}
@@ -168,10 +170,13 @@ export default class App extends React.Component<Props, State> {
 
 	clearSearchField() {
 		searchText = "";
-		const newRowsProps = this.state.logFile.rows.map(() =>
-			constructNewRowProperty(true, SelectedRowType.None),
-		);
-		this.setState({ filterSearch: false, rowProperties: newRowsProps, searchMatches: [], currentSearchMatchIndex: -1 });
+		const newRowsProps = this.clearRowsTypes();
+		this.setState({ 
+			filterSearch: false, 
+			rowProperties: newRowsProps, 
+			searchMatches: [], 
+			currentSearchMatch: null,
+			currentSearchMatchIndex: null });
 	}
 
 	updateSearchMatches() {
@@ -192,6 +197,7 @@ export default class App extends React.Component<Props, State> {
 
 			this.setState({
 				searchMatches: filteredIndices,
+				currentSearchMatch: filteredIndices[0],
 				currentSearchMatchIndex: 0
 			});
 		}
@@ -213,7 +219,7 @@ export default class App extends React.Component<Props, State> {
 				else return constructNewRowProperty(false, SelectedRowType.None);
 			});
 		}
-		this.setState({rowProperties, filterSearch})
+		this.setState({ rowProperties, filterSearch })
 		return rowProperties;
 	}
 
@@ -221,7 +227,7 @@ export default class App extends React.Component<Props, State> {
 		const { searchMatches, currentSearchMatchIndex } = this.state;
 		let newCurrentSearchMatchIndex;
 
-		if (currentSearchMatchIndex !== -1) {
+		if (currentSearchMatchIndex !== null) {
 			if (isGoingForward) {
 				newCurrentSearchMatchIndex =
 					currentSearchMatchIndex < searchMatches.length - 1
@@ -236,6 +242,7 @@ export default class App extends React.Component<Props, State> {
 
 			this.setState({
 				currentSearchMatchIndex: newCurrentSearchMatchIndex,
+				currentSearchMatch: searchMatches[newCurrentSearchMatchIndex]
 			});
 		}
 	}
@@ -345,7 +352,7 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	clearSelectedRowsTypes(): RowProperty[] {
+	clearRowsTypes(): RowProperty[] {
 		const clearedSelectedRows = this.state.rowProperties.map(() =>
 			constructNewRowProperty(true, SelectedRowType.None),
 		);
@@ -353,7 +360,7 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	handleStructureUpdate(isClosing: boolean) {
-		const clearedSelectedRows = this.clearSelectedRowsTypes();
+		const clearedSelectedRows = this.clearRowsTypes();
 
 		this.setState({
 			showStructureDialog: !isClosing,
@@ -366,7 +373,7 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	handleStructureMatching(expression: string) {
-		const rowProperties = this.clearSelectedRowsTypes();
+		const rowProperties = this.clearRowsTypes();
 		const { logFileAsString, logEntryCharIndexMaps } = this.state;
 		let { currentStructureMatch, currentStructureMatchIndex } = this.state;
 
@@ -598,7 +605,7 @@ export default class App extends React.Component<Props, State> {
 							</Tooltip>
 						</VSCodeTextField>
 						{" "}
-						{this.state.currentSearchMatchIndex === -1
+						{this.state.currentSearchMatchIndex === null
 							? "No Results"
 							: `${this.state.currentSearchMatchIndex + 1} of ${this.state.searchMatches.length}`
 						}
@@ -687,6 +694,7 @@ export default class App extends React.Component<Props, State> {
 							structureMatches={this.state.structureMatches}
 							structureMatchesLogRows={this.state.structureMatchesLogRows}
 							currentStructureMatch={this.state.currentStructureMatch}
+							currentSearchMatch={this.state.currentSearchMatch}
 							onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
 							onRowPropsChanged={(index, isRendered) => this.handleRowCollapse(index, isRendered)}
 							collapsibleRows={this.state.collapsibleRows}

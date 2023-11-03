@@ -34,6 +34,7 @@ interface Props {
 	forwardRef: React.RefObject<HTMLDivElement>;
 	coloredTable: boolean;
 	rowProperties: RowProperty[];
+	currentSearchMatch: number | null;
 	currentStructureMatch: number[];
 	structureMatches: number[][];
 	structureMatchesLogRows: number[];
@@ -83,6 +84,9 @@ export default class LogView extends React.Component<Props, State> {
 		}
 		if (prevProps.currentStructureMatch[0] !== this.props.currentStructureMatch[0]) {
 			this.updateState(this.props.currentStructureMatch[0]);
+		}
+		if (prevProps.currentSearchMatch !== this.props.currentSearchMatch) {
+			this.updateState(this.props.currentSearchMatch);
 		}
 	}
 
@@ -297,16 +301,16 @@ export default class LogView extends React.Component<Props, State> {
 		}
 	}
 
-	updateState(currentStructureMatchFirstRow: StructureMatchId = null) {
+	updateState(currentMatchFirstRow: StructureMatchId = null) {
 		if (!this.viewport.current) return;
 		const height = this.viewport.current.clientHeight;
 		const maxVisibleItems = height / LOG_ROW_HEIGHT;
 		const visibleItems = Math.min(this.props.logFile.amountOfRows(), maxVisibleItems);
 		let scrollTop;
 
-		if (currentStructureMatchFirstRow !== null) {
-			if (currentStructureMatchFirstRow + visibleItems < this.props.logFile.amountOfRows()) {
-				scrollTop = currentStructureMatchFirstRow * LOG_ROW_HEIGHT;
+		if (currentMatchFirstRow !== null) {
+			if (currentMatchFirstRow + visibleItems < this.props.logFile.amountOfRows()) {
+				scrollTop = currentMatchFirstRow * LOG_ROW_HEIGHT;
 			} else {
 				scrollTop =
 					visibleItems < this.props.logFile.amountOfRows()
@@ -319,9 +323,9 @@ export default class LogView extends React.Component<Props, State> {
 
 		const scrollLeft = this.viewport.current.scrollLeft;
 		const start =
-			currentStructureMatchFirstRow !== null &&
-			currentStructureMatchFirstRow + maxVisibleItems < this.props.logFile.amountOfRows()
-				? currentStructureMatchFirstRow
+			currentMatchFirstRow !== null &&
+				currentMatchFirstRow + maxVisibleItems < this.props.logFile.amountOfRows()
+				? currentMatchFirstRow
 				: scrollTop / LOG_ROW_HEIGHT;
 		const startFloor = Math.floor(start);
 		const endCeil = Math.min(
@@ -339,7 +343,7 @@ export default class LogView extends React.Component<Props, State> {
 			rowHeight: LOG_ROW_HEIGHT,
 		};
 
-		if (currentStructureMatchFirstRow !== null) {
+		if (currentMatchFirstRow !== null) {
 			this.viewport.current.scrollTop = scrollTop;
 		}
 
@@ -387,8 +391,8 @@ export default class LogView extends React.Component<Props, State> {
 		return visibleRows.length;
 	}
 
-	deleteSegmentAnnotations(){
-		this.setState({collapsed : []});
+	deleteSegmentAnnotations() {
+		this.setState({ collapsed: [] });
 		this.props.clearSegmentation();
 	}
 
@@ -404,9 +408,9 @@ export default class LogView extends React.Component<Props, State> {
 			<div style={HEADER_STYLE} className="header-background">
 				<div style={style}>
 					<div style={getSegmentStyle(segmentWidth, LOG_HEADER_HEIGHT)}>
-						{Object.keys(this.props.collapsibleRows).length > 0 && 
-						<div className="box">
-							<Tooltip
+						{Object.keys(this.props.collapsibleRows).length > 0 &&
+							<div className="box">
+								<Tooltip
 									title={<h3>Delete all the segment annotations</h3>}
 									placement="bottom"
 									arrow
@@ -414,12 +418,12 @@ export default class LogView extends React.Component<Props, State> {
 									<VSCodeButton
 										appearance="icon"
 										key={"delete"}
-										onClick={() => {this.deleteSegmentAnnotations()}}
+										onClick={() => { this.deleteSegmentAnnotations() }}
 									>
 										<i className="codicon codicon-close" />
 									</VSCodeButton>
-							</Tooltip>
-						</div>}
+								</Tooltip>
+							</div>}
 					</div>
 					{this.props.logFile
 						.getSelectedHeader()
@@ -450,7 +454,7 @@ export default class LogView extends React.Component<Props, State> {
 	render() {
 		const selection = getSelection();
 
-		if(selection !== null){
+		if (selection !== null) {
 			// empty unwanted text selection resulting from Shift-click
 			selection.empty();
 		}
@@ -462,7 +466,7 @@ export default class LogView extends React.Component<Props, State> {
 			logFile.headers.reduce(
 				(partialSum: number, h) => partialSum + this.state.columnWidth[h.name],
 				0,
-			) + (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE : 
+			) + (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE :
 			logFile.amountOfColumns() * BORDER_SIZE +
 			logFile.headers.reduce(
 				(partialSum: number, h) => partialSum + this.state.columnWidth[h.name],
