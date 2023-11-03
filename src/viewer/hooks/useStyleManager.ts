@@ -11,6 +11,7 @@ import {
 	BACKGROUND_COLOR_MATCHED_ROW_CURRENT,
 	BACKGROUND_COLOR_MATCHED_ROW_OTHER,
 	BACKGROUND_COLOR_SELECTED_ROW,
+	BACKGROUND_COLOR_SEARCH_ROW,
 } from "../constants";
 import { RowProperty, StructureEntry } from "../types";
 
@@ -225,6 +226,11 @@ export const getLogViewRowSelectionStyle = (
 				backgroundColor: BACKGROUND_COLOR_SELECTED_ROW,
 			};
 			break;
+			case SelectedRowType.SearchResult:
+				rowSelectionStyle = {
+					backgroundColor: BACKGROUND_COLOR_SEARCH_ROW,
+				};
+				break;
 		case SelectedRowType.None:
 			rowSelectionStyle = {
 				borderBottom: BORDER,

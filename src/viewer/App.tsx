@@ -43,9 +43,13 @@ interface State {
 	selectedColumns: boolean[];
 	selectedColumnsMini: boolean[];
 	coloredTable: boolean;
+
+	// Search related
 	reSearch: boolean;
 	wholeSearch: boolean;
 	caseSearch: boolean;
+	searchMatches: number[];
+	currentSearchMatchIndex: number;
 
 	// Structure related
 	logFileAsString: string;
@@ -89,7 +93,7 @@ export default class App extends React.Component<Props, State> {
 	child = React.createRef<HTMLDivElement>();
 	constructor(props: Props) {
 		super(props);
-		this.filterLog = this.filterLog.bind(this);
+		this.searchLog = this.searchLog.bind(this);
 		this.state = {
 			logFile: LogFile.create([], []),
 			logFileAsString: "",
@@ -105,6 +109,8 @@ export default class App extends React.Component<Props, State> {
 			reSearch: false,
 			wholeSearch: false,
 			caseSearch: false,
+			searchMatches: [1, 6],
+			currentSearchMatchIndex: -1,
 			selectedLogRows: [],
 			rowProperties: [],
 			logEntryCharIndexMaps: null,
@@ -141,7 +147,7 @@ export default class App extends React.Component<Props, State> {
 			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
 			const logFile = LogFile.create(lines, rules);
 			const newRowsProps = logFile.rows.map(() =>
-				constructNewRowProperty(true, true, SelectedRowType.None),
+				constructNewRowProperty(true, SelectedRowType.None),
 			);
 			this.setState({
 				logFile,
@@ -156,21 +162,18 @@ export default class App extends React.Component<Props, State> {
 	clearSearch() {
 		searchText = "";
 		const newRowsProps = this.state.logFile.rows.map(() =>
-			constructNewRowProperty(true, true, SelectedRowType.None),
+			constructNewRowProperty(true, SelectedRowType.None),
 		);
 		this.setState({ rowProperties: newRowsProps });
 	}
 
-	filterLog() {
+	searchLog() {
 		if (searchText === "")
 			this.clearSearch();
 		else {
-			const rules = this.state.rules;
-			const logFile = this.state.logFile;
-			const logFileText = this.state.logFileAsString;
 			const colIndex = this.state.logFile.headers.findIndex((h) => h.name === searchColumn);
 			const filteredIndices = returnSearchIndices(
-				logFile.rows,
+				this.state.logFile.rows,
 				colIndex,
 				searchText,
 				this.state.reSearch,
@@ -180,23 +183,44 @@ export default class App extends React.Component<Props, State> {
 
 			const newRowsProps = this.state.logFile.rows.map((row, index) => {
 				if (filteredIndices.includes(index))
-					return constructNewRowProperty(true, true, SelectedRowType.None);
-				else return constructNewRowProperty(false, false, SelectedRowType.None);
+					return constructNewRowProperty(true, SelectedRowType.SearchResult);
+				else return constructNewRowProperty(true, SelectedRowType.None);
 			});
-			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
+
 			this.setState({
-				logFile,
-				logFileAsString: logFileText,
-				logEntryCharIndexMaps: logEntryCharIndexMaps,
-				rules,
 				rowProperties: newRowsProps,
+				searchMatches: filteredIndices,
+				currentSearchMatchIndex: 0
 			});
 		}
 	}
 
-	searchCommand() {
+	searchKeyPress() {
 		clearTimeout(searchTimeoutId);
-		searchTimeoutId = setTimeout(this.filterLog, 1000);
+		searchTimeoutId = setTimeout(this.searchLog, 1000);
+	}
+
+	handleNavigateSearchMatches(isGoingForward: boolean) {
+		const { searchMatches, currentSearchMatchIndex } = this.state;
+		let newCurrentSearchMatchIndex;
+
+		if (currentSearchMatchIndex !== -1) {
+			if (isGoingForward) {
+				newCurrentSearchMatchIndex =
+					currentSearchMatchIndex < searchMatches.length - 1
+						? currentSearchMatchIndex + 1
+						: 0;
+			} else {
+				newCurrentSearchMatchIndex =
+					currentSearchMatchIndex > 0
+						? currentSearchMatchIndex - 1
+						: searchMatches.length - 1;
+			}
+
+			this.setState({
+				currentSearchMatchIndex: newCurrentSearchMatchIndex,
+			});
+		}
 	}
 
 	handleAnnotationDialog(newRules: Rule[], isClose: boolean) {
@@ -267,6 +291,15 @@ export default class App extends React.Component<Props, State> {
 		this.setState({ rowProperties: newRowProps });
 	}
 
+	handleRowSelect(rowProperties: RowProperty[], rowIndex: number) {
+		if (rowProperties[rowIndex].rowType !== SelectedRowType.UserSelect)
+			return SelectedRowType.UserSelect;
+		else if (this.state.searchMatches.includes(rowIndex))
+			return SelectedRowType.SearchResult;
+		else
+			return SelectedRowType.None;
+	}
+
 	handleSelectedLogRow(rowIndex: number, event: React.MouseEvent) {
 		if (event.ctrlKey) {
 			const newRowProps = this.state.rowProperties;
@@ -277,26 +310,17 @@ export default class App extends React.Component<Props, State> {
 					// Shift click higher in the event log
 					if (lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
 						for (let i = lastSelectedRow + 1; i < rowIndex + 1; i++) {
-							newRowProps[i].rowType =
-								newRowProps[i].rowType === SelectedRowType.None
-									? SelectedRowType.UserSelect
-									: SelectedRowType.None;
+							newRowProps[i].rowType = this.handleRowSelect(newRowProps, rowIndex);
 						}
 					}
 					// Shift click lower in the event log
 					else if (lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
 						for (let i = rowIndex; i < lastSelectedRow + 1; i++) {
-							newRowProps[i].rowType =
-								newRowProps[i].rowType === SelectedRowType.None
-									? SelectedRowType.UserSelect
-									: SelectedRowType.None;
+							newRowProps[i].rowType = this.handleRowSelect(newRowProps, rowIndex);								
 						}
 					}
 				} else {
-					newRowProps[rowIndex].rowType =
-						newRowProps[rowIndex].rowType === SelectedRowType.None
-							? SelectedRowType.UserSelect
-							: SelectedRowType.None;
+					newRowProps[rowIndex].rowType = this.handleRowSelect(newRowProps, rowIndex);
 				}
 
 				this.setState({ rowProperties: newRowProps, lastSelectedRow: rowIndex });
@@ -306,7 +330,7 @@ export default class App extends React.Component<Props, State> {
 
 	clearSelectedRowsTypes(): RowProperty[] {
 		const clearedSelectedRows = this.state.rowProperties.map(() =>
-			constructNewRowProperty(true, true, SelectedRowType.None),
+			constructNewRowProperty(true, SelectedRowType.None),
 		);
 		return clearedSelectedRows;
 	}
@@ -495,7 +519,7 @@ export default class App extends React.Component<Props, State> {
 							style={{ marginRight: "5px" }}
 							placeholder="Search Text"
 							value={searchText}
-							onInput={(e) => {searchText = e.target.value; this.searchCommand();}}
+							onInput={(e) => { searchText = e.target.value; this.searchKeyPress(); }}
 							autofocus
 						>
 							<Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
@@ -546,6 +570,29 @@ export default class App extends React.Component<Props, State> {
 								></span>
 							</Tooltip>
 						</VSCodeTextField>
+						{" "}
+						{this.state.currentSearchMatchIndex === -1
+							? 0
+							: this.state.currentSearchMatchIndex! + 1}{" "}
+						of {this.state.searchMatches.length}
+						{this.state.searchMatches.length > 1 && (
+							<>
+								<VSCodeButton
+									className="structure-result-element"
+									appearance="icon"
+									onClick={() => this.handleNavigateSearchMatches(false)}
+								>
+									<i className="codicon codicon-chevron-up" />
+								</VSCodeButton>
+								<VSCodeButton
+									className="structure-result-element"
+									appearance="icon"
+									onClick={() => this.handleNavigateSearchMatches(true)}
+								>
+									<i className="codicon codicon-chevron-down" />
+								</VSCodeButton>
+							</>
+						)}
 						{this.state.showMinimapHeader && (
 							<VSCodeButton
 								appearance="icon"

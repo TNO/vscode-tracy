@@ -4,6 +4,8 @@ const RGB_TURQUOISE = "69, 205, 191";
 
 const RGB_OFFICE_GREEN = "0, 100, 0";
 
+const RGB_OFF_ORANGE = "244, 157, 71";
+
 export const MINIMAP_COLUMN_WIDTH = 15;
 
 export const LOG_HEADER_HEIGHT = 40;
@@ -23,6 +25,8 @@ export const BORDER = `${BORDER_SIZE}px solid grey`;
 export const BORDER_SELECTED_ROW = `${SELECTED_ROW_BORDER_SIZE}px solid rgb(${RGB_TURQUOISE})`;
 
 export const BACKGROUND_COLOR_SELECTED_ROW = `rgba(${RGB_TURQUOISE}, 0.5)`;
+
+export const BACKGROUND_COLOR_SEARCH_ROW = `rgba(${RGB_OFF_ORANGE}, 0.5)`;
 
 export const BORDER_STRUCTURE_MATCH_CURRENT = `${STRUCUTURE_MATCH_BORDER_SIZE}px solid rgb(${RGB_LIME_GREEN})`;
 
@@ -73,4 +77,5 @@ export enum SelectedRowType {
 	None = "NONE",
 	UserSelect = "SELECTED",
 	QueryResult = "QUERY_RESULT",
+	SearchResult = "SEARCH_RESULT"
 }
