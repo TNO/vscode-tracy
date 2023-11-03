@@ -80,6 +80,7 @@ const COLUMN_2_HEADER_STYLE = {
 
 let searchText = "";
 let searchColumn = "All";
+let searchTimeoutId;
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
@@ -88,6 +89,7 @@ export default class App extends React.Component<Props, State> {
 	child = React.createRef<HTMLDivElement>();
 	constructor(props: Props) {
 		super(props);
+		this.filterLog = this.filterLog.bind(this);
 		this.state = {
 			logFile: LogFile.create([], []),
 			logFileAsString: "",
@@ -151,49 +153,50 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	filterLog(action: any) {
-		let newRowsProps;
-		if (action === "Clear") {
-			searchText = "";
-			newRowsProps = this.state.logFile.rows.map(() =>
-				constructNewRowProperty(true, true, SelectedRowType.None),
-			);
-			this.setState({ rowProperties: newRowsProps });
-		} else if (action === "Enter") {
-			if (searchText === "") {
-				newRowsProps = this.state.logFile.rows.map(() =>
-					constructNewRowProperty(true, true, SelectedRowType.None),
-				);
-				this.setState({ rowProperties: newRowsProps });
-			} else {
-				const rules = this.state.rules;
-				const logFile = this.state.logFile;
-				const logFileText = this.state.logFileAsString;
-				const colIndex = this.state.logFile.headers.findIndex((h) => h.name === searchColumn);
-				const filteredIndices = returnSearchIndices(
-					logFile.rows,
-					colIndex,
-					searchText,
-					this.state.reSearch,
-					this.state.wholeSearch,
-					this.state.caseSearch,
-				);
+	clearSearch() {
+		searchText = "";
+		const newRowsProps = this.state.logFile.rows.map(() =>
+			constructNewRowProperty(true, true, SelectedRowType.None),
+		);
+		this.setState({ rowProperties: newRowsProps });
+	}
 
-				newRowsProps = this.state.logFile.rows.map((row, index) => {
-					if (filteredIndices.includes(index))
-						return constructNewRowProperty(true, true, SelectedRowType.None);
-					else return constructNewRowProperty(false, false, SelectedRowType.None);
-				});
-				const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
-				this.setState({
-					logFile,
-					logFileAsString: logFileText,
-					logEntryCharIndexMaps: logEntryCharIndexMaps,
-					rules,
-					rowProperties: newRowsProps,
-				});
-			}
+	filterLog() {
+		if (searchText === "")
+			this.clearSearch();
+		else {
+			const rules = this.state.rules;
+			const logFile = this.state.logFile;
+			const logFileText = this.state.logFileAsString;
+			const colIndex = this.state.logFile.headers.findIndex((h) => h.name === searchColumn);
+			const filteredIndices = returnSearchIndices(
+				logFile.rows,
+				colIndex,
+				searchText,
+				this.state.reSearch,
+				this.state.wholeSearch,
+				this.state.caseSearch,
+			);
+
+			const newRowsProps = this.state.logFile.rows.map((row, index) => {
+				if (filteredIndices.includes(index))
+					return constructNewRowProperty(true, true, SelectedRowType.None);
+				else return constructNewRowProperty(false, false, SelectedRowType.None);
+			});
+			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
+			this.setState({
+				logFile,
+				logFileAsString: logFileText,
+				logEntryCharIndexMaps: logEntryCharIndexMaps,
+				rules,
+				rowProperties: newRowsProps,
+			});
 		}
+	}
+
+	searchCommand() {
+		clearTimeout(searchTimeoutId);
+		searchTimeoutId = setTimeout(this.filterLog, 1000);
 	}
 
 	handleAnnotationDialog(newRules: Rule[], isClose: boolean) {
@@ -422,7 +425,7 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	clearSegmentation() {
-		this.setState({ collapsibleRows : {} });
+		this.setState({ collapsibleRows: {} });
 	}
 
 	switchBooleanState(name: string) {
@@ -477,6 +480,7 @@ export default class App extends React.Component<Props, State> {
 					</div>
 					<div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
 						<VSCodeDropdown
+							key="searchDropdown"
 							style={{ marginRight: "5px" }}
 							onChange={(e) => (searchColumn = e.target.value)}
 						>
@@ -487,11 +491,12 @@ export default class App extends React.Component<Props, State> {
 							))}
 						</VSCodeDropdown>
 						<VSCodeTextField
+							key="searchTextField"
 							style={{ marginRight: "5px" }}
 							placeholder="Search Text"
 							value={searchText}
-							onInput={(e) => (searchText = e.target.value)}
-							onKeyUp={(e) => this.filterLog(e.key)}
+							onInput={(e) => {searchText = e.target.value; this.searchCommand();}}
+							autofocus
 						>
 							<Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
 								<span
@@ -537,7 +542,7 @@ export default class App extends React.Component<Props, State> {
 									slot="end"
 									style={{ cursor: "pointer" }}
 									className="codicon codicon-close"
-									onClick={() => this.filterLog("Clear")}
+									onClick={() => this.clearSearch()}
 								></span>
 							</Tooltip>
 						</VSCodeTextField>
