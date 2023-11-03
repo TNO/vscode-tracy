@@ -479,9 +479,9 @@ export default class StructureDialog extends React.Component<Props, State> {
 			},
 		});
 
-        const selection = getSelection();
+		const selection = getSelection();
 
-		if(selection !== null){
+		if (selection !== null) {
 			// empty unwanted text selection resulting from Shift-click
 			selection.empty();
 		}

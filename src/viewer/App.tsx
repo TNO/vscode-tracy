@@ -171,12 +171,13 @@ export default class App extends React.Component<Props, State> {
 	clearSearchField() {
 		searchText = "";
 		const newRowsProps = this.clearRowsTypes();
-		this.setState({ 
-			filterSearch: false, 
-			rowProperties: newRowsProps, 
-			searchMatches: [], 
+		this.setState({
+			filterSearch: false,
+			rowProperties: newRowsProps,
+			searchMatches: [],
 			currentSearchMatch: null,
-			currentSearchMatchIndex: null });
+			currentSearchMatchIndex: null
+		});
 	}
 
 	updateSearchMatches() {
@@ -221,30 +222,6 @@ export default class App extends React.Component<Props, State> {
 		}
 		this.setState({ rowProperties, filterSearch })
 		return rowProperties;
-	}
-
-	handleNavigateSearchMatches(isGoingForward: boolean) {
-		const { searchMatches, currentSearchMatchIndex } = this.state;
-		let newCurrentSearchMatchIndex;
-
-		if (currentSearchMatchIndex !== null) {
-			if (isGoingForward) {
-				newCurrentSearchMatchIndex =
-					currentSearchMatchIndex < searchMatches.length - 1
-						? currentSearchMatchIndex + 1
-						: 0;
-			} else {
-				newCurrentSearchMatchIndex =
-					currentSearchMatchIndex > 0
-						? currentSearchMatchIndex - 1
-						: searchMatches.length - 1;
-			}
-
-			this.setState({
-				currentSearchMatchIndex: newCurrentSearchMatchIndex,
-				currentSearchMatch: searchMatches[newCurrentSearchMatchIndex]
-			});
-		}
 	}
 
 	handleAnnotationDialog(newRules: Rule[], isClose: boolean) {
@@ -405,30 +382,42 @@ export default class App extends React.Component<Props, State> {
 		});
 	}
 
-	handleNavigateStructureMatches(isGoingForward: boolean) {
-		const { currentStructureMatch, currentStructureMatchIndex, structureMatches } = this.state;
-		let newCurrentStructureMatch = [...currentStructureMatch];
-		let newCurrentStructureMatchIndex;
+	handleNavigation(isGoingForward: boolean, isStructureMatching: boolean) {
+		let matches, currentMatchIndex;
+		if (!isStructureMatching) {
+			matches = this.state.searchMatches;
+			currentMatchIndex = this.state.currentSearchMatchIndex;
+		}
+		else {
+			matches = this.state.structureMatches;
+			currentMatchIndex = this.state.currentStructureMatchIndex;
+		}
 
-		if (currentStructureMatchIndex !== null) {
+		if (currentMatchIndex !== null) {
 			if (isGoingForward) {
-				newCurrentStructureMatchIndex =
-					currentStructureMatchIndex < structureMatches.length - 1
-						? currentStructureMatchIndex + 1
+				currentMatchIndex =
+					currentMatchIndex < matches.length - 1
+						? currentMatchIndex + 1
 						: 0;
 			} else {
-				newCurrentStructureMatchIndex =
-					currentStructureMatchIndex > 0
-						? currentStructureMatchIndex - 1
-						: structureMatches.length - 1;
+				currentMatchIndex =
+					currentMatchIndex > 0
+						? currentMatchIndex - 1
+						: matches.length - 1;
 			}
 
-			newCurrentStructureMatch = structureMatches[newCurrentStructureMatchIndex];
-
-			this.setState({
-				currentStructureMatch: newCurrentStructureMatch,
-				currentStructureMatchIndex: newCurrentStructureMatchIndex,
-			});
+			if (!isStructureMatching) {
+				this.setState({
+					currentSearchMatchIndex: currentMatchIndex,
+					currentSearchMatch: matches[currentMatchIndex]
+				});
+			}
+			else {
+				this.setState({
+					currentStructureMatch: matches[currentMatchIndex],
+					currentStructureMatchIndex: currentMatchIndex,
+				});
+			}
 		}
 	}
 
@@ -613,7 +602,7 @@ export default class App extends React.Component<Props, State> {
 							className="structure-result-element"
 							appearance="icon"
 							disabled={this.state.searchMatches.length < 2}
-							onClick={() => this.handleNavigateSearchMatches(false)}
+							onClick={() => this.handleNavigation(false, false)}
 						>
 							<i className="codicon codicon-chevron-up" />
 						</VSCodeButton>
@@ -621,7 +610,7 @@ export default class App extends React.Component<Props, State> {
 							className="structure-result-element"
 							appearance="icon"
 							disabled={this.state.searchMatches.length < 2}
-							onClick={() => this.handleNavigateSearchMatches(true)}
+							onClick={() => this.handleNavigation(true, false)}
 						>
 							<i className="codicon codicon-chevron-down" />
 						</VSCodeButton>
@@ -806,7 +795,7 @@ export default class App extends React.Component<Props, State> {
 								this.handleSegmentation(entryExpression, exitExpression)
 							}
 							onNavigateStructureMatches={(isGoingForward) =>
-								this.handleNavigateStructureMatches(isGoingForward)
+								this.handleNavigation(isGoingForward, true)
 							}
 						/>
 					)}
