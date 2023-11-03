@@ -150,7 +150,7 @@ export default class LogView extends React.Component<Props, State> {
 		const maxLevel = Math.min(4, getSegmentMaxLevel(collapsibleRows));
 		const segmentWidth: number = (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE;
 		for (let r = firstRender; counter <= lastRender; r++) {
-			if (rowProperties[r].isSearchResult && rowProperties[r].isRendered) {
+			if (rowProperties[r].isRendered) {
 				let rowStyle;
 
 				if (structureMatchesLogRows.includes(r)) {
