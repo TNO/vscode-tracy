@@ -109,7 +109,7 @@ export default class App extends React.Component<Props, State> {
 			reSearch: false,
 			wholeSearch: false,
 			caseSearch: false,
-			searchMatches: [1, 6],
+			searchMatches: [],
 			currentSearchMatchIndex: -1,
 			selectedLogRows: [],
 			rowProperties: [],
@@ -164,7 +164,7 @@ export default class App extends React.Component<Props, State> {
 		const newRowsProps = this.state.logFile.rows.map(() =>
 			constructNewRowProperty(true, SelectedRowType.None),
 		);
-		this.setState({ rowProperties: newRowsProps });
+		this.setState({ rowProperties: newRowsProps, searchMatches: [], currentSearchMatchIndex: -1 });
 	}
 
 	searchLog() {
@@ -316,7 +316,7 @@ export default class App extends React.Component<Props, State> {
 					// Shift click lower in the event log
 					else if (lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
 						for (let i = rowIndex; i < lastSelectedRow + 1; i++) {
-							newRowProps[i].rowType = this.handleRowSelect(newRowProps, rowIndex);								
+							newRowProps[i].rowType = this.handleRowSelect(newRowProps, rowIndex);
 						}
 					}
 				} else {
@@ -572,27 +572,33 @@ export default class App extends React.Component<Props, State> {
 						</VSCodeTextField>
 						{" "}
 						{this.state.currentSearchMatchIndex === -1
-							? 0
-							: this.state.currentSearchMatchIndex! + 1}{" "}
-						of {this.state.searchMatches.length}
-						{this.state.searchMatches.length > 1 && (
-							<>
-								<VSCodeButton
-									className="structure-result-element"
-									appearance="icon"
-									onClick={() => this.handleNavigateSearchMatches(false)}
-								>
-									<i className="codicon codicon-chevron-up" />
-								</VSCodeButton>
-								<VSCodeButton
-									className="structure-result-element"
-									appearance="icon"
-									onClick={() => this.handleNavigateSearchMatches(true)}
-								>
-									<i className="codicon codicon-chevron-down" />
-								</VSCodeButton>
-							</>
-						)}
+							? "No Results"
+							: `${this.state.currentSearchMatchIndex + 1} of ${this.state.searchMatches.length}`
+						}
+						<VSCodeButton
+							className="structure-result-element"
+							appearance="icon"
+							disabled={this.state.searchMatches.length < 2}
+							onClick={() => this.handleNavigateSearchMatches(false)}
+						>
+							<i className="codicon codicon-chevron-up" />
+						</VSCodeButton>
+						<VSCodeButton
+							className="structure-result-element"
+							appearance="icon"
+							disabled={this.state.searchMatches.length < 2}
+							onClick={() => this.handleNavigateSearchMatches(true)}
+						>
+							<i className="codicon codicon-chevron-down" />
+						</VSCodeButton>
+						<VSCodeButton
+							className="structure-result-element"
+							appearance="icon"
+							disabled={this.state.searchMatches.length < 1}
+							onClick={() => this.filterSearchMatches(true)}
+						>
+							<i className="codicon codicon-filter" />
+						</VSCodeButton>
 						{this.state.showMinimapHeader && (
 							<VSCodeButton
 								appearance="icon"
