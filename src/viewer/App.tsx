@@ -48,6 +48,7 @@ interface State {
 	reSearch: boolean;
 	wholeSearch: boolean;
 	caseSearch: boolean;
+	filterSearch: boolean;
 	searchMatches: number[];
 	currentSearchMatchIndex: number;
 
@@ -93,7 +94,7 @@ export default class App extends React.Component<Props, State> {
 	child = React.createRef<HTMLDivElement>();
 	constructor(props: Props) {
 		super(props);
-		this.searchLog = this.searchLog.bind(this);
+		this.updateSearchMatches = this.updateSearchMatches.bind(this);
 		this.state = {
 			logFile: LogFile.create([], []),
 			logFileAsString: "",
@@ -109,6 +110,7 @@ export default class App extends React.Component<Props, State> {
 			reSearch: false,
 			wholeSearch: false,
 			caseSearch: false,
+			filterSearch: false,
 			searchMatches: [],
 			currentSearchMatchIndex: -1,
 			selectedLogRows: [],
@@ -159,17 +161,22 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	clearSearch() {
+	updateSearchField() {
+		clearTimeout(searchTimeoutId);
+		searchTimeoutId = setTimeout(this.updateSearchMatches, 1000);
+	}
+
+	clearSearchField() {
 		searchText = "";
 		const newRowsProps = this.state.logFile.rows.map(() =>
 			constructNewRowProperty(true, SelectedRowType.None),
 		);
-		this.setState({ rowProperties: newRowsProps, searchMatches: [], currentSearchMatchIndex: -1 });
+		this.setState({ filterSearch: false, rowProperties: newRowsProps, searchMatches: [], currentSearchMatchIndex: -1 });
 	}
 
-	searchLog() {
+	updateSearchMatches() {
 		if (searchText === "")
-			this.clearSearch();
+			this.clearSearchField();
 		else {
 			const colIndex = this.state.logFile.headers.findIndex((h) => h.name === searchColumn);
 			const filteredIndices = returnSearchIndices(
@@ -181,23 +188,33 @@ export default class App extends React.Component<Props, State> {
 				this.state.caseSearch,
 			);
 
-			const newRowsProps = this.state.logFile.rows.map((row, index) => {
-				if (filteredIndices.includes(index))
-					return constructNewRowProperty(true, SelectedRowType.SearchResult);
-				else return constructNewRowProperty(true, SelectedRowType.None);
-			});
+			this.updateVisibleSearchMatches(filteredIndices, this.state.filterSearch);
 
 			this.setState({
-				rowProperties: newRowsProps,
 				searchMatches: filteredIndices,
 				currentSearchMatchIndex: 0
 			});
 		}
 	}
 
-	searchKeyPress() {
-		clearTimeout(searchTimeoutId);
-		searchTimeoutId = setTimeout(this.searchLog, 1000);
+	updateVisibleSearchMatches(searchMatches: number[], filterSearch: boolean) {
+		let rowProperties;
+		if (!filterSearch) {
+			rowProperties = this.state.logFile.rows.map((row, index) => {
+				if (searchMatches.includes(index))
+					return constructNewRowProperty(true, SelectedRowType.SearchResult);
+				else return constructNewRowProperty(true, SelectedRowType.None);
+			});
+		}
+		else {
+			rowProperties = this.state.logFile.rows.map((row, index) => {
+				if (searchMatches.includes(index))
+					return constructNewRowProperty(true, SelectedRowType.SearchResult);
+				else return constructNewRowProperty(false, SelectedRowType.None);
+			});
+		}
+		this.setState({rowProperties, filterSearch})
+		return rowProperties;
 	}
 
 	handleNavigateSearchMatches(isGoingForward: boolean) {
@@ -453,13 +470,23 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	switchBooleanState(name: string) {
-		if (name === "coloredTable")
-			this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
-		else if (name === "reSearch") this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
-		else if (name === "wholeSearch")
-			this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
-		else if (name === "caseSearch")
-			this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
+		switch (name) {
+			case "coloredTable":
+				this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
+				break;
+			case "reSearch":
+				this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
+				break;
+			case "wholeSearch":
+				this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
+				break;
+			case "caseSearch":
+				this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
+				break;
+			case "filterSearch":
+				this.setState(({ filterSearch }) => ({ filterSearch: !filterSearch }));
+				break;
+		}
 	}
 
 	render() {
@@ -519,7 +546,7 @@ export default class App extends React.Component<Props, State> {
 							style={{ marginRight: "5px" }}
 							placeholder="Search Text"
 							value={searchText}
-							onInput={(e) => { searchText = e.target.value; this.searchKeyPress(); }}
+							onInput={(e) => { searchText = e.target.value; this.updateSearchField(); }}
 							autofocus
 						>
 							<Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
@@ -566,7 +593,7 @@ export default class App extends React.Component<Props, State> {
 									slot="end"
 									style={{ cursor: "pointer" }}
 									className="codicon codicon-close"
-									onClick={() => this.clearSearch()}
+									onClick={() => this.clearSearchField()}
 								></span>
 							</Tooltip>
 						</VSCodeTextField>
@@ -591,14 +618,26 @@ export default class App extends React.Component<Props, State> {
 						>
 							<i className="codicon codicon-chevron-down" />
 						</VSCodeButton>
-						<VSCodeButton
-							className="structure-result-element"
-							appearance="icon"
-							disabled={this.state.searchMatches.length < 1}
-							onClick={() => this.filterSearchMatches(true)}
-						>
-							<i className="codicon codicon-filter" />
-						</VSCodeButton>
+						{this.state.filterSearch && (
+							<VSCodeButton
+								className="structure-result-element"
+								appearance="icon"
+								disabled={this.state.searchMatches.length < 1}
+								onClick={() => { this.updateVisibleSearchMatches(this.state.searchMatches, false); }}
+							>
+								<i className="codicon codicon-filter-filled" />
+							</VSCodeButton>
+						)}
+						{!this.state.filterSearch && (
+							<VSCodeButton
+								className="structure-result-element"
+								appearance="icon"
+								disabled={this.state.searchMatches.length < 1}
+								onClick={() => { this.updateVisibleSearchMatches(this.state.searchMatches, true); }}
+							>
+								<i className="codicon codicon-filter" />
+							</VSCodeButton>
+						)}
 						{this.state.showMinimapHeader && (
 							<VSCodeButton
 								appearance="icon"
