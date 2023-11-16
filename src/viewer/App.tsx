@@ -5,9 +5,9 @@ import MinimapView from "./minimap/MinimapView";
 import Tooltip from "@mui/material/Tooltip";
 import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps } from "./types";
 import {
-	LOG_HEADER_HEIGHT,
+	COLUMN_0_HEADER_STYLE,
+	COLUMN_2_HEADER_STYLE,
 	MINIMAP_COLUMN_WIDTH,
-	BORDER,
 	SelectedRowType,
 	StructureHeaderColumnType,
 } from "./constants";
@@ -69,20 +69,6 @@ interface State {
 	collapsibleRows: { [key: number]: Segment };
 }
 
-const COLUMN_0_HEADER_STYLE = {
-	height: LOG_HEADER_HEIGHT,
-	display: "flex",
-	justifyContent: "center",
-	alignItems: "center",
-	borderLeft: BORDER,
-	borderBottom: BORDER,
-};
-
-const COLUMN_2_HEADER_STYLE = {
-	height: "100%",
-	display: "flex",
-	borderLeft: BORDER,
-};
 
 let searchText = "";
 let searchColumn = "All";

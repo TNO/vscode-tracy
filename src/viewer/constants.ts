@@ -48,6 +48,21 @@ export const RGB_ANNOTATION3 = `rgb(255, 165, 0)`;
 
 export const RGB_ANNOTATION4 = `rgb(128, 0, 128)`;
 
+export const COLUMN_0_HEADER_STYLE = {
+	height: LOG_HEADER_HEIGHT,
+	display: "flex",
+	justifyContent: "center",
+	alignItems: "center",
+	borderLeft: BORDER,
+	borderBottom: BORDER,
+};
+
+export const COLUMN_2_HEADER_STYLE = {
+	height: "100%",
+	display: "flex",
+	borderLeft: BORDER,
+};
+
 // TODO: determine column width automatically, not hardcoded
 export const LOG_COLUMN_WIDTH_LOOKUP = {
 	timestamp: 180,
