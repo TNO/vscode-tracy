@@ -39,8 +39,8 @@ interface State {
 	showStatesDialog: boolean;
 	showStructureDialog: boolean;
 	showFlagsDialog: boolean;
-	showMinimapHeader: boolean;
 	showSelectDialog: boolean;
+	showMinimapHeader: boolean;
 	selectedColumns: boolean[];
 	selectedColumnsMini: boolean[];
 	coloredTable: boolean;
@@ -58,7 +58,6 @@ interface State {
 	logFileAsString: string;
 	logEntryCharIndexMaps: LogEntryCharMaps | null;
 	selectedLogRows: string[][];
-	// selectedRowsTypes: RowType[];
 	rowProperties: RowProperty[];
 	lastSelectedRow: number | undefined;
 	structureMatches: number[][];
@@ -90,8 +89,8 @@ export default class App extends React.Component<Props, State> {
 			searchText = this.previousSession.searchText || "";
 			searchColumn = this.previousSession.searchColumn || "All";
 			["searchColumn", "searchText"].forEach(e => delete this.previousSession[e]);
-			this.state = { ...this.state, ...this.previousSession }
-			console.log(this.state)
+			const { showFlagsDialog, showStatesDialog, showStructureDialog, ...updatedState } = this.previousSession;
+			this.state = { ...this.state, ...updatedState }
 		}
 
 		this.onMessage = this.onMessage.bind(this);
@@ -134,6 +133,12 @@ export default class App extends React.Component<Props, State> {
 					constructNewRowProperty(true, SelectedRowType.None),
 				);
 				this.setState({ rowProperties: newRowsProps });
+			}
+			else {
+				const showFlagsDialog = this.previousSession.showFlagsDialog;
+				const showStatesDialog = this.previousSession.showStatesDialog;
+				const showStructureDialog = this.previousSession.showStructureDialog;
+				this.setState({ showFlagsDialog, showStatesDialog, showStructureDialog });
 			}
 		}
 	}
