@@ -32,7 +32,6 @@ export const returnSearchIndices = (
     if (!caseSearchBool && !reSearchBool) searchText = searchText.toLowerCase();
     if (!reSearchBool) {
         if (!wholeSearchBool) {
-            console.log(searchText)
             if (columnIndex === -1) {
                 if (!caseSearchBool) {
                     for (let i = 0; i < rows.length; i++) {
