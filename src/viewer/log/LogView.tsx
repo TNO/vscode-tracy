@@ -37,7 +37,6 @@ interface Props {
 	currentSearchMatch: number | null;
 	currentStructureMatch: number[];
 	structureMatches: number[][];
-	structureMatchesLogRows: number[];
 	collapsibleRows: { [key: number]: Segment };
 	clearSegmentation: () => void;
 }
@@ -131,7 +130,6 @@ export default class LogView extends React.Component<Props, State> {
 			rowProperties,
 			structureMatches,
 			currentStructureMatch,
-			structureMatchesLogRows,
 			collapsibleRows,
 		} = this.props;
 		let firstRender = this.state.state.startFloor;
@@ -153,6 +151,8 @@ export default class LogView extends React.Component<Props, State> {
 		let counter = firstRender;
 		const maxLevel = Math.min(4, getSegmentMaxLevel(collapsibleRows));
 		const segmentWidth: number = (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE;
+		const structureMatchesLogRows = structureMatches.flat(1);
+		
 		for (let r = firstRender; counter <= lastRender; r++) {
 			if (rowProperties[r].isRendered) {
 				let rowStyle;

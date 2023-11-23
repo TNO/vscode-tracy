@@ -24,7 +24,6 @@ export const defaultAppState = {
 	logEntryCharIndexMaps: null,
 	showStructureDialog: false,
 	structureMatches: [],
-	structureMatchesLogRows: [],
 	currentStructureMatchIndex: null,
 	currentStructureMatch: [],
 	lastSelectedRow: undefined,

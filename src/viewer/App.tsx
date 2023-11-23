@@ -61,7 +61,6 @@ interface State {
 	rowProperties: RowProperty[];
 	lastSelectedRow: number | undefined;
 	structureMatches: number[][];
-	structureMatchesLogRows: number[];
 	currentStructureMatch: number[];
 	currentStructureMatchIndex: StructureMatchId;
 
@@ -282,7 +281,9 @@ export default class App extends React.Component<Props, State> {
 	handleSelectedLogRow(rowIndex: number, event: React.MouseEvent) {
 		if (event.ctrlKey) {
 			const newRowProps = this.state.rowProperties;
-			const { structureMatchesLogRows, lastSelectedRow } = this.state;
+			const { structureMatches, lastSelectedRow } = this.state;
+
+			const structureMatchesLogRows = structureMatches.flat(1);
 
 			if (!structureMatchesLogRows.includes(rowIndex)) {
 				if (event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
@@ -321,7 +322,6 @@ export default class App extends React.Component<Props, State> {
 			showStructureDialog: !isClosing,
 			rowProperties: clearedSelectedRows,
 			structureMatches: [],
-			structureMatchesLogRows: [],
 			currentStructureMatchIndex: null,
 			currentStructureMatch: [],
 		});
@@ -337,11 +337,6 @@ export default class App extends React.Component<Props, State> {
 			logFileAsString,
 			logEntryCharIndexMaps!,
 		);
-		let structureMatchesLogRows: number[] = [];
-
-		structureMatches.forEach((matchArray) => {
-			structureMatchesLogRows = structureMatchesLogRows.concat(matchArray);
-		});
 
 		if (structureMatches.length >= 1) {
 			currentStructureMatchIndex = 0;
@@ -354,7 +349,6 @@ export default class App extends React.Component<Props, State> {
 		this.setState({
 			rowProperties,
 			structureMatches,
-			structureMatchesLogRows,
 			currentStructureMatch,
 			currentStructureMatchIndex,
 		});
@@ -656,7 +650,6 @@ export default class App extends React.Component<Props, State> {
 							coloredTable={this.state.coloredTable}
 							rowProperties={this.state.rowProperties}
 							structureMatches={this.state.structureMatches}
-							structureMatchesLogRows={this.state.structureMatchesLogRows}
 							currentStructureMatch={this.state.currentStructureMatch}
 							currentSearchMatch={this.state.currentSearchMatch}
 							onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
