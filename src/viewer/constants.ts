@@ -1,3 +1,36 @@
+import LogFile from "./LogFile";
+
+export const defaultAppState = {
+	rules: [],
+	logFile: LogFile.create([], []),
+	logFileAsString: "",
+	logViewState: undefined,
+	coloredTable: false,
+	showMinimapHeader: true,
+	showStatesDialog: false,
+	showFlagsDialog: false,
+	showSelectDialog: false,
+	selectedColumns: [],
+	selectedColumnsMini: [],
+	reSearch: false,
+	wholeSearch: false,
+	caseSearch: false,
+	filterSearch: false,
+	searchMatches: [],
+	currentSearchMatch: null,
+	currentSearchMatchIndex: null,
+	selectedLogRows: [],
+	rowProperties: [],
+	logEntryCharIndexMaps: null,
+	showStructureDialog: false,
+	structureMatches: [],
+	structureMatchesLogRows: [],
+	currentStructureMatchIndex: null,
+	currentStructureMatch: [],
+	lastSelectedRow: undefined,
+	collapsibleRows: {},
+}
+
 const RGB_LIME_GREEN = "0, 208, 0";
 
 const RGB_TURQUOISE = "69, 205, 191";
