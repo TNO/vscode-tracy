@@ -10,6 +10,7 @@ import {
 	MINIMAP_COLUMN_WIDTH,
 	SelectedRowType,
 	StructureHeaderColumnType,
+	defaultAppState,
 } from "./constants";
 import {
 	VSCodeButton,
@@ -78,40 +79,20 @@ let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 export default class App extends React.Component<Props, State> {
 	// @ts-ignore
 	vscode = acquireVsCodeApi();
+	previousSession = this.vscode.getState();
 	child = React.createRef<HTMLDivElement>();
 	constructor(props: Props) {
 		super(props);
 		this.updateSearchMatches = this.updateSearchMatches.bind(this);
-		this.state = {
-			logFile: LogFile.create([], []),
-			logFileAsString: "",
-			logViewState: undefined,
-			coloredTable: false,
-			showMinimapHeader: true,
-			rules: [],
-			showStatesDialog: false,
-			showFlagsDialog: false,
-			showSelectDialog: false,
-			selectedColumns: [],
-			selectedColumnsMini: [],
-			reSearch: false,
-			wholeSearch: false,
-			caseSearch: false,
-			filterSearch: false,
-			searchMatches: [],
-			currentSearchMatch: null,
-			currentSearchMatchIndex: null,
-			selectedLogRows: [],
-			rowProperties: [],
-			logEntryCharIndexMaps: null,
-			showStructureDialog: false,
-			structureMatches: [],
-			structureMatchesLogRows: [],
-			currentStructureMatchIndex: null,
-			currentStructureMatch: [],
-			lastSelectedRow: undefined,
-			collapsibleRows: {},
-		};
+
+		this.state = defaultAppState;
+		if (this.previousSession !== undefined) {
+			searchText = this.previousSession.searchText || "";
+			searchColumn = this.previousSession.searchColumn || "All";
+			["searchColumn", "searchText"].forEach(e => delete this.previousSession[e]);
+			this.state = { ...this.state, ...this.previousSession }
+			console.log(this.state)
+		}
 
 		this.onMessage = this.onMessage.bind(this);
 		window.addEventListener("message", this.onMessage);
@@ -122,6 +103,10 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	componentDidUpdate(prevProps: Props, prevState: State) {
+		if (this.state !== prevState) {
+			const { rules, logFile, logFileAsString, logEntryCharIndexMaps, ...updatedState } = this.state;
+			this.vscode.setState({ ...updatedState, searchText, searchColumn })
+		}
 		if (this.state.logFile !== prevState.logFile ||
 			this.state.collapsibleRows !== prevState.collapsibleRows) {
 			this.render();
@@ -136,16 +121,20 @@ export default class App extends React.Component<Props, State> {
 			const logFileText = JSON.stringify(lines, null, 2);
 			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
 			const logFile = LogFile.create(lines, rules);
-			const newRowsProps = logFile.rows.map(() =>
-				constructNewRowProperty(true, SelectedRowType.None),
-			);
+			logFile.setSelectedColumns(this.state.selectedColumns, this.state.selectedColumnsMini)
 			this.setState({
 				rules,
 				logFile,
 				logFileAsString: logFileText,
 				logEntryCharIndexMaps: logEntryCharIndexMaps,
-				rowProperties: newRowsProps,
 			});
+
+			if (!this.previousSession) {
+				const newRowsProps = logFile.rows.map(() =>
+					constructNewRowProperty(true, SelectedRowType.None),
+				);
+				this.setState({ rowProperties: newRowsProps });
+			}
 		}
 	}
 
@@ -171,7 +160,7 @@ export default class App extends React.Component<Props, State> {
 			this.clearSearchField();
 		else {
 			const colIndex = this.state.logFile.headers.findIndex((h) => h.name === searchColumn);
-			const filteredIndices = returnSearchIndices(
+			const searchMatches = returnSearchIndices(
 				this.state.logFile.rows,
 				colIndex,
 				searchText,
@@ -180,13 +169,11 @@ export default class App extends React.Component<Props, State> {
 				this.state.caseSearch,
 			);
 
-			this.updateVisibleSearchMatches(filteredIndices, this.state.filterSearch);
+			const currentSearchMatch = searchMatches[0];
+			const currentSearchMatchIndex = 0;
+			const [rowProperties, filterSearch] = this.updateVisibleSearchMatches(searchMatches, this.state.filterSearch);
 
-			this.setState({
-				searchMatches: filteredIndices,
-				currentSearchMatch: filteredIndices[0],
-				currentSearchMatchIndex: 0
-			});
+			this.setState({ searchMatches, currentSearchMatch, currentSearchMatchIndex, rowProperties, filterSearch });
 		}
 	}
 
@@ -206,8 +193,8 @@ export default class App extends React.Component<Props, State> {
 				else return constructNewRowProperty(false, SelectedRowType.None);
 			});
 		}
-		this.setState({ rowProperties, filterSearch })
-		return rowProperties;
+		this.setState({ rowProperties, filterSearch });
+		return [rowProperties, filterSearch];
 	}
 
 	handleAnnotationDialog(newRules: Rule[], isClose: boolean) {
@@ -506,16 +493,13 @@ export default class App extends React.Component<Props, State> {
 						>
 							Choose Columns
 						</VSCodeButton>
-						{/* <label>
-                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.switchBooleanState('coloredTable')}/>
-                        Color Table
-                    </label> */}
+
 					</div>
 					<div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
 						<VSCodeDropdown
 							key="searchDropdown"
 							style={{ marginRight: "5px" }}
-							onChange={(e) => (searchColumn = e.target.value)}
+							onChange={(e) => { searchColumn = e.target.value; this.updateSearchField(); }}
 						>
 							{allColumns.map((col, col_i) => (
 								<VSCodeOption key={col_i} value={col}>
@@ -580,9 +564,9 @@ export default class App extends React.Component<Props, State> {
 							</Tooltip>
 						</VSCodeTextField>
 						{" "}
-						{this.state.currentSearchMatchIndex === null
+						{this.state.searchMatches.length === 0
 							? "No Results"
-							: `${this.state.currentSearchMatchIndex + 1} of ${this.state.searchMatches.length}`
+							: `${this.state.currentSearchMatchIndex! + 1} of ${this.state.searchMatches.length}`
 						}
 						<VSCodeButton
 							className="structure-result-element"
