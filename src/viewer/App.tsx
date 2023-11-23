@@ -69,9 +69,9 @@ interface State {
 }
 
 
-let searchText = "";
-let searchColumn = "All";
 let searchTimeoutId;
+let searchText: string = "";
+let searchColumn: string = "All";
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
@@ -120,6 +120,7 @@ export default class App extends React.Component<Props, State> {
 			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
 			const logFile = LogFile.create(lines, rules);
 			logFile.setSelectedColumns(this.state.selectedColumns, this.state.selectedColumnsMini)
+			this.extractHeaderColumnTypes(logFile, rules);
 			this.setState({
 				rules,
 				logFile,
@@ -139,6 +140,25 @@ export default class App extends React.Component<Props, State> {
 				const showStructureDialog = this.previousSession.showStructureDialog;
 				this.setState({ showFlagsDialog, showStatesDialog, showStructureDialog });
 			}
+		}
+	}
+
+	extractHeaderColumnTypes(logFile: LogFile, rules: Rule[]) {
+		logHeaderColumnTypes = [];
+		for (let h = 0; h < logFile.headers.length; h++) {
+			let headerType = StructureHeaderColumnType.Selected;
+
+			if (logFile.headers[h].name.toLowerCase() === "timestamp") {
+				headerType = StructureHeaderColumnType.Unselected;
+			}
+
+			rules.forEach((rule) => {
+				if (rule.column === logFile.headers[h].name) {
+					headerType = StructureHeaderColumnType.Custom;
+				}
+			});
+
+			logHeaderColumnTypes.push(headerType);
 		}
 	}
 
@@ -226,7 +246,6 @@ export default class App extends React.Component<Props, State> {
 
 	handleStructureDialog(isClosing: boolean) {
 		if (isClosing === true) {
-			logHeaderColumnTypes = [];
 			this.handleStructureUpdate(isClosing);
 		} else {
 			const { logFile, rowProperties, rules, showStructureDialog } = this.state;
@@ -240,22 +259,7 @@ export default class App extends React.Component<Props, State> {
 			}
 
 			if (!showStructureDialog) {
-				for (let h = 0; h < logFile.headers.length; h++) {
-					let headerType = StructureHeaderColumnType.Selected;
-
-					if (logFile.headers[h].name.toLowerCase() === "timestamp") {
-						headerType = StructureHeaderColumnType.Unselected;
-					}
-
-					rules.forEach((rule) => {
-						if (rule.column === logFile.headers[h].name) {
-							headerType = StructureHeaderColumnType.Custom;
-						}
-					});
-
-					logHeaderColumnTypes.push(headerType);
-				}
-
+				this.extractHeaderColumnTypes(logFile, rules);
 				this.setState({ showStructureDialog: true });
 			}
 
