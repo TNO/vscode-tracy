@@ -61,7 +61,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 
 		this.state = {
 			isRemovingStructureEntries: false,
-			isStructureMatching: false,
+			isStructureMatching: this.props.numberOfMatches > 0 ? true : false,
 			structureHeaderColumnsTypes: logHeaderColumnsTypes,
 			structureEntries: structureEntries,
 			wildcards: [],
@@ -72,7 +72,9 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	componentDidMount(): void {
-		this.props.onStructureUpdate(); //trigger manually, as update function isn't called for initial render.
+		// trigger manually, as update function isn't called for initial render.
+		// removing the trigger to keep persistence
+		// this.props.onStructureUpdate(); 
 	}
 
 	shouldComponentUpdate(
