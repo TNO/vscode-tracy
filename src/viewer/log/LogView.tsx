@@ -28,6 +28,7 @@ import Tooltip from "@mui/material/Tooltip";
 
 interface Props {
 	logFile: LogFile;
+	previousSessionLogView: LogViewState | undefined;
 	onLogViewStateChanged: (value: LogViewState) => void;
 	onSelectedRowsChanged: (index: number, event: React.MouseEvent) => void;
 	onRowPropsChanged: (index: number, isRendered: boolean) => void;
@@ -79,7 +80,10 @@ export default class LogView extends React.Component<Props, State> {
 
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
 		if (prevProps.logFile !== this.props.logFile) {
-			this.updateState();
+			if ( this.props.previousSessionLogView === undefined)
+				this.updateState();
+			else
+				this.loadState();
 		}
 		if (prevProps.currentStructureMatch[0] !== this.props.currentStructureMatch[0]) {
 			this.updateState(this.props.currentStructureMatch[0]);
@@ -301,8 +305,20 @@ export default class LogView extends React.Component<Props, State> {
 		}
 	}
 
+	loadState() {
+		if ( !this.viewport.current || !this.props.previousSessionLogView) return;
+		this.viewport.current.scrollTop = this.props.previousSessionLogView.scrollTop;
+		console.log(this.props.previousSessionLogView)
+		console.log(this.props.previousSessionLogView.scrollTop)
+		console.log(this.viewport.current.scrollTop)
+		this.setState({ state: this.props.previousSessionLogView });
+		this.props.onLogViewStateChanged( this.props.previousSessionLogView );
+	}
+
 	updateState(currentMatchFirstRow: StructureMatchId = null) {
 		if (!this.viewport.current) return;
+		console.log('In updateState')
+		console.log(this.viewport.current.scrollTop)
 		const height = this.viewport.current.clientHeight;
 		const maxVisibleItems = height / LOG_ROW_HEIGHT;
 		const visibleItems = Math.min(this.props.logFile.amountOfRows(), maxVisibleItems);

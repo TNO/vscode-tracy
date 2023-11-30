@@ -84,9 +84,10 @@ export default class App extends React.Component<Props, State> {
 		this.updateSearchMatches = this.updateSearchMatches.bind(this);
 
 		this.state = defaultAppState;
+		console.log(this.previousSession)
 		if (this.previousSession !== undefined) {
-			searchText = this.previousSession.searchText || "";
-			searchColumn = this.previousSession.searchColumn || "All";
+			searchText = this.previousSession.searchText;
+			searchColumn = this.previousSession.searchColumn;
 			["searchColumn", "searchText"].forEach(e => delete this.previousSession[e]);
 			const { showFlagsDialog, showStatesDialog, showStructureDialog, ...updatedState } = this.previousSession;
 			this.state = { ...this.state, ...updatedState }
@@ -501,6 +502,7 @@ export default class App extends React.Component<Props, State> {
 					<div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
 						<VSCodeDropdown
 							key="searchDropdown"
+							value={searchColumn}
 							style={{ marginRight: "5px" }}
 							onChange={(e) => { searchColumn = e.target.value; this.updateSearchField(); }}
 						>
@@ -649,6 +651,7 @@ export default class App extends React.Component<Props, State> {
 					<div style={{ flex: 1, display: "flex" }}>
 						<LogView
 							logFile={this.state.logFile}
+							previousSessionLogView={this.previousSession?.logViewState}
 							onLogViewStateChanged={(logViewState) => this.setState({ logViewState })}
 							forwardRef={this.child}
 							coloredTable={this.state.coloredTable}
