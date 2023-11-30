@@ -46,6 +46,7 @@ interface State {
 	columnWidth: { [id: string]: number };
 	logFile: LogFile;
 	collapsed: { [key: number]: boolean };
+    isLoadingSavedState: boolean;
 }
 
 const HEADER_STYLE: React.CSSProperties = {
@@ -70,6 +71,7 @@ export default class LogView extends React.Component<Props, State> {
 			columnWidth: LOG_COLUMN_WIDTH_LOOKUP,
 			logFile: this.props.logFile,
 			collapsed: [],
+            isLoadingSavedState: false
 		};
 	}
 
@@ -79,6 +81,7 @@ export default class LogView extends React.Component<Props, State> {
 	}
 
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
+        console.log("in componentDidUpdate");
 		if (prevProps.logFile !== this.props.logFile) {
 			if ( this.props.previousSessionLogView === undefined)
 				this.updateState();
@@ -91,6 +94,10 @@ export default class LogView extends React.Component<Props, State> {
 		if (prevProps.currentSearchMatch !== this.props.currentSearchMatch) {
 			this.updateState(this.props.currentSearchMatch);
 		}
+        if(this.viewport.current && this.props.previousSessionLogView && this.state.isLoadingSavedState) {
+            this.viewport.current.scrollTop = this.props.previousSessionLogView.scrollTop;
+            this.setState({isLoadingSavedState:false});
+        }
 	}
 
 	renderColumn(
@@ -306,12 +313,9 @@ export default class LogView extends React.Component<Props, State> {
 	}
 
 	loadState() {
-		if ( !this.viewport.current || !this.props.previousSessionLogView) return;
-		this.viewport.current.scrollTop = this.props.previousSessionLogView.scrollTop;
-		console.log(this.props.previousSessionLogView)
-		console.log(this.props.previousSessionLogView.scrollTop)
-		console.log(this.viewport.current.scrollTop)
-		this.setState({ state: this.props.previousSessionLogView });
+		if (!this.props.previousSessionLogView) return;
+
+		this.setState({ state: this.props.previousSessionLogView, isLoadingSavedState: true });
 		this.props.onLogViewStateChanged( this.props.previousSessionLogView );
 	}
 
