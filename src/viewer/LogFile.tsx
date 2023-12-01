@@ -26,11 +26,14 @@ export default class LogFile {
 		this.rows = rows;
 		this.selectedColumns = new Array(headers.length).fill(true);
 		this.selectedColumnsMini = new Array(headers.length).fill(true);
+		this.selectedColumnsMini[0] = false;
 	}
 
 	static create(content: { [s: string]: string }[], rules: Rule[]) {
 		const contentHeaders = this.getContentHeaders(content);
 		const headers = this.getHeaders(contentHeaders, rules);
+		for (let i = 0; i < content.length; i++) 
+			content[i]['Entry'] = (i+1).toString();
 		const rows = content.map((l) => headers.map((h) => l[h.name]));
 		const logFile = new LogFile(contentHeaders, headers, rows);
 		logFile.computeDefaultColumnColors();
@@ -99,8 +102,9 @@ export default class LogFile {
 
 	private static getContentHeaders(content: { [s: string]: string }[]) {
 		// Headers are all keys that are present in the first object (row)
-		const first = content[0] ?? {};
-		return Object.keys(first);
+		const firstRow = content[0] ?? {};
+		const contentHeaders = ['Entry'].concat(Object.keys(firstRow));
+		return contentHeaders;
 	}
 
 	private static getHeaders(contentHeaders: string[], rules: Rule[]) {
@@ -121,8 +125,12 @@ export default class LogFile {
 
 	private computeDefaultColumnColors() {
 		for (let i = 0; i < this.contentHeaders.length; i++) {
-			const values = this.rows.map((r) => r[i]);
-			this.columnsColors[i] = LogFile.computeColors(this.headers[i], values);
+			if (this.contentHeaders[i].toLowerCase() !== "timestamp"){ 
+				const values = this.rows.map((r) => r[i]);
+				this.columnsColors[i] = LogFile.computeColors(this.headers[i], values);
+			} else {
+				this.columnsColors[i] = this.columnsColors[0];
+			}
 		}
 	}
 
@@ -152,12 +160,14 @@ export default class LogFile {
 	private static computeColors(header: Header, values: string[]) {
 		let colorizer: (s: string) => string;
 
-		if (header.type === "number") {
-			colorizer = scaleSequential().domain(extent(values)).interpolator(interpolateTurbo);
-		} else {
+		if (header.name === "Entry") {
+			colorizer = (v) => interpolateTurbo(values.indexOf(v) / values.length);
+		} else if (header.type === "string") {
 			const uniqueValues = [...new Set(values)].sort();
 			colorizer = (v) => interpolateTurbo(uniqueValues.indexOf(v) / uniqueValues.length);
-		}
+		} else if (header.type === "number") {
+			colorizer = scaleSequential().domain(extent(values)).interpolator(interpolateTurbo);
+		} 
 
 		return values.map((l) => colorizer(l));
 	}
