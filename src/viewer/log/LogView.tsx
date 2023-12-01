@@ -43,8 +43,8 @@ interface Props {
 }
 interface State {
 	state: LogViewState | undefined;
-	columnWidth: { [id: string]: number };
 	logFile: LogFile;
+	columnWidth: { [id: string]: number };
 	collapsed: { [key: number]: boolean };
     isLoadingSavedState: boolean;
 }
@@ -81,7 +81,6 @@ export default class LogView extends React.Component<Props, State> {
 	}
 
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
-        console.log("in componentDidUpdate");
 		if (prevProps.logFile !== this.props.logFile) {
 			if ( this.props.previousSessionLogView === undefined)
 				this.updateState();
@@ -94,7 +93,7 @@ export default class LogView extends React.Component<Props, State> {
 		if (prevProps.currentSearchMatch !== this.props.currentSearchMatch) {
 			this.updateState(this.props.currentSearchMatch);
 		}
-        if(this.viewport.current && this.props.previousSessionLogView && this.state.isLoadingSavedState) {
+        if (this.viewport.current && this.props.previousSessionLogView && this.state.isLoadingSavedState) {
             this.viewport.current.scrollTop = this.props.previousSessionLogView.scrollTop;
             this.setState({isLoadingSavedState:false});
         }
@@ -314,15 +313,12 @@ export default class LogView extends React.Component<Props, State> {
 
 	loadState() {
 		if (!this.props.previousSessionLogView) return;
-
 		this.setState({ state: this.props.previousSessionLogView, isLoadingSavedState: true });
 		this.props.onLogViewStateChanged( this.props.previousSessionLogView );
 	}
 
 	updateState(currentMatchFirstRow: StructureMatchId = null) {
 		if (!this.viewport.current) return;
-		console.log('In updateState')
-		console.log(this.viewport.current.scrollTop)
 		const height = this.viewport.current.clientHeight;
 		const maxVisibleItems = height / LOG_ROW_HEIGHT;
 		const visibleItems = Math.min(this.props.logFile.amountOfRows(), maxVisibleItems);

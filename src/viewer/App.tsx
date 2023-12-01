@@ -84,7 +84,6 @@ export default class App extends React.Component<Props, State> {
 		this.updateSearchMatches = this.updateSearchMatches.bind(this);
 
 		this.state = defaultAppState;
-		console.log(this.previousSession)
 		if (this.previousSession !== undefined) {
 			searchText = this.previousSession.searchText;
 			searchColumn = this.previousSession.searchColumn;

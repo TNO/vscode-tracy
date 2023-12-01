@@ -4,7 +4,6 @@ import { Header } from "./types";
 import { scaleSequential } from "d3-scale";
 import { interpolateTurbo } from "d3-scale-chromatic";
 
-// TODO: determine column type automatically, not hardcoded
 const DEFAULT_HEADER_TYPE = "string";
 const HEADER_TYPE_LOOKUP = {
 	threadID: "number",
