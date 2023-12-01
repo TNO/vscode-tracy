@@ -397,7 +397,7 @@ export default class FlagRule extends Rule {
 						<VSCodePanelView id="view-1">
 							<Table
 								columns={[
-									{ name: "Text", width: "200px" },
+									{ name: "Regex", width: "200px" },
 									{ name: "Column", width: "150px" },
 								]}
 								rows={flagRows}
