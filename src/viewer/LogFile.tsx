@@ -125,12 +125,8 @@ export default class LogFile {
 
 	private computeDefaultColumnColors() {
 		for (let i = 0; i < this.contentHeaders.length; i++) {
-			if (this.contentHeaders[i].toLowerCase() !== "timestamp"){ 
-				const values = this.rows.map((r) => r[i]);
-				this.columnsColors[i] = LogFile.computeColors(this.headers[i], values);
-			} else {
-				this.columnsColors[i] = this.columnsColors[0];
-			}
+			const values = this.rows.map((r) => r[i]);
+			this.columnsColors[i] = LogFile.computeColors(this.headers[i], values);
 		}
 	}
 
