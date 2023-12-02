@@ -228,7 +228,7 @@ export default class App extends React.Component<Props, State> {
 		if (isClose === true)
 			this.setState({
 				rules: newRules,
-				logFile: this.state.logFile.updateRules(newRules),
+				logFile: this.state.logFile.updateLogFile(newRules, []),
 				showStatesDialog: false,
 				showFlagsDialog: false,
 			});
@@ -352,11 +352,14 @@ export default class App extends React.Component<Props, State> {
 			currentStructureMatch = [];
 		}
 
+		console.log(structureMatches)
+
 		this.setState({
 			rowProperties,
 			structureMatches,
 			currentStructureMatch,
 			currentStructureMatchIndex,
+			logFile: this.state.logFile.updateLogFile(this.state.rules, structureMatches)
 		});
 	}
 
