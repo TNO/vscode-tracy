@@ -330,6 +330,7 @@ export default class App extends React.Component<Props, State> {
 			structureMatches: [],
 			currentStructureMatchIndex: null,
 			currentStructureMatch: [],
+			logFile: this.state.logFile.updateLogFile(this.state.rules, [])
 		});
 	}
 
@@ -351,8 +352,6 @@ export default class App extends React.Component<Props, State> {
 			currentStructureMatchIndex = null;
 			currentStructureMatch = [];
 		}
-
-		console.log(structureMatches)
 
 		this.setState({
 			rowProperties,
