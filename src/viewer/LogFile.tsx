@@ -33,7 +33,7 @@ export default class LogFile {
 		const contentHeaders = this.getContentHeaders(content);
 		const headers = this.getHeaders(contentHeaders, rules);
 		for (let i = 0; i < content.length; i++) 
-			content[i]['Entry'] = (i+1).toString();
+			content[i]['Line'] = (i+1).toString();
 		const rows = content.map((l) => headers.map((h) => l[h.name]));
 		const logFile = new LogFile(contentHeaders, headers, rows);
 		logFile.computeDefaultColumnColors();
@@ -131,7 +131,7 @@ export default class LogFile {
 	private static getContentHeaders(content: { [s: string]: string }[]) {
 		// Headers are all keys that are present in the first object (row)
 		const firstRow = content[0] ?? {};
-		const contentHeaders = ['Entry'].concat(Object.keys(firstRow));
+		const contentHeaders = ['Line'].concat(Object.keys(firstRow));
 		return contentHeaders;
 	}
 
@@ -184,7 +184,7 @@ export default class LogFile {
 	private static computeColors(header: Header, values: string[]) {
 		let colorizer: (s: string) => string;
 
-		if (header.name === "Entry") {
+		if (header.name === "Line") {
 			colorizer = (v) => interpolateTurbo(values.indexOf(v) / values.length);
 		} else if (header.type === "string") {
 			const uniqueValues = [...new Set(values)].sort();

@@ -119,7 +119,7 @@ export default class App extends React.Component<Props, State> {
 			const logFileText = JSON.stringify(lines, null, 2);
 			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
 			const logFile = LogFile.create(lines, rules);
-			logFile.setSelectedColumns(this.state.selectedColumns, this.state.selectedColumnsMini)
+			logFile.setSelectedColumns(this.state.selectedColumns, this.state.selectedColumnsMini);
 			this.extractHeaderColumnTypes(logFile, rules);
 			this.setState({
 				rules,
@@ -150,7 +150,7 @@ export default class App extends React.Component<Props, State> {
 
 			if (logFile.headers[h].name.toLowerCase() === "timestamp") {
 				headerType = StructureHeaderColumnType.Unselected;
-			} else if (logFile.headers[h].name.toLowerCase() === "entry") {
+			} else if (logFile.headers[h].name === "Line") {
 				headerType = StructureHeaderColumnType.Custom;
 			}
 
@@ -466,7 +466,8 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	render() {
-		const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
+		const minimapCounter = this.state.logFile.selectedColumnsMini.filter(Boolean).length;
+		const minimapWidth = minimapCounter * MINIMAP_COLUMN_WIDTH;
 		const minimapHeight = this.state.showMinimapHeader ? "12%" : "5%";
 
 		const allColumns = [
