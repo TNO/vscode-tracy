@@ -303,14 +303,20 @@ export default class FlagRule extends Rule {
 									<VSCodeOption key="1" value="equals">
 										equals
 									</VSCodeOption>
-									<VSCodeOption key="2" value="startsWith">
+									<VSCodeOption key="2" value="regexSearch">
+										regex search
+									</VSCodeOption>
+									<VSCodeOption key="3" value="startsWith">
 										startsWith
 									</VSCodeOption>
-									<VSCodeOption key="3" value="endsWith">
+									<VSCodeOption key="4" value="endsWith">
 										endsWith
 									</VSCodeOption>
-									<VSCodeOption key="4" value="regexSearch">
-										regex search
+									<VSCodeOption key="5" value="lessThan">
+										less than
+									</VSCodeOption>
+									<VSCodeOption key="6" value="moreThan">
+										more than
 									</VSCodeOption>
 								</VSCodeDropdown>,
 								<VSCodeTextField
@@ -445,6 +451,16 @@ export default class FlagRule extends Rule {
 								}
 							} else if (condition.Operation === "regexSearch") {
 								if (useRegularExpressionSearch("gs", condition.Text, logValue) === false) {
+									allConditionsSatisfied = false;
+									break;
+								}
+							} else if (condition.Operation === "lessThan") {
+								if (parseFloat(logValue) >= parseFloat(condition.Text)) {
+									allConditionsSatisfied = false;
+									break;
+								}
+							} else if (condition.Operation === "moreThan") {
+								if (parseFloat(logValue) <= parseFloat(condition.Text)) {
 									allConditionsSatisfied = false;
 									break;
 								}
