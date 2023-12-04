@@ -658,6 +658,7 @@ export default class App extends React.Component<Props, State> {
 							previousSessionLogView={this.previousSession?.logViewState}
 							onLogViewStateChanged={(logViewState) => this.setState({ logViewState })}
 							forwardRef={this.child}
+							filterSearch={this.state.filterSearch}
 							coloredTable={this.state.coloredTable}
 							rowProperties={this.state.rowProperties}
 							structureMatches={this.state.structureMatches}

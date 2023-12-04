@@ -33,6 +33,7 @@ interface Props {
 	onSelectedRowsChanged: (index: number, event: React.MouseEvent) => void;
 	onRowPropsChanged: (index: number, isRendered: boolean) => void;
 	forwardRef: React.RefObject<HTMLDivElement>;
+	filterSearch: boolean;
 	coloredTable: boolean;
 	rowProperties: RowProperty[];
 	currentSearchMatch: number | null;
@@ -97,6 +98,10 @@ export default class LogView extends React.Component<Props, State> {
             this.viewport.current.scrollTop = this.props.previousSessionLogView.scrollTop;
             this.setState({isLoadingSavedState:false});
         }
+		if (prevProps.filterSearch !== this.props.filterSearch) {
+			const firstRow = this.state.state?.startFloor;
+			this.updateState(firstRow);
+		}
 	}
 
 	renderColumn(
