@@ -248,7 +248,7 @@ export const useStructureRegularExpressionSearch = (
         const indexOfFirstObjectInMatch = logEntryCharIndexMaps.firstCharIndexMap.get(matchRanges[0]);
         const indexOfLastObjectInMatch = logEntryCharIndexMaps.lastCharIndexMap.get(matchRanges[1]);
 
-        if (indexOfFirstObjectInMatch && indexOfLastObjectInMatch) {
+        if ((indexOfFirstObjectInMatch !== undefined) && (indexOfLastObjectInMatch !== undefined)) {
 
             for (let i = indexOfFirstObjectInMatch; i <= indexOfLastObjectInMatch; i++) {
                 indexesOfEntriesInMatch.push(i);

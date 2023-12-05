@@ -465,6 +465,19 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
+	exportData(exportIndices: number[]) {
+		var exportObjects: Object[] = []
+		const originalColumns = this.state.logFile.headers;
+		for (var index of exportIndices) {
+			var rowObject = {};
+			const row = this.state.logFile.rows[index]
+			for (var columnIndex = 0; columnIndex <= originalColumns.length-1; columnIndex++)
+				rowObject[originalColumns[columnIndex].name] = row[columnIndex];
+			exportObjects.push(rowObject)
+		}
+		this.vscode.postMessage({ type: "exportData", data: exportObjects });
+	}
+
 	render() {
 		const minimapCounter = this.state.logFile.selectedColumnsMini.filter(Boolean).length;
 		const minimapWidth = minimapCounter * MINIMAP_COLUMN_WIDTH;
@@ -496,12 +509,20 @@ export default class App extends React.Component<Props, State> {
 				>
 					<div style={{ display: "flex" }}>
 						<VSCodeButton
-							style={{ marginLeft: "5px", height: "25px", width: "150px" }}
+							style={{ marginLeft: "5px", height: "25px", width: "125px" }}
 							onClick={() => this.setState({ showSelectDialog: true })}
 						>
 							Choose Columns
 						</VSCodeButton>
-
+						<VSCodeButton
+							style={{ marginLeft: "5px", height: "25px", width: "110px" }}
+							onClick={() => {
+								const exportIndices = this.state.rowProperties.flatMap((row, index) => row.isSearchResult ? index : []);
+								this.exportData(exportIndices);}
+							}
+						>
+							Export
+						</VSCodeButton>
 					</div>
 					<div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
 						<VSCodeDropdown
@@ -777,6 +798,7 @@ export default class App extends React.Component<Props, State> {
 							onNavigateStructureMatches={(isGoingForward) =>
 								this.handleNavigation(isGoingForward, true)
 							}
+							onExportStructureMatches={() => this.exportData(this.state.structureMatchesLogRows)}
 						/>
 					)}
 				</div>
