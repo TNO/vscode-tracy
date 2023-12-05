@@ -21,6 +21,7 @@ import {
 import {
 	useGetCharIndicesForLogEntries,
 	useStructureRegularExpressionSearch,
+	useStructureRegularExpressionNestedSearch
 } from "./hooks/useStructureRegularExpressionManager";
 import { getRegularExpressionMatches, returnSearchIndices } from "./hooks/useLogSearchManager";
 import { constructNewRowProperty, constructNewSegment } from "./hooks/useRowProperty";
@@ -401,20 +402,22 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	handleSegmentation(entryExpression: string, exitExpression: string) {
+	handleSegmentation(expression: string) {
 		const { logFileAsString, logEntryCharIndexMaps } = this.state;
 		const { collapsibleRows } = this.state;
 
-		const entryMatches = getRegularExpressionMatches(
-			entryExpression,
+		const segmentMatches = useStructureRegularExpressionNestedSearch(
+			expression,
 			logFileAsString,
 			logEntryCharIndexMaps!,
 		);
-		const exitMatches = getRegularExpressionMatches(
-			exitExpression,
-			logFileAsString,
-			logEntryCharIndexMaps!,
-		);
+
+		let entryMatches: number[] = [];
+		let exitMatches: number[] = [];
+		segmentMatches.forEach((match) => {
+			entryMatches.push(match[0])
+			exitMatches.push(match[match.length - 1])
+		})
 
 		const stack: number[] = [];
 		const maximumLevel = 5;
@@ -791,9 +794,7 @@ export default class App extends React.Component<Props, State> {
 							onClose={() => this.handleStructureDialog(true)}
 							onStructureUpdate={() => this.handleStructureUpdate(false)}
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
-							onDefineSegment={(entryExpression, exitExpression) =>
-								this.handleSegmentation(entryExpression, exitExpression)
-							}
+							onDefineSegment={(expression) => this.handleSegmentation(expression)}
 							onNavigateStructureMatches={(isGoingForward) =>
 								this.handleNavigation(isGoingForward, true)
 							}
