@@ -1,6 +1,8 @@
 # Minimap View
 (Screenshot of component - Optional)
 
+![](../../figures/minimap.PNG)
+
 ---
 This component contains the colored map which visualizes the log contents according to the value in every cell.
 
@@ -12,7 +14,7 @@ This component contains the colored map which visualizes the log contents accord
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `logFile` | `LogFile` | it contains the input content of the log |
+| `logFile` | `LogFile` | it contains the content of the input log/logs |
 | `logViewState` | `LogViewState` | A state to keep several values for representing the log view |
 | `onLogViewStateChanged` | `function` | A function that update the log view state to other components |
 | `forwardRef` | `React.RefObject<HTMLDivElement>` | A ref object for update the scrolling between log view and minimap |

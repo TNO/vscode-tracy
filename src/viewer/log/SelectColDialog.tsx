@@ -17,6 +17,7 @@ const BACKDROP_STYLE: React.CSSProperties = {
 	backgroundColor: "#00000030",
 	position: "absolute",
 	padding: "10px",
+	zIndex: 100
 };
 
 const DIALOG_STYLE: React.CSSProperties = {

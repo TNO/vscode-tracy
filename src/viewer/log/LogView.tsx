@@ -18,6 +18,7 @@ import {
 	getLogViewRowSelectionStyle,
 	getLogViewStructureMatchStyle,
 	getSegmentStyle,
+	getSegmentRowStyle,
 } from "../hooks/useStyleManager";
 import { LogViewState, RowProperty, Segment, StructureMatchId } from "../types";
 import LogFile from "../LogFile";
@@ -187,24 +188,20 @@ export default class LogView extends React.Component<Props, State> {
 				for (let l = 0; l <= maxLevel; l++) {
 					rowResult.push(this.renderSegmentForRow(r, l));
 				}
+				const segmentStyle = getSegmentRowStyle(segmentWidth, counter * LOG_ROW_HEIGHT);
 				//add log rows
 				result.push(
 					<div style={{ display: "flex", flexDirection: "row", flexWrap: "nowrap" }}>
-						<div
-							style={{
-								flex: 1,
-								display: "flex",
-								flexDirection: "row",
-								position: "absolute",
-								height: LOG_ROW_HEIGHT,
-								overflow: "hidden",
-								top: counter * LOG_ROW_HEIGHT,
-								width: segmentWidth,
-							}}
-							key={"seg" + r}
-						>
-							{rowResult}
-						</div>
+						{Object.keys(this.props.collapsibleRows).length > 0 &&
+						<div style= {{ position: "sticky", left: 0 , zIndex: 100}}>
+							<div
+								style={segmentStyle}
+								key={"seg" + r}
+								className="box1"
+							>
+								{rowResult}
+							</div>
+						</div>}
 						<div
 							key={r}
 							style={rowStyle}
@@ -234,12 +231,13 @@ export default class LogView extends React.Component<Props, State> {
 	renderSegmentForRow(r: number, level: number) {
 		const { collapsibleRows } = this.props;
 		const style: React.CSSProperties = {
+			display: "inline-block",
+			position: "relative",
 			textAlign: "center",
 			alignContent: "center",
 			justifyContent: "center",
 			height: LOG_ROW_HEIGHT,
-			position: "relative",
-			width: 30,
+			width: 30
 		};
 		let annotation = false;
 		if (collapsibleRows[r] != undefined && collapsibleRows[r].level == level) {
@@ -271,12 +269,12 @@ export default class LogView extends React.Component<Props, State> {
 		}
 		if (annotation) {
 			return (
-				<div style={{ ...style }} key={r + "_" + level}>
+				<div style={ style } key={r + "_" + level}>
 					<div style={{ backgroundColor: this.getRGB(level) }} className="vertical-line"></div>
 				</div>
 			);
 		} else {
-			return <div style={{ ...style }} key={r + "_" + level}></div>;
+			return <div style={ style } key={r + "_" + level}></div>;
 		}
 	}
 
@@ -428,10 +426,10 @@ export default class LogView extends React.Component<Props, State> {
 		return (
 			<div style={HEADER_STYLE} className="header-background">
 				<div style={style}>
-					<div style={getSegmentStyle(segmentWidth, LOG_HEADER_HEIGHT)}>
-						{Object.keys(this.props.collapsibleRows).length > 0 &&
-							<div className="box">
-								<Tooltip
+					<div style={getSegmentStyle(segmentWidth, LOG_HEADER_HEIGHT)} className="header-background">
+						{Object.keys(this.props.collapsibleRows).length > 0 && 
+						<div className="box">
+							<Tooltip
 									title={<h3>Delete all the segment annotations</h3>}
 									placement="bottom"
 									arrow
