@@ -30,10 +30,13 @@ export default class LogFile {
 	}
 
 	static create(content: { [s: string]: string }[], rules: Rule[]) {
-		const contentHeaders = this.getContentHeaders(content);
+		let contentHeaders = this.getContentHeaders(content);
+		if (!contentHeaders.includes("Line")) {
+			contentHeaders = ["Line"].concat(contentHeaders);
+			for (let i = 0; i < content.length; i++) 
+				content[i]["Line"] = (i+1).toString();
+		}
 		const headers = this.getHeaders(contentHeaders, rules);
-		for (let i = 0; i < content.length; i++) 
-			content[i]['Line'] = (i+1).toString();
 		const rows = content.map((l) => headers.map((h) => l[h.name]));
 		const logFile = new LogFile(contentHeaders, headers, rows);
 		logFile.computeDefaultColumnColors();
@@ -131,7 +134,7 @@ export default class LogFile {
 	private static getContentHeaders(content: { [s: string]: string }[]) {
 		// Headers are all keys that are present in the first object (row)
 		const firstRow = content[0] ?? {};
-		const contentHeaders = ['Line'].concat(Object.keys(firstRow));
+		const contentHeaders = Object.keys(firstRow);
 		return contentHeaders;
 	}
 

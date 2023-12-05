@@ -468,6 +468,8 @@ export default class App extends React.Component<Props, State> {
 	exportData(exportIndices: number[]) {
 		var exportObjects: Object[] = []
 		const originalColumns = this.state.logFile.headers;
+		if (exportIndices.length === 0)
+			exportIndices = Array.from(Array(this.state.logFile.amountOfRows()).keys())
 		for (var index of exportIndices) {
 			var rowObject = {};
 			const row = this.state.logFile.rows[index]
