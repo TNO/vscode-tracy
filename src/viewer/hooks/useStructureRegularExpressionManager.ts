@@ -238,7 +238,7 @@ export const useStructureRegularExpressionSearch = (
     const perfEnd = performance.now();
     console.log(`Execution time (regular expression run): ${perfEnd - perfStart} ms`);
 
-    console.log(textRanges);
+    // console.log(textRanges);
 
     const transStart = performance.now();
 

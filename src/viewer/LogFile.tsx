@@ -184,7 +184,7 @@ export default class LogFile {
 	private static computeColors(header: Header, values: string[]) {
 		let colorizer: (s: string) => string;
 
-		if (header.name === "Line") {
+		if (header.name === "Line" || header.name === "Structure") {
 			colorizer = (v) => interpolateTurbo(values.indexOf(v) / values.length);
 		} else if (header.type === "string") {
 			const uniqueValues = [...new Set(values)].sort();
