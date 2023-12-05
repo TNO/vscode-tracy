@@ -194,6 +194,7 @@ export default class StatesDialog extends React.Component<Props, State> {
 					textFieldWidth,
 					userColumns,
 					this.props.logFile,
+					this.state.rules
 				)}
 			</div>
 		);

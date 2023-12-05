@@ -1,6 +1,7 @@
 // When adding new rules, don't forget to update the lookup in Rule.fromJSON
 import React from "react";
 import Rule from "./Rule";
+import StateBasedRule from "./StateBasedRule";
 import LogFile from "../LogFile";
 import Table from "./Tables/Table";
 import FlagTable from "./Tables/FlagTable";
@@ -126,7 +127,7 @@ export default class FlagRule extends Rule {
 		const flagRule = rule as FlagRule;
 		let newFlags = flagRule.flags;
 		for (let i = 0; i < newFlags.length; i++) {
-			for (let j = 0; j < newFlags[i].conditions.length; j++) 
+			for (let j = 0; j < newFlags[i].conditions.length; j++)
 				newFlags[i].conditions[j] = newFlags[i].conditions[j].filter(subCondition => ((subCondition.Column !== "") && (subCondition.Text !== "")))
 			newFlags[i].conditions = newFlags[i].conditions.filter(li => li.length !== 0)
 		}
@@ -141,6 +142,7 @@ export default class FlagRule extends Rule {
 		textFieldWidth: string,
 		user_columns: string[],
 		logFile: LogFile,
+		rules: Rule[]
 	) {
 		const allColumns = ["", ...logFile.contentHeaders, ...user_columns];
 
@@ -278,7 +280,8 @@ export default class FlagRule extends Rule {
 					const conditionSet = this.flags[this.selectedFlag].conditions[columnIndex];
 					conditionRows.push(
 						conditionSet.map((sub, s_i) => {
-							return [
+							let setMap: any[] = [];
+							setMap.push(
 								<VSCodeDropdown
 									style={{ width: "100%", marginBottom: "2px" }}
 									value={sub.Column}
@@ -290,7 +293,9 @@ export default class FlagRule extends Rule {
 											{col}
 										</VSCodeOption>
 									))}
-								</VSCodeDropdown>,
+								</VSCodeDropdown>
+							);
+							setMap.push(
 								<VSCodeDropdown
 									style={{ width: "100%" }}
 									value={sub.Operation}
@@ -318,14 +323,48 @@ export default class FlagRule extends Rule {
 									<VSCodeOption key="6" value="moreThan">
 										more than
 									</VSCodeOption>
-								</VSCodeDropdown>,
-								<VSCodeTextField
-									style={{ width: "100%" }}
-									value={sub.Text}
-									key="Text"
-									onInput={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
-								/>,
-							];
+								</VSCodeDropdown>
+							);
+							let dropdownOptions: string[] = [];
+							if (user_columns.includes(sub.Column)) {
+								const dropdownRule = rules.filter(r => r.column === sub.Column)[0];
+								if (dropdownRule.ruleType === 'Flag rule') {
+									let dropdownFlagRule = dropdownRule as FlagRule;
+									dropdownOptions = dropdownFlagRule.flags.map(f => f.name);
+								}
+								else if (dropdownRule.ruleType === 'State based rule') {
+									let dropdownStateRule = dropdownRule as StateBasedRule;
+									dropdownOptions = dropdownStateRule.ruleStates.map(s => s.name)
+								}
+							}
+							console.log(dropdownOptions)
+							if (dropdownOptions.length === 0 || dropdownOptions[0] === '') {
+								setMap.push(
+									<VSCodeTextField
+										style={{ width: "100%" }}
+										value={sub.Text}
+										key="Text"
+										onInput={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
+									/>,
+								);
+							}
+							else {
+								setMap.push(
+									<VSCodeDropdown
+										style={{ width: "100%" }}
+										value={sub.Text}
+										key="Text"
+										onChange={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
+									>
+										{dropdownOptions.map((option, optionIndex) => (
+											<VSCodeOption key={optionIndex} value={option}>
+												{option}
+											</VSCodeOption>
+										))}
+									</VSCodeDropdown>
+								);
+							}
+							return setMap;
 						}),
 					);
 				}
