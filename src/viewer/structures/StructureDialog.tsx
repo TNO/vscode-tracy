@@ -41,7 +41,8 @@ interface Props {
 	onStructureUpdate: () => void;
 	onNavigateStructureMatches: (isGoingForward: boolean) => void;
 	onMatchStructure: (expression: string) => void;
-	onDefineSegment: (entryExpression: string, exitExpression: string) => void;
+	onExportStructureMatches: () => void;
+	onDefineSegment: (expression: string) => void;
 }
 
 interface State {
@@ -61,7 +62,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 
 		this.state = {
 			isRemovingStructureEntries: false,
-			isStructureMatching: false,
+			isStructureMatching: this.props.numberOfMatches > 0 ? true : false,
 			structureHeaderColumnsTypes: logHeaderColumnsTypes,
 			structureEntries: structureEntries,
 			wildcards: [],
@@ -72,7 +73,9 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	componentDidMount(): void {
-		this.props.onStructureUpdate(); //trigger manually, as update function isn't called for initial render.
+		// trigger manually, as update function isn't called for initial render.
+		// removing the trigger to keep persistence
+		// this.props.onStructureUpdate(); 
 	}
 
 	shouldComponentUpdate(
@@ -279,20 +282,14 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	defineSegment() {
-		// TODO: Add functionality with wildcard
-		const entryRegExp = useStructureQueryConstructor(
+		const segmentRegExp = useStructureQueryConstructor(
 			this.props.logHeaderColumns,
 			this.state.structureHeaderColumnsTypes,
-			this.state.structureEntries.slice(0, 1),
-			[],
+			this.state.structureEntries,
+			this.state.wildcards,
 		);
-		const exitRegExp = useStructureQueryConstructor(
-			this.props.logHeaderColumns,
-			this.state.structureHeaderColumnsTypes,
-			this.state.structureEntries.slice(-1),
-			[],
-		);
-		this.props.onDefineSegment(entryRegExp, exitRegExp);
+
+		this.props.onDefineSegment(segmentRegExp);
 	}
 
 	createWildcard() {
@@ -479,9 +476,9 @@ export default class StructureDialog extends React.Component<Props, State> {
 			},
 		});
 
-        const selection = getSelection();
+		const selection = getSelection();
 
-		if(selection !== null){
+		if (selection !== null) {
 			// empty unwanted text selection resulting from Shift-click
 			selection.empty();
 		}
@@ -608,6 +605,15 @@ export default class StructureDialog extends React.Component<Props, State> {
 							disabled={isRemovingStructureEntries}
 						>
 							Search for Structure
+						</VSCodeButton>
+						<VSCodeButton
+							className="structure-result-element"
+							onClick={() => {
+								this.props.onExportStructureMatches();
+							}}
+							disabled={this.props.numberOfMatches == 0}
+						>
+							Export Structures
 						</VSCodeButton>
 						{isStructureMatching && (
 							<>

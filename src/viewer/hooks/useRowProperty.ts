@@ -2,11 +2,10 @@ import { RowProperty, Segment } from "../types";
 import { SelectedRowType } from "../constants";
 
 export const constructNewRowProperty = (
-	isSearchResult: boolean,
 	isRendered: boolean,
 	rowType: SelectedRowType,
 ): RowProperty => {
-	const newRowProperty: RowProperty = { isSearchResult, isRendered, rowType };
+	const newRowProperty: RowProperty = { isRendered, rowType };
 	return newRowProperty;
 };
 

@@ -249,7 +249,7 @@ export const removeWildcardFromCellContent = (
 			contentsBeforeCurrent[contentsBeforeCurrent.length - 1].wildcardIndex !== null &&
 			contentsAfterCurrent[0].wildcardIndex !== null
 		) {
-			//console.log("both are wildcards");
+			// Both are wildcards
 			contentsToBeRemoved.wildcardIndex = null;
 
 			newCellContents.push(...contentsBeforeCurrent);
@@ -261,7 +261,7 @@ export const removeWildcardFromCellContent = (
 			contentsBeforeCurrent[contentsBeforeCurrent.length - 1].wildcardIndex === null &&
 			contentsAfterCurrent[0].wildcardIndex === null
 		) {
-			//console.log("both are text");
+			// Both are text
 			const newContentsTextValue =
 				contentsBeforeCurrent[contentsBeforeCurrent.length - 1].textValue +
 				contentsToBeRemoved.textValue +
@@ -288,7 +288,7 @@ export const removeWildcardFromCellContent = (
 			contentsBeforeCurrent[contentsBeforeCurrent.length - 1].wildcardIndex === null &&
 			contentsAfterCurrent[0].wildcardIndex !== null
 		) {
-			//console.log("before is text, after is wildcard");
+			// Before is text, after is wildcard
 			const newContentsTextValue =
 				contentsBeforeCurrent[contentsBeforeCurrent.length - 1] + contentsToBeRemoved.textValue;
 			const newContents: CellContents = {
@@ -305,7 +305,7 @@ export const removeWildcardFromCellContent = (
 			newCellContents.push(newContents);
 			newCellContents = newCellContents.concat(contentsAfterCurrent);
 		} else {
-			//console.log("before is wildcard, after is text");
+			// Before is wildcard, after is text
 			const newContentsTextValue =
 				contentsToBeRemoved.textValue + contentsAfterCurrent[0].textValue;
 			const newContents: CellContents = {

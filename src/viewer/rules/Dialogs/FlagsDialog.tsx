@@ -242,6 +242,7 @@ export default class FlagsDialog extends React.Component<Props, State> {
 					textFieldWidth,
 					userColumns,
 					this.props.logFile,
+					this.state.rules
 				)}
 			</div>
 		);

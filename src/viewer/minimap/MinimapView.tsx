@@ -100,7 +100,6 @@ export default class MinimapView extends React.Component<Props, State> {
 				let counter = 0; //increase only when row is rendered
 				for (let i = 0; i < colors.length; i++) {
 					if (
-						this.props.rowProperties[i].isSearchResult &&
 						this.props.rowProperties[i].isRendered
 					) {
 						ctx.beginPath();

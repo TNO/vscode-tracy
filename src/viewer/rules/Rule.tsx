@@ -20,6 +20,7 @@ export default abstract class Rule {
 		textFieldWidth: string,
 		user_columns: string[],
 		logFile: LogFile,
+		rules: Rule[]
 	): JSX.Element;
 	abstract computeValues(logFile: LogFile): string[];
 	abstract toJSON(): { [s: string]: any };
