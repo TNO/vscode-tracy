@@ -30,13 +30,11 @@ export default class LogFile {
 	}
 
 	static create(content: { [s: string]: string }[], rules: Rule[]) {
-		let contentHeaders = this.getContentHeaders(content);
-		if (!contentHeaders.includes("Line")) {
-			contentHeaders = ["Line"].concat(contentHeaders);
+		const contentHeaders = this.getContentHeaders(content);
+		const headers = this.getHeaders(contentHeaders, rules);
+		if (!contentHeaders.includes("Line"))
 			for (let i = 0; i < content.length; i++) 
 				content[i]["Line"] = (i+1).toString();
-		}
-		const headers = this.getHeaders(contentHeaders, rules);
 		const rows = content.map((l) => headers.map((h) => l[h.name]));
 		const logFile = new LogFile(contentHeaders, headers, rows);
 		logFile.computeDefaultColumnColors();
@@ -49,8 +47,6 @@ export default class LogFile {
 		const headers = LogFile.getHeaders(this.contentHeaders, rules);
 
 		let rows = this.rows;
-		if (this.rows[0].length === headers.length + 1)
-			rows = this.rows.map(r => r.slice(0,-1))
 
 		if (structureMatches.length > 0) {
 			updatedSelected.push(false);
@@ -140,36 +136,34 @@ export default class LogFile {
 
 	private static getHeaders(contentHeaders: string[], rules: Rule[]) {
 		const allHeaders = [...contentHeaders, ...rules.map((r) => r.column)];
-		return allHeaders.map((name) => {
+		let headers = allHeaders.map((name) => {
 			const type = HEADER_TYPE_LOOKUP[name] ?? DEFAULT_HEADER_TYPE;
 			return { name, type };
 		});
+		if (!contentHeaders.includes("Line")) {
+			const lineHeader = [{ name: "Line", type: DEFAULT_HEADER_TYPE }];
+			headers = lineHeader.concat(headers);
+		}
+		return headers;
 	}
 
-	private updateHeaders(rules: Rule[]) {
-		const allHeaders = [...this.contentHeaders, ...rules.map((r) => r.column)];
-		this.headers = allHeaders.map((name) => {
-			const type = HEADER_TYPE_LOOKUP[name] ?? DEFAULT_HEADER_TYPE;
-			return { name, type };
-		});
-	}
 
 	private computeDefaultColumnColors() {
-		for (let i = 0; i < this.contentHeaders.length; i++) {
+		for (let i = 0; i < this.getStaticHeadersSize(); i++) {
 			const values = this.rows.map((r) => r[i]);
 			this.columnsColors[i] = LogFile.computeColors(this.headers[i], values);
 		}
 	}
 
 	private copyDefaultColumnColors(colours: string[][]) {
-		for (let i = 0; i < this.contentHeaders.length; i++) {
+		for (let i = 0; i < this.getStaticHeadersSize(); i++) {
 			this.columnsColors[i] = colours[i];
 		}
 	}
 
 	private computeRulesValuesAndColors(rules: Rule[]) {
 		// Compute rules values
-		const firstRuleIndex = this.contentHeaders.length;
+		const firstRuleIndex = this.getStaticHeadersSize();
 		const rulesValues = rules.map((r) => r.computeValues(this));
 		for (let row = 0; row < this.rows.length; row++) {
 			for (let column = 0; column < rulesValues.length; column++) {
@@ -197,6 +191,13 @@ export default class LogFile {
 		} 
 
 		return values.map((l) => colorizer(l));
+	}
+
+	private getStaticHeadersSize() {
+		let size = this.contentHeaders.length;
+		if (!this.contentHeaders.includes("Line"))
+			size++;
+		return size;
 	}
 
 	amountOfRows = () => this.rows.length;

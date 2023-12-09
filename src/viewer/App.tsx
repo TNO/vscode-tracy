@@ -151,16 +151,11 @@ export default class App extends React.Component<Props, State> {
 
 			if (logFile.headers[h].name.toLowerCase() === "timestamp") {
 				headerType = StructureHeaderColumnType.Unselected;
-			} else if (logFile.headers[h].name === "Line") {
+			}
+			if (!logFile.contentHeaders.includes(logFile.headers[h].name)) {
 				headerType = StructureHeaderColumnType.Custom;
 			}
-
-			rules.forEach((rule) => {
-				if (rule.column === logFile.headers[h].name) {
-					headerType = StructureHeaderColumnType.Custom;
-				}
-			});
-
+			
 			logHeaderColumnTypes.push(headerType);
 		}
 	}
