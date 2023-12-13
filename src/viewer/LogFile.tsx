@@ -180,17 +180,22 @@ export default class LogFile {
 
 	private static computeColors(header: Header, values: string[]) {
 		let colorizer: (s: string) => string;
-
-		if (header.name === "Line" || header.name === "Structure") {
-			colorizer = (v) => interpolateTurbo(values.indexOf(v) / values.length);
+		 if (this.containsOnlyInts(values)) {
+			colorizer = scaleSequential().domain(extent(values)).interpolator(interpolateTurbo);
 		} else if (header.type === "string") {
 			const uniqueValues = [...new Set(values)].sort();
 			colorizer = (v) => interpolateTurbo(uniqueValues.indexOf(v) / uniqueValues.length);
-		} else if (header.type === "number") {
-			colorizer = scaleSequential().domain(extent(values)).interpolator(interpolateTurbo);
-		} 
+		}
 
 		return values.map((l) => colorizer(l));
+	}
+
+	private static containsOnlyInts(items: string[]) {
+		for (const i of items){
+			if (!Number(i))
+				return false;
+		}
+		return true;
 	}
 
 	private getStaticHeadersSize() {
