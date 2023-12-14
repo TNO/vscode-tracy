@@ -231,12 +231,12 @@ export default class App extends React.Component<Props, State> {
 		else this.setState({ rules: newRules });
 	}
 
-	handleSelectDialog(selectedCols: boolean[], selectedColsMini: boolean[], isClose: boolean) {
+	handleSelectDialog(selectedColumns: boolean[], selectedColumnsMini: boolean[], isClose: boolean) {
 		if (isClose === true) {
 			this.setState({
-				selectedColumns: selectedCols,
-				selectedColumnsMini: selectedColsMini,
-				logFile: this.state.logFile.setSelectedColumns(selectedCols, selectedColsMini),
+				selectedColumns: selectedColumns,
+				selectedColumnsMini: selectedColumnsMini,
+				logFile: this.state.logFile.setSelectedColumns(selectedColumns, selectedColumnsMini),
 				showSelectDialog: false,
 			});
 		}

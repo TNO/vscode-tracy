@@ -76,12 +76,6 @@ export default class LogFile {
 		logFile.copyDefaultColumnColors(this.columnsColors);
 		logFile.computeRulesValuesAndColors(rules);
 		return logFile.setSelectedColumns(updatedSelected, updatedSelectedMini);
-
-		// Old solution
-		// this.updateSelectedColumns(rules);
-		// this.updateHeaders(rules);
-		// this.computeRulesValuesAndColors(rules);
-		// return this;
 	}
 
 	updateSelectedColumns(rules: Rule[]) {
@@ -180,8 +174,10 @@ export default class LogFile {
 
 	private static computeColors(header: Header, values: string[]) {
 		let colorizer: (s: string) => string;
-		 if (this.containsOnlyInts(values)) {
-			colorizer = scaleSequential().domain(extent(values)).interpolator(interpolateTurbo);
+		if (this.containsOnlyNumbers(values)) {
+			let uniqueValues = [...new Set(values)];
+			const sortedNumbers = uniqueValues.map(Number).sort(function(a,b) { return a - b;});
+			colorizer = scaleSequential().domain(extent(sortedNumbers)).interpolator(interpolateTurbo);
 		} else if (header.type === "string") {
 			const uniqueValues = [...new Set(values)].sort();
 			colorizer = (v) => interpolateTurbo(uniqueValues.indexOf(v) / uniqueValues.length);
@@ -190,9 +186,9 @@ export default class LogFile {
 		return values.map((l) => colorizer(l));
 	}
 
-	private static containsOnlyInts(items: string[]) {
+	private static containsOnlyNumbers(items: string[]) {
 		for (const i of items){
-			if (!Number(i))
+			if (!Number(+i) && (+i !== 0))
 				return false;
 		}
 		return true;
