@@ -192,8 +192,6 @@ export const removeWildcardFromStructureEntry = (
 	wildcardIndex: number,
 ): StructureEntry[] => {
 	const modifiedStructureEntries = structureEntries;
-	// console.log('entryIndex:',structureEntryIndex);
-	// console.log('cellIndex:',cellIndex);
 	let wildcardsInCell = modifiedStructureEntries[structureEntryIndex].wildcardsIndices[cellIndex];
 
 	wildcardsInCell = wildcardsInCell.filter((value) => value !== wildcardIndex);

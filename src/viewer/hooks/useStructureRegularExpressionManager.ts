@@ -223,7 +223,6 @@ export const useStructureRegularExpressionSearch = (
     console.log("Starting Structure Matching");
     const perfStart = performance.now();
     const textRanges: number[][] = [];
-    const resultingMatches: number[][] = [];
     const structureQuery = new RegExp(expression, flags);
     let result;
 
@@ -236,25 +235,61 @@ export const useStructureRegularExpressionSearch = (
 
     const transStart = performance.now();
 
+    const resultingMatches = extractMatches(textRanges, logEntryCharIndexMaps);
+
+    const transEnd = performance.now();
+    console.log(`Execution time (translation from char indices to logFile.rows indices): ${transEnd - transStart} ms`);
+
+    return resultingMatches;
+};
+
+export const useStructureRegularExpressionNestedSearch = (
+    expression: string,
+    logFileAsString: string,
+    logEntryCharIndexMaps: LogEntryCharMaps,
+): number[][] => {
+    const textRanges: number[][] = [];
+    const structureQuery = new RegExp(expression, "s");
+
+    let finished = false;
+    let previousStartIndex = 0;
+    let remainingText = logFileAsString;
+
+    while (!finished) {
+        let match = remainingText.match(structureQuery);
+        if ((match == undefined) || (match.index == undefined)) {
+            finished = true;
+        }
+        else {
+            let startIndex = previousStartIndex + match.index;
+            let lastIndex = startIndex + match[0].length;
+            textRanges.push([startIndex, lastIndex]);
+            previousStartIndex = startIndex + 1;
+            remainingText = remainingText.substring(match.index + 1);
+        }
+    }
+
+    const resultingMatches = extractMatches(textRanges, logEntryCharIndexMaps);
+
+    return resultingMatches;
+};
+
+function extractMatches(textRanges: number[][], logEntryCharIndexMaps: LogEntryCharMaps) {
+    let resultingMatches: number[][] = [];
     textRanges.forEach((matchRanges) => {
         const indexesOfEntriesInMatch: number[] = [];
 
         const indexOfFirstObjectInMatch = logEntryCharIndexMaps.firstCharIndexMap.get(matchRanges[0]);
         const indexOfLastObjectInMatch = logEntryCharIndexMaps.lastCharIndexMap.get(matchRanges[1]);
-
-        if (indexOfFirstObjectInMatch != undefined && indexOfLastObjectInMatch != undefined) {
+        
+        if ((indexOfFirstObjectInMatch !== undefined) && (indexOfLastObjectInMatch !== undefined)) {
 
             for (let i = indexOfFirstObjectInMatch; i <= indexOfLastObjectInMatch; i++) {
                 indexesOfEntriesInMatch.push(i);
             }
-
             resultingMatches.push(indexesOfEntriesInMatch);
         }
 
     });
-
-    const transEnd = performance.now();
-    console.log(`Execution time (translation from char indices to logFile.rows indices): ${transEnd - transStart} ms`);
-
     return resultingMatches;
 };

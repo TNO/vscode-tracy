@@ -4,7 +4,6 @@ import { Header } from "./types";
 import { scaleSequential } from "d3-scale";
 import { interpolateTurbo } from "d3-scale-chromatic";
 
-// TODO: determine column type automatically, not hardcoded
 const DEFAULT_HEADER_TYPE = "string";
 const HEADER_TYPE_LOOKUP = {
 	threadID: "number",
@@ -27,10 +26,16 @@ export default class LogFile {
 		this.rows = rows;
 		this.selectedColumns = new Array(headers.length).fill(true);
 		this.selectedColumnsMini = new Array(headers.length).fill(true);
+		this.selectedColumnsMini[0] = false;
 	}
 
 	static create(content: { [s: string]: string }[], rules: Rule[]) {
-		const contentHeaders = this.getContentHeaders(content);
+		let contentHeaders = this.getContentHeaders(content);
+		if (!contentHeaders.includes("Line")) {
+			contentHeaders = ["Line"].concat(contentHeaders);
+			for (let i = 0; i < content.length; i++) 
+				content[i]["Line"] = (i+1).toString();
+		}
 		const headers = this.getHeaders(contentHeaders, rules);
 		const rows = content.map((l) => headers.map((h) => l[h.name]));
 		const logFile = new LogFile(contentHeaders, headers, rows);
@@ -39,11 +44,39 @@ export default class LogFile {
 		return logFile;
 	}
 
-	updateRules(rules: Rule[]): LogFile {
-		// Slower solution
+	updateLogFile(rules: Rule[], structureMatches: number[][]): LogFile {
 		const [updatedSelected, updatedSelectedMini] = this.updateSelectedColumns(rules)
 		const headers = LogFile.getHeaders(this.contentHeaders, rules);
-		const logFile = new LogFile(this.contentHeaders, headers, this.rows);
+
+		let rows = this.rows;
+		if (this.rows[0].length === headers.length + 1)
+			rows = this.rows.map(r => r.slice(0,-1))
+
+		if (structureMatches.length > 0) {
+			updatedSelected.push(false);
+			updatedSelectedMini.push(true);
+			const name = "Structure"
+			const type = DEFAULT_HEADER_TYPE;
+			headers.push({name, type});
+			let currentStructureIndex = 0;
+			for (let i = 0; i < rows.length; i++) {
+				rows[i].push("");
+				if (currentStructureIndex < structureMatches.length) {
+					if (i > structureMatches[currentStructureIndex].at(-1)!) {
+						currentStructureIndex++;
+						if (currentStructureIndex === structureMatches.length)
+							break;
+					}
+
+					if (structureMatches[currentStructureIndex].includes(i)) {
+						rows[i].pop();
+						rows[i].push((currentStructureIndex + 1).toString());
+					}
+				}					
+			}
+		}
+
+		const logFile = new LogFile(this.contentHeaders, headers, rows);
 		logFile.copyDefaultColumnColors(this.columnsColors);
 		logFile.computeRulesValuesAndColors(rules);
 		return logFile.setSelectedColumns(updatedSelected, updatedSelectedMini);
@@ -100,8 +133,9 @@ export default class LogFile {
 
 	private static getContentHeaders(content: { [s: string]: string }[]) {
 		// Headers are all keys that are present in the first object (row)
-		const first = content[0] ?? {};
-		return Object.keys(first);
+		const firstRow = content[0] ?? {};
+		const contentHeaders = Object.keys(firstRow);
+		return contentHeaders;
 	}
 
 	private static getHeaders(contentHeaders: string[], rules: Rule[]) {
@@ -135,16 +169,16 @@ export default class LogFile {
 
 	private computeRulesValuesAndColors(rules: Rule[]) {
 		// Compute rules values
-		const startIndex = this.headers.length - rules.length;
+		const firstRuleIndex = this.contentHeaders.length;
 		const rulesValues = rules.map((r) => r.computeValues(this));
 		for (let row = 0; row < this.rows.length; row++) {
 			for (let column = 0; column < rulesValues.length; column++) {
-				this.rows[row][column + startIndex] = rulesValues[column][row];
+				this.rows[row][column + firstRuleIndex] = rulesValues[column][row];
 			}
 		}
 
 		// Compute colors
-		for (let i = startIndex; i < this.headers.length; i++) {
+		for (let i = firstRuleIndex; i < this.headers.length; i++) {
 			const values = this.rows.map((r) => r[i]);
 			this.columnsColors[i] = LogFile.computeColors(this.headers[i], values);
 		}
@@ -153,12 +187,14 @@ export default class LogFile {
 	private static computeColors(header: Header, values: string[]) {
 		let colorizer: (s: string) => string;
 
-		if (header.type === "number") {
-			colorizer = scaleSequential().domain(extent(values)).interpolator(interpolateTurbo);
-		} else {
+		if (header.name === "Line" || header.name === "Structure") {
+			colorizer = (v) => interpolateTurbo(values.indexOf(v) / values.length);
+		} else if (header.type === "string") {
 			const uniqueValues = [...new Set(values)].sort();
 			colorizer = (v) => interpolateTurbo(uniqueValues.indexOf(v) / uniqueValues.length);
-		}
+		} else if (header.type === "number") {
+			colorizer = scaleSequential().domain(extent(values)).interpolator(interpolateTurbo);
+		} 
 
 		return values.map((l) => colorizer(l));
 	}

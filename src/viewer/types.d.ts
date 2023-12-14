@@ -47,7 +47,6 @@ export interface CellContents {
 export type StructureMatchId = number | null;
 
 export interface RowProperty {
-	isSearchResult: boolean;
 	isRendered: boolean;
 	rowType: SelectedRowType;
 }
