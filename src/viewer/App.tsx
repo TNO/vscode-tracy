@@ -23,7 +23,7 @@ import {
 	useStructureRegularExpressionSearch,
 	useStructureRegularExpressionNestedSearch
 } from "./hooks/useStructureRegularExpressionManager";
-import { getRegularExpressionMatches, returnSearchIndices } from "./hooks/useLogSearchManager";
+import { returnSearchIndices } from "./hooks/useLogSearchManager";
 import { constructNewRowProperty, constructNewSegment } from "./hooks/useRowProperty";
 import StructureDialog from "./structures/StructureDialog";
 import StatesDialog from "./rules/Dialogs/StatesDialog";
@@ -119,9 +119,10 @@ export default class App extends React.Component<Props, State> {
 			const lines = JSON.parse(message.text);
 			const logFileText = JSON.stringify(lines, null, 2);
 			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
-			const logFile = LogFile.create(lines, rules);
-			logFile.setSelectedColumns(this.state.selectedColumns, this.state.selectedColumnsMini);
-			this.extractHeaderColumnTypes(logFile, rules);
+			let logFile = LogFile.create(lines, rules);
+			// if (this.previousSession)
+			// 	logFile.setSelectedColumns(this.previousSession.selectedColumns, this.previousSession.selectedColumnsMini);
+			this.extractHeaderColumnTypes(logFile);
 			this.setState({
 				rules,
 				logFile,
@@ -136,15 +137,16 @@ export default class App extends React.Component<Props, State> {
 				this.setState({ rowProperties: newRowsProps });
 			}
 			else {
-				const showFlagsDialog = this.previousSession.showFlagsDialog;
-				const showStatesDialog = this.previousSession.showStatesDialog;
-				const showStructureDialog = this.previousSession.showStructureDialog;
-				this.setState({ showFlagsDialog, showStatesDialog, showStructureDialog });
+				this.setState({ 
+					showFlagsDialog: this.previousSession.showFlagsDialog,
+					showStatesDialog: this.previousSession.showStatesDialog,
+					showStructureDialog: this.previousSession.showStructureDialog,					
+				});
 			}
 		}
 	}
 
-	extractHeaderColumnTypes(logFile: LogFile, rules: Rule[]) {
+	extractHeaderColumnTypes(logFile: LogFile) {
 		logHeaderColumnTypes = [];
 		for (let h = 0; h < logFile.headers.length; h++) {
 			let headerType = StructureHeaderColumnType.Selected;
@@ -246,7 +248,7 @@ export default class App extends React.Component<Props, State> {
 		if (isClosing === true) {
 			this.handleStructureUpdate(isClosing);
 		} else {
-			const { logFile, rowProperties, rules, showStructureDialog } = this.state;
+			const { logFile, rowProperties, showStructureDialog } = this.state;
 
 			const selectedLogRows = logFile.rows.filter(
 				(v, i) => rowProperties[i].rowType === SelectedRowType.UserSelect,
@@ -257,7 +259,7 @@ export default class App extends React.Component<Props, State> {
 			}
 
 			if (!showStructureDialog) {
-				this.extractHeaderColumnTypes(logFile, rules);
+				this.extractHeaderColumnTypes(logFile);
 				this.setState({ showStructureDialog: true });
 			}
 
