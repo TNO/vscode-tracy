@@ -1,5 +1,7 @@
 import React from "react";
 import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
+import CloseIcon from "@mui/icons-material/Close";
+import IconButton from '@mui/material/IconButton';
 import StructureTable from "./StructureTable";
 import { ContextMenuItem, Header, StructureEntry, Wildcard } from "../types";
 import { StructureHeaderColumnType } from "../constants";
@@ -30,6 +32,7 @@ import isEqual from "react-fast-compare";
 import cloneDeep from "lodash/cloneDeep";
 import ContextMenu from "../contextMenu/contextMenu";
 import { styled } from "@mui/material/styles";
+import StructureSettingsDropdown from "./StructureSettingsDropdown";
 
 interface Props {
 	logHeaderColumns: Header[];
@@ -550,9 +553,15 @@ export default class StructureDialog extends React.Component<Props, State> {
 							>
 								<i className="codicon codicon-question" />
 							</CustomWidthTooltip>
-							<VSCodeButton appearance="icon" onClick={() => this.props.onClose()}>
-								<i className="codicon codicon-close" />
-							</VSCodeButton>
+                            <StructureSettingsDropdown/>
+                            <IconButton
+                                    id="close-button"
+                                    aria-label="close"
+                                    size="small"
+                                    onClick={() => this.props.onClose()}>
+                                <CloseIcon fontSize="small"/>
+                            </IconButton>
+                            
 						</div>
 					</div>
 					<StructureTable

@@ -250,6 +250,7 @@ export default class App extends React.Component<Props, State> {
 	handleStructureDialog(isClosing: boolean) {
 		if (isClosing === true) {
 			this.handleStructureUpdate(isClosing);
+            console.log(this.state.logFileAsString)
 		} else {
 			const { logFile, rowProperties, rules, showStructureDialog } = this.state;
 
