@@ -208,6 +208,7 @@ export default class App extends React.Component<Props, State> {
 				if (searchMatches.includes(index))
 					return constructNewRowProperty(true, SelectedRowType.SearchResult);
 				else return constructNewRowProperty(true, SelectedRowType.None);
+				// else return constructNewRowProperty(true, this.state.rowProperties[index].rowType);
 			});
 		}
 		else {
@@ -215,6 +216,7 @@ export default class App extends React.Component<Props, State> {
 				if (searchMatches.includes(index))
 					return constructNewRowProperty(true, SelectedRowType.SearchResult);
 				else return constructNewRowProperty(false, SelectedRowType.None);
+				// else return constructNewRowProperty(false, this.state.rowProperties[index].rowType);
 			});
 		}
 		this.setState({ rowProperties, filterSearch });
@@ -414,8 +416,8 @@ export default class App extends React.Component<Props, State> {
 		segmentMatches.forEach((match) => {
 			entryMatches.push(match[0])
 			exitMatches.push(match[match.length - 1])
-		})
-
+		});
+		exitMatches = [...new Set(exitMatches)];
 		const stack: number[] = [];
 		const maximumLevel = 5;
 		let nextEntry = entryMatches.shift()!;
@@ -427,7 +429,7 @@ export default class App extends React.Component<Props, State> {
 				nextEntry = entryMatches.shift()!;
 			} else {
 				const entry = stack.pop()!;
-				if (stack.length <= maximumLevel - 1)
+				if (stack.length < maximumLevel)
 					collapsibleRows[entry] = constructNewSegment(entry, nextExit, stack.length);
 				else console.log(`Maximum segment level reached: Discarding (${entry}, ${nextExit})`);
 				nextExit = exitMatches.shift()!;
