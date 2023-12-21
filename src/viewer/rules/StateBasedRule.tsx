@@ -245,7 +245,7 @@ export default class StateBasedRule extends Rule {
 							<VSCodeDropdown
 								style={{ width: "100%", marginBottom: "2px" }}
 								value={r.Column}
-								key="Dropdown"
+								key="editTransitionColumn"
 								onChange={(e) => editTransition(transitionIndex, c_i, "Column", e.target.value)}
 							>
 								{allColumns.map((col, col_i) => (
@@ -259,7 +259,7 @@ export default class StateBasedRule extends Rule {
 							<VSCodeDropdown
 								style={{ width: "100%" }}
 								value={r.Operation}
-								key="Operators"
+								key="editTransitionOperation"
 								onChange={(e) => editTransition(transitionIndex, c_i, "Operation", e.target.value)}
 							>
 								<VSCodeOption key="0" value="contains">
@@ -285,25 +285,33 @@ export default class StateBasedRule extends Rule {
 								</VSCodeOption>
 							</VSCodeDropdown>
 						);
+
+						let isDropdown = false;
 						let dropdownOptions: string[] = [];
 						if (user_columns.includes(r.Column)) {
 							const dropdownRule = rules.filter(rule => rule.column === r.Column)[0];
-							if (dropdownRule.ruleType === 'Flag rule') {
+							if (dropdownRule.ruleType === "Flag rule") {
 								let dropdownFlagRule = dropdownRule as FlagRule;
 								dropdownOptions = dropdownFlagRule.flags.map(f => f.name);
+								dropdownOptions.push(dropdownFlagRule.defaultValue);
+									if (dropdownFlagRule.flagType === "User Defined" && dropdownOptions.length > 0)
+										isDropdown = true;
 							}
-							else if (dropdownRule.ruleType === 'State based rule') {
+							else if (dropdownRule.ruleType === "State based rule") {
 								let dropdownStateRule = dropdownRule as StateBasedRule;
-								dropdownOptions = dropdownStateRule.ruleStates.map(s => s.name)
+								dropdownOptions = dropdownStateRule.ruleStates.map(s => s.name);
+								if (dropdownOptions.length > 0)
+									isDropdown = true;
 							}
 						}
-						if (dropdownOptions.length === 0 || dropdownOptions[0] === '') {
+						dropdownOptions = dropdownOptions.filter(opt => opt != "")
+						if (!isDropdown) {
 							setMap.push(
 								<VSCodeTextField
 									style={{ width: "100%" }}
 									value={r.Text}
 									onInput={(e) => editTransition(transitionIndex, c_i, "Text", e.target.value)}
-									key="Text"
+									key="editTransitionText"
 								/>
 							);
 						}
@@ -312,7 +320,7 @@ export default class StateBasedRule extends Rule {
 								<VSCodeDropdown
 									style={{ width: "100%" }}
 									value={r.Text}
-									key="Text"
+									key="editTransitionTextDropdown"
 									onChange={(e) => editTransition(transitionIndex, c_i, "Text", e.target.value)}
 								>
 									{dropdownOptions.map((option, optionIndex) => (
