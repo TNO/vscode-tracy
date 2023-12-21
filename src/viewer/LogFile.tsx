@@ -51,9 +51,16 @@ export default class LogFile {
 		if (structureMatches.length > 0) {
 			updatedSelected.push(false);
 			updatedSelectedMini.push(true);
-			const name = "Structure"
-			const type = DEFAULT_HEADER_TYPE;
-			headers.push({name, type});
+			let num = 1;
+			while (true) {
+				const name = "Structure" + num
+				const type = DEFAULT_HEADER_TYPE;
+				if (!headers.map(h => h.name).includes(name)) {
+					headers.push({name, type});
+					break;
+				}
+				num++;
+			}
 			let currentStructureIndex = 0;
 			for (let i = 0; i < rows.length; i++) {
 				rows[i].push("");
