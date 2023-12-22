@@ -33,8 +33,8 @@ export default class LogFile {
 		const contentHeaders = this.getContentHeaders(content);
 		const headers = this.getHeaders(contentHeaders, rules);
 		if (!contentHeaders.includes("Line"))
-			for (let i = 0; i < content.length; i++) 
-				content[i]["Line"] = (i+1).toString();
+			for (let i = 0; i < content.length; i++)
+				content[i]["Line"] = (i + 1).toString();
 		const rows = content.map((l) => headers.map((h) => l[h.name]));
 		const logFile = new LogFile(contentHeaders, headers, rows);
 		logFile.computeDefaultColumnColors();
@@ -49,21 +49,30 @@ export default class LogFile {
 		let rows = this.rows;
 
 		if (structureMatches.length > 0) {
-			updatedSelected.push(false);
-			updatedSelectedMini.push(true);
 			let num = 1;
 			while (true) {
 				const name = "Structure" + num
 				const type = DEFAULT_HEADER_TYPE;
 				if (!headers.map(h => h.name).includes(name)) {
-					headers.push({name, type});
+					headers.push({ name, type });
 					break;
 				}
 				num++;
 			}
+			// Previous structure match already exists in logfile
+			if (headers.length === rows[0].length) {
+				for (let i = 0; i < rows.length; i++)
+					rows[i].pop();
+			}
+			else {
+				updatedSelected.push(true);
+				updatedSelectedMini.push(true);
+			}
+			for (let i = 0; i < rows.length; i++)
+				rows[i].push("0");
+
 			let currentStructureIndex = 0;
 			for (let i = 0; i < rows.length; i++) {
-				rows[i].push("");
 				if (currentStructureIndex < structureMatches.length) {
 					if (i > structureMatches[currentStructureIndex].at(-1)!) {
 						currentStructureIndex++;
@@ -75,7 +84,7 @@ export default class LogFile {
 						rows[i].pop();
 						rows[i].push((currentStructureIndex + 1).toString());
 					}
-				}					
+				}
 			}
 		}
 
@@ -183,7 +192,7 @@ export default class LogFile {
 		let colorizer: (s: string) => string;
 		if (this.containsOnlyNumbers(values)) {
 			let uniqueValues = [...new Set(values)];
-			const sortedNumbers = uniqueValues.map(Number).sort(function(a,b) { return a - b;});
+			const sortedNumbers = uniqueValues.map(Number).sort(function (a, b) { return a - b; });
 			colorizer = scaleSequential().domain(extent(sortedNumbers)).interpolator(interpolateTurbo);
 		} else if (header.type === "string") {
 			const uniqueValues = [...new Set(values)].sort();
@@ -194,7 +203,7 @@ export default class LogFile {
 	}
 
 	private static containsOnlyNumbers(items: string[]) {
-		for (const i of items){
+		for (const i of items) {
 			if (!Number(+i) && (+i !== 0))
 				return false;
 		}
