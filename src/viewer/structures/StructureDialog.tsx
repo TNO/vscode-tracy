@@ -1,10 +1,10 @@
 import React from "react";
 import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
 import StructureTable from "./StructureTable";
-import { ContextMenuItem, Header, StructureEntry, Wildcard } from "../types";
-import { StructureHeaderColumnType } from "../constants";
+import { ContextMenuItem, Header, LogEntryCharMaps, Segment, StructureEntry, Wildcard } from "../types";
+import { StructureHeaderColumnType, StructureLinkDistance } from "../constants";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
-import { useStructureQueryConstructor } from "../hooks/useStructureRegularExpressionManager";
+import { useStructureQueryConstructor, useStructureRegularExpressionNestedSearch } from "../hooks/useStructureRegularExpressionManager";
 import {
 	constructStructureEntriesArray,
 	appendNewStructureEntries,
@@ -30,19 +30,23 @@ import isEqual from "react-fast-compare";
 import cloneDeep from "lodash/cloneDeep";
 import ContextMenu from "../contextMenu/contextMenu";
 import { styled } from "@mui/material/styles";
+import { constructNewSegment, maximumSegmentation } from "../hooks/useRowProperty";
 
 interface Props {
+	logFileAsString: string;
+	logEntryCharIndexMaps: LogEntryCharMaps | null;
 	logHeaderColumns: Header[];
 	logHeaderColumnsTypes: StructureHeaderColumnType[];
 	logSelectedRows: string[][];
 	currentStructureMatchIndex: number | null;
 	numberOfMatches: number;
+	collapsibleRows: { [key: number]: Segment };
 	onClose: () => void;
 	onStructureUpdate: () => void;
 	onNavigateStructureMatches: (isGoingForward: boolean) => void;
 	onMatchStructure: (expression: string) => void;
 	onExportStructureMatches: () => void;
-	onDefineSegment: (expression: string) => void;
+	onDefineSegment: (expression: { [key: number]: Segment }) => void;
 }
 
 interface State {
@@ -282,14 +286,68 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	defineSegment() {
-		const segmentRegExp = useStructureQueryConstructor(
+		let collapsibleRows = this.props.collapsibleRows;
+		
+		const minSegmentRegExp = useStructureQueryConstructor(
 			this.props.logHeaderColumns,
 			this.state.structureHeaderColumnsTypes,
 			this.state.structureEntries,
 			this.state.wildcards,
 		);
 
-		this.props.onDefineSegment(segmentRegExp);
+		let maxSegmentEntries = this.state.structureEntries;
+		maxSegmentEntries[maxSegmentEntries.length-2].structureLink = StructureLinkDistance.Max;
+
+		const maxSegmentRegExp = useStructureQueryConstructor(
+			this.props.logHeaderColumns,
+			this.state.structureHeaderColumnsTypes,
+			maxSegmentEntries,
+			this.state.wildcards,
+		);
+
+		const segmentMatches = useStructureRegularExpressionNestedSearch(
+			minSegmentRegExp,
+			maxSegmentRegExp,
+			this.props.logFileAsString,
+			this.props.logEntryCharIndexMaps!,
+		);
+
+		console.log(segmentMatches)
+
+		let entryMatches: number[] = [];
+		let exitMatches: number[] = [];
+		segmentMatches.forEach((match) => {
+			entryMatches.push(match[0])
+			exitMatches.push(match[match.length - 1])
+		});
+		entryMatches = [...new Set(entryMatches)].sort(function (a, b) {  return a - b;  });
+		exitMatches = [...new Set(exitMatches)].sort(function (a, b) {  return a - b;  });
+
+		const stack: number[] = [];
+		let nextEntry = entryMatches.shift()!;
+		let nextExit = exitMatches.shift()!;
+
+		while (nextEntry !== undefined && nextExit !== undefined) {
+			console.log([nextEntry, nextExit]);
+			if (nextEntry < nextExit) {
+				stack.push(nextEntry);
+				nextEntry = entryMatches.shift()!;
+			} else {
+				const entry = stack.pop()!;
+				if (stack.length < maximumSegmentation)
+					collapsibleRows[entry] = constructNewSegment(entry, nextExit, stack.length);
+				// else console.log(`Maximum segment level reached: Discarding (${entry}, ${nextExit})`);
+				nextExit = exitMatches.shift()!;
+			}
+		}
+		while (nextExit !== undefined) {
+			const entry = stack.pop()!;
+			if (stack.length < maximumSegmentation)
+				collapsibleRows[entry] = constructNewSegment(entry, nextExit, stack.length);
+			nextExit = exitMatches.shift()!;
+		}
+
+		this.props.onDefineSegment(collapsibleRows);
 	}
 
 	createWildcard() {

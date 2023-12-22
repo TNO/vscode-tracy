@@ -250,28 +250,43 @@ export const useStructureRegularExpressionSearch = (
 };
 
 export const useStructureRegularExpressionNestedSearch = (
-    expression: string,
+    minExpression: string,
+    maxExpression: string,
     logFileAsString: string,
     logEntryCharIndexMaps: LogEntryCharMaps,
 ): number[][] => {
     const textRanges: number[][] = [];
-    const structureQuery = new RegExp(expression, "s");
+    const minQuery = new RegExp(minExpression, "s");
+    const maxQuery = new RegExp(maxExpression, "s");
 
-    let finished = false;
-    let previousStartIndex = 0;
+    let previousIndex = 0;
     let remainingText = logFileAsString;
 
-    while (!finished) {
-        let match = remainingText.match(structureQuery);
-        if ((match == undefined) || (match.index == undefined)) {
-            finished = true;
-        }
+    while (true) {
+        let match = remainingText.match(minQuery);
+        if ((match == undefined) || (match.index == undefined))
+            break;
         else {
-            let startIndex = previousStartIndex + match.index;
+            let startIndex = previousIndex + match.index;
             let lastIndex = startIndex + match[0].length;
             textRanges.push([startIndex, lastIndex]);
-            previousStartIndex = startIndex + 1;
+            previousIndex = startIndex + 1;
             remainingText = remainingText.substring(match.index + 1);
+        }
+    }
+
+    previousIndex = logFileAsString.length;
+    remainingText = logFileAsString;
+
+    while (true) {
+        let match = remainingText.match(maxQuery);
+        if ((match == undefined) || (match.index == undefined))
+            break;
+        else {
+            let startIndex = match.index;
+            let lastIndex = startIndex + match[0].length;
+            textRanges.push([startIndex, lastIndex]);
+            remainingText = remainingText.substring(0, lastIndex - 1);
         }
     }
 

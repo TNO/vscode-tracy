@@ -1,4 +1,5 @@
 import React from "react";
+import Rule from "./rules/Rule";
 import LogFile from "./LogFile";
 import LogView from "./log/LogView";
 import MinimapView from "./minimap/MinimapView";
@@ -21,15 +22,13 @@ import {
 import {
 	useGetCharIndicesForLogEntries,
 	useStructureRegularExpressionSearch,
-	useStructureRegularExpressionNestedSearch
 } from "./hooks/useStructureRegularExpressionManager";
 import { returnSearchIndices } from "./hooks/useLogSearchManager";
-import { constructNewRowProperty, constructNewSegment } from "./hooks/useRowProperty";
+import { constructNewRowProperty } from "./hooks/useRowProperty";
 import StructureDialog from "./structures/StructureDialog";
 import StatesDialog from "./rules/Dialogs/StatesDialog";
 import FlagsDialog from "./rules/Dialogs/FlagsDialog";
 import ExportDialog from "./rules/Dialogs/ExportDialog";
-import Rule from "./rules/Rule";
 import MinimapHeader from "./minimap/MinimapHeader";
 import SelectColDialog from "./log/SelectColDialog";
 
@@ -408,50 +407,8 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	handleSegmentation(expression: string) {
-		const { logFileAsString, logEntryCharIndexMaps } = this.state;
-		const { collapsibleRows } = this.state;
-
-		const segmentMatches = useStructureRegularExpressionNestedSearch(
-			expression,
-			logFileAsString,
-			logEntryCharIndexMaps!,
-		);
-
-		let entryMatches: number[] = [];
-		let exitMatches: number[] = [];
-		segmentMatches.forEach((match) => {
-			entryMatches.push(match[0])
-			exitMatches.push(match[match.length - 1])
-		});
-		exitMatches = [...new Set(exitMatches)];
-		const stack: number[] = [];
-		const maximumLevel = 5;
-		let nextEntry = entryMatches.shift()!;
-		let nextExit = exitMatches.shift()!;
-
-		while (nextEntry !== undefined && nextExit !== undefined) {
-			if (nextEntry < nextExit) {
-				stack.push(nextEntry);
-				nextEntry = entryMatches.shift()!;
-			} else {
-				const entry = stack.pop()!;
-				if (stack.length < maximumLevel)
-					collapsibleRows[entry] = constructNewSegment(entry, nextExit, stack.length);
-				else console.log(`Maximum segment level reached: Discarding (${entry}, ${nextExit})`);
-				nextExit = exitMatches.shift()!;
-			}
-		}
-		if (nextExit !== undefined) {
-			const entry = stack.pop()!;
-			collapsibleRows[entry] = constructNewSegment(entry, nextExit, 0);
-		}
-
+	updateSegmentation(collapsibleRows: { [key: number]: Segment }) {
 		this.setState({ collapsibleRows });
-	}
-
-	clearSegmentation() {
-		this.setState({ collapsibleRows: {} });
 	}
 
 	switchBooleanState(name: string) {
@@ -696,7 +653,7 @@ export default class App extends React.Component<Props, State> {
 							onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
 							onRowPropsChanged={(index, isRendered) => this.handleRowCollapse(index, isRendered)}
 							collapsibleRows={this.state.collapsibleRows}
-							clearSegmentation={() => this.clearSegmentation()}
+							clearSegmentation={() => this.updateSegmentation({})}
 						/>
 					</div>
 					<div
@@ -801,16 +758,17 @@ export default class App extends React.Component<Props, State> {
 							logHeaderColumns={this.state.logFile.headers}
 							logHeaderColumnsTypes={logHeaderColumnTypes}
 							logSelectedRows={this.state.selectedLogRows}
+							logFileAsString={this.state.logFileAsString}
+							logEntryCharIndexMaps={this.state.logEntryCharIndexMaps}
+							collapsibleRows={this.state.collapsibleRows}
 							currentStructureMatchIndex={this.state.currentStructureMatchIndex}
 							numberOfMatches={this.state.structureMatches.length}
 							onClose={() => this.handleStructureDialog(true)}
 							onStructureUpdate={() => this.handleStructureUpdate(false)}
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
-							onDefineSegment={(expression) => this.handleSegmentation(expression)}
-							onNavigateStructureMatches={(isGoingForward) =>
-								this.handleNavigation(isGoingForward, true)
-							}
-							onExportStructureMatches={() => this.exportData(this.state.structureMatches.flat(1))}
+							onDefineSegment={(collapsibleRows) => this.updateSegmentation(collapsibleRows)}
+							onNavigateStructureMatches={(isGoingForward) => this.handleNavigation(isGoingForward, true)}
+							onExportStructureMatches={() => this.exportData(this.state.structureMatches.flat(1))} 
 						/>
 					)}
 				</div>
