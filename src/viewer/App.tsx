@@ -448,7 +448,7 @@ export default class App extends React.Component<Props, State> {
 
 	render() {
 		const minimapCounter = this.state.logFile.selectedColumnsMini.filter(Boolean).length;
-		const minimapWidth = minimapCounter * MINIMAP_COLUMN_WIDTH;
+		const minimapWidth = Math.max(6, minimapCounter) * MINIMAP_COLUMN_WIDTH;
 		const minimapHeight = this.state.showMinimapHeader ? "12%" : "5%";
 
 		const allColumns = [
