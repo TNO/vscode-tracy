@@ -28,6 +28,7 @@ import { constructNewRowProperty, constructNewSegment } from "./hooks/useRowProp
 import StructureDialog from "./structures/StructureDialog";
 import StatesDialog from "./rules/Dialogs/StatesDialog";
 import FlagsDialog from "./rules/Dialogs/FlagsDialog";
+import ExportDialog from "./rules/Dialogs/ExportDialog";
 import Rule from "./rules/Rule";
 import MinimapHeader from "./minimap/MinimapHeader";
 import SelectColDialog from "./log/SelectColDialog";
@@ -37,6 +38,7 @@ interface State {
 	logFile: LogFile;
 	logViewState: LogViewState | undefined;
 	rules: Rule[];
+	showExportDialog: boolean;
 	showStatesDialog: boolean;
 	showStructureDialog: boolean;
 	showFlagsDialog: boolean;
@@ -73,6 +75,7 @@ interface State {
 let searchTimeoutId;
 let searchText: string = "";
 let searchColumn: string = "All";
+let exportPath: string = "";
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
@@ -137,12 +140,16 @@ export default class App extends React.Component<Props, State> {
 				this.setState({ rowProperties: newRowsProps });
 			}
 			else {
-				this.setState({ 
+				this.setState({
 					showFlagsDialog: this.previousSession.showFlagsDialog,
 					showStatesDialog: this.previousSession.showStatesDialog,
-					showStructureDialog: this.previousSession.showStructureDialog,					
+					showStructureDialog: this.previousSession.showStructureDialog,
 				});
 			}
+		}
+		else if (message.type === "readExportPath") {
+			exportPath = message.text;
+			this.setState({ showExportDialog: true });
 		}
 	}
 
@@ -157,7 +164,7 @@ export default class App extends React.Component<Props, State> {
 			if (!logFile.contentHeaders.includes(logFile.headers[h].name)) {
 				headerType = StructureHeaderColumnType.Custom;
 			}
-			
+
 			logHeaderColumnTypes.push(headerType);
 		}
 	}
@@ -475,7 +482,7 @@ export default class App extends React.Component<Props, State> {
 		for (var index of exportIndices) {
 			var rowObject = {};
 			const row = this.state.logFile.rows[index]
-			for (var columnIndex = 0; columnIndex <= originalColumns.length-1; columnIndex++)
+			for (var columnIndex = 0; columnIndex <= originalColumns.length - 1; columnIndex++)
 				rowObject[originalColumns[columnIndex].name] = row[columnIndex];
 			exportObjects.push(rowObject)
 		}
@@ -754,6 +761,12 @@ export default class App extends React.Component<Props, State> {
 							/>
 						)}
 					</div>
+					{this.state.showExportDialog && (
+						<ExportDialog
+							filepath={exportPath}
+							onClose={() => this.setState({ showExportDialog: false })}
+						/>
+					)}
 					{this.state.showStatesDialog && (
 						<StatesDialog
 							logFile={this.state.logFile}

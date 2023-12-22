@@ -71,6 +71,10 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 				const _time = new Date(Date.now() - tzoffset).toISOString().slice(11,19).replace(/:/g, "");
 				const exportFile = `${filename}_Tracy_export_${_date}_${_time}.tracy.json`;
 				fs.writeFileSync(exportFile, JSON.stringify(e.data));
+				webviewPanel.webview.postMessage({
+					type: "readExportPath",
+					text: exportFile,
+				});
 			}
 		});
 	}

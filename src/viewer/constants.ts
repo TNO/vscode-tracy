@@ -7,6 +7,7 @@ export const defaultAppState = {
 	logViewState: undefined,
 	coloredTable: false,
 	showMinimapHeader: true,
+	showExportDialog: false,
 	showStatesDialog: false,
 	showFlagsDialog: false,
 	showSelectDialog: false,
