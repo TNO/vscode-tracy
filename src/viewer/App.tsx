@@ -213,16 +213,14 @@ export default class App extends React.Component<Props, State> {
 			rowProperties = this.state.logFile.rows.map((row, index) => {
 				if (searchMatches.includes(index))
 					return constructNewRowProperty(true, SelectedRowType.SearchResult);
-				else return constructNewRowProperty(true, SelectedRowType.None);
-				// else return constructNewRowProperty(true, this.state.rowProperties[index].rowType);
+				else return constructNewRowProperty(true, this.state.rowProperties[index].rowType);
 			});
 		}
 		else {
 			rowProperties = this.state.logFile.rows.map((row, index) => {
 				if (searchMatches.includes(index))
 					return constructNewRowProperty(true, SelectedRowType.SearchResult);
-				else return constructNewRowProperty(false, SelectedRowType.None);
-				// else return constructNewRowProperty(false, this.state.rowProperties[index].rowType);
+				else return constructNewRowProperty(false, this.state.rowProperties[index].rowType);
 			});
 		}
 		this.setState({ rowProperties, filterSearch });
