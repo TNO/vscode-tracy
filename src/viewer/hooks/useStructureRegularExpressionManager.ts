@@ -106,7 +106,7 @@ const getRegExpForLogEntry = (
     let rowString = "";
     let hasProcessedLastUsableColumn = false;
 
-    for (let c = row.length - 1; c >= 0; c--) {
+    for (let c = logHeaders.length - 1; c >= 0; c--) {
 
         const headerString = getHeaderValue(logHeaders[c].name);
 
