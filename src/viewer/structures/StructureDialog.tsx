@@ -312,8 +312,6 @@ export default class StructureDialog extends React.Component<Props, State> {
 			this.props.logEntryCharIndexMaps!,
 		);
 
-		console.log(segmentMatches)
-
 		let entryMatches: number[] = [];
 		let exitMatches: number[] = [];
 		segmentMatches.forEach((match) => {
@@ -328,7 +326,6 @@ export default class StructureDialog extends React.Component<Props, State> {
 		let nextExit = exitMatches.shift()!;
 
 		while (nextEntry !== undefined && nextExit !== undefined) {
-			console.log([nextEntry, nextExit]);
 			if (nextEntry < nextExit) {
 				stack.push(nextEntry);
 				nextEntry = entryMatches.shift()!;
