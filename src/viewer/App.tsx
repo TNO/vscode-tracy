@@ -213,14 +213,14 @@ export default class App extends React.Component<Props, State> {
 			rowProperties = this.state.logFile.rows.map((row, index) => {
 				if (searchMatches.includes(index))
 					return constructNewRowProperty(true, SelectedRowType.SearchResult);
-				else return constructNewRowProperty(true, this.state.rowProperties[index].rowType);
+				else return constructNewRowProperty(true, SelectedRowType.None);
 			});
 		}
 		else {
 			rowProperties = this.state.logFile.rows.map((row, index) => {
 				if (searchMatches.includes(index))
 					return constructNewRowProperty(true, SelectedRowType.SearchResult);
-				else return constructNewRowProperty(false, this.state.rowProperties[index].rowType);
+				else return constructNewRowProperty(false, SelectedRowType.None);
 			});
 		}
 		this.setState({ rowProperties, filterSearch });
@@ -416,12 +416,15 @@ export default class App extends React.Component<Props, State> {
 				break;
 			case "reSearch":
 				this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
+				this.updateSearchField();
 				break;
 			case "wholeSearch":
 				this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
+				this.updateSearchField();
 				break;
 			case "caseSearch":
 				this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
+				this.updateSearchField();
 				break;
 			case "filterSearch":
 				this.setState(({ filterSearch }) => ({ filterSearch: !filterSearch }));
