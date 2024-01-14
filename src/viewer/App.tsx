@@ -5,11 +5,12 @@ import MinimapView from "./minimap/MinimapView";
 import Tooltip from "@mui/material/Tooltip";
 import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps } from "./types";
 import {
-	LOG_HEADER_HEIGHT,
+	COLUMN_0_HEADER_STYLE,
+	COLUMN_2_HEADER_STYLE,
 	MINIMAP_COLUMN_WIDTH,
-	BORDER,
 	SelectedRowType,
 	StructureHeaderColumnType,
+	defaultAppState,
 } from "./constants";
 import {
 	VSCodeButton,
@@ -20,6 +21,7 @@ import {
 import {
 	useGetCharIndicesForLogEntries,
 	useStructureRegularExpressionSearch,
+	useStructureRegularExpressionNestedSearch
 } from "./hooks/useStructureRegularExpressionManager";
 import { getRegularExpressionMatches, returnSearchIndices } from "./hooks/useLogSearchManager";
 import { constructNewRowProperty, constructNewSegment } from "./hooks/useRowProperty";
@@ -38,24 +40,28 @@ interface State {
 	showStatesDialog: boolean;
 	showStructureDialog: boolean;
 	showFlagsDialog: boolean;
-	showMinimapHeader: boolean;
 	showSelectDialog: boolean;
+	showMinimapHeader: boolean;
 	selectedColumns: boolean[];
 	selectedColumnsMini: boolean[];
 	coloredTable: boolean;
+
+	// Search related
 	reSearch: boolean;
 	wholeSearch: boolean;
 	caseSearch: boolean;
+	filterSearch: boolean;
+	searchMatches: number[];
+	currentSearchMatch: number | null;
+	currentSearchMatchIndex: number | null;
 
 	// Structure related
 	logFileAsString: string;
 	logEntryCharIndexMaps: LogEntryCharMaps | null;
 	selectedLogRows: string[][];
-	// selectedRowsTypes: RowType[];
 	rowProperties: RowProperty[];
 	lastSelectedRow: number | undefined;
 	structureMatches: number[][];
-	structureMatchesLogRows: number[];
 	currentStructureMatch: number[];
 	currentStructureMatchIndex: StructureMatchId;
 
@@ -63,57 +69,29 @@ interface State {
 	collapsibleRows: { [key: number]: Segment };
 }
 
-const COLUMN_0_HEADER_STYLE = {
-	height: LOG_HEADER_HEIGHT,
-	display: "flex",
-	justifyContent: "center",
-	alignItems: "center",
-	borderLeft: BORDER,
-	borderBottom: BORDER,
-};
 
-const COLUMN_2_HEADER_STYLE = {
-	height: "100%",
-	display: "flex",
-	borderLeft: BORDER,
-};
-
-let searchText = "";
-let searchColumn = "All";
+let searchTimeoutId;
+let searchText: string = "";
+let searchColumn: string = "All";
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
 	// @ts-ignore
 	vscode = acquireVsCodeApi();
+	previousSession = this.vscode.getState();
 	child = React.createRef<HTMLDivElement>();
 	constructor(props: Props) {
 		super(props);
-		this.state = {
-			logFile: LogFile.create([], []),
-			logFileAsString: "",
-			logViewState: undefined,
-			coloredTable: false,
-			showMinimapHeader: true,
-			rules: [],
-			showStatesDialog: false,
-			showFlagsDialog: false,
-			showSelectDialog: false,
-			selectedColumns: [],
-			selectedColumnsMini: [],
-			reSearch: false,
-			wholeSearch: false,
-			caseSearch: false,
-			selectedLogRows: [],
-			rowProperties: [],
-			logEntryCharIndexMaps: null,
-			showStructureDialog: false,
-			structureMatches: [],
-			structureMatchesLogRows: [],
-			currentStructureMatchIndex: null,
-			currentStructureMatch: [],
-			lastSelectedRow: undefined,
-			collapsibleRows: {},
-		};
+		this.updateSearchMatches = this.updateSearchMatches.bind(this);
+
+		this.state = defaultAppState;
+		if (this.previousSession !== undefined) {
+			searchText = this.previousSession.searchText;
+			searchColumn = this.previousSession.searchColumn;
+			["searchColumn", "searchText"].forEach(e => delete this.previousSession[e]);
+			const { showFlagsDialog, showStatesDialog, showStructureDialog, ...updatedState } = this.previousSession;
+			this.state = { ...this.state, ...updatedState }
+		}
 
 		this.onMessage = this.onMessage.bind(this);
 		window.addEventListener("message", this.onMessage);
@@ -124,6 +102,10 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	componentDidUpdate(prevProps: Props, prevState: State) {
+		if (this.state !== prevState) {
+			const { rules, logFile, logFileAsString, logEntryCharIndexMaps, ...updatedState } = this.state;
+			this.vscode.setState({ ...updatedState, searchText, searchColumn })
+		}
 		if (this.state.logFile !== prevState.logFile ||
 			this.state.collapsibleRows !== prevState.collapsibleRows) {
 			this.render();
@@ -138,62 +120,108 @@ export default class App extends React.Component<Props, State> {
 			const logFileText = JSON.stringify(lines, null, 2);
 			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
 			const logFile = LogFile.create(lines, rules);
-			const newRowsProps = logFile.rows.map(() =>
-				constructNewRowProperty(true, true, SelectedRowType.None),
-			);
+			logFile.setSelectedColumns(this.state.selectedColumns, this.state.selectedColumnsMini);
+			this.extractHeaderColumnTypes(logFile, rules);
 			this.setState({
+				rules,
 				logFile,
 				logFileAsString: logFileText,
 				logEntryCharIndexMaps: logEntryCharIndexMaps,
-				rules,
-				rowProperties: newRowsProps,
 			});
+
+			if (!this.previousSession) {
+				const newRowsProps = logFile.rows.map(() =>
+					constructNewRowProperty(true, SelectedRowType.None),
+				);
+				this.setState({ rowProperties: newRowsProps });
+			}
+			else {
+				const showFlagsDialog = this.previousSession.showFlagsDialog;
+				const showStatesDialog = this.previousSession.showStatesDialog;
+				const showStructureDialog = this.previousSession.showStructureDialog;
+				this.setState({ showFlagsDialog, showStatesDialog, showStructureDialog });
+			}
 		}
 	}
 
-	filterLog(action: any) {
-		let newRowsProps;
-		if (action === "Clear") {
-			searchText = "";
-			newRowsProps = this.state.logFile.rows.map(() =>
-				constructNewRowProperty(true, true, SelectedRowType.None),
-			);
-			this.setState({ rowProperties: newRowsProps });
-		} else if (action === "Enter") {
-			if (searchText === "") {
-				newRowsProps = this.state.logFile.rows.map(() =>
-					constructNewRowProperty(true, true, SelectedRowType.None),
-				);
-				this.setState({ rowProperties: newRowsProps });
-			} else {
-				const rules = this.state.rules;
-				const logFile = this.state.logFile;
-				const logFileText = this.state.logFileAsString;
-				const colIndex = this.state.logFile.headers.findIndex((h) => h.name === searchColumn);
-				const filteredIndices = returnSearchIndices(
-					logFile.rows,
-					colIndex,
-					searchText,
-					this.state.reSearch,
-					this.state.wholeSearch,
-					this.state.caseSearch,
-				);
+	extractHeaderColumnTypes(logFile: LogFile, rules: Rule[]) {
+		logHeaderColumnTypes = [];
+		for (let h = 0; h < logFile.headers.length; h++) {
+			let headerType = StructureHeaderColumnType.Selected;
 
-				newRowsProps = this.state.logFile.rows.map((row, index) => {
-					if (filteredIndices.includes(index))
-						return constructNewRowProperty(true, true, SelectedRowType.None);
-					else return constructNewRowProperty(false, false, SelectedRowType.None);
-				});
-				const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
-				this.setState({
-					logFile,
-					logFileAsString: logFileText,
-					logEntryCharIndexMaps: logEntryCharIndexMaps,
-					rules,
-					rowProperties: newRowsProps,
-				});
+			if (logFile.headers[h].name.toLowerCase() === "timestamp") {
+				headerType = StructureHeaderColumnType.Unselected;
+			} else if (logFile.headers[h].name === "Line") {
+				headerType = StructureHeaderColumnType.Custom;
 			}
+
+			rules.forEach((rule) => {
+				if (rule.column === logFile.headers[h].name) {
+					headerType = StructureHeaderColumnType.Custom;
+				}
+			});
+
+			logHeaderColumnTypes.push(headerType);
 		}
+	}
+
+	updateSearchField() {
+		clearTimeout(searchTimeoutId);
+		searchTimeoutId = setTimeout(this.updateSearchMatches, 1000);
+	}
+
+	clearSearchField() {
+		searchText = "";
+		const newRowsProps = this.clearRowsTypes();
+		this.setState({
+			filterSearch: false,
+			rowProperties: newRowsProps,
+			searchMatches: [],
+			currentSearchMatch: null,
+			currentSearchMatchIndex: null
+		});
+	}
+
+	updateSearchMatches() {
+		if (searchText === "")
+			this.clearSearchField();
+		else {
+			const colIndex = this.state.logFile.headers.findIndex((h) => h.name === searchColumn);
+			const searchMatches = returnSearchIndices(
+				this.state.logFile.rows,
+				colIndex,
+				searchText,
+				this.state.reSearch,
+				this.state.wholeSearch,
+				this.state.caseSearch,
+			);
+
+			const currentSearchMatch = searchMatches[0];
+			const currentSearchMatchIndex = 0;
+			const [rowProperties, filterSearch] = this.updateVisibleSearchMatches(searchMatches, this.state.filterSearch);
+
+			this.setState({ searchMatches, currentSearchMatch, currentSearchMatchIndex, rowProperties, filterSearch });
+		}
+	}
+
+	updateVisibleSearchMatches(searchMatches: number[], filterSearch: boolean) {
+		let rowProperties;
+		if (!filterSearch) {
+			rowProperties = this.state.logFile.rows.map((row, index) => {
+				if (searchMatches.includes(index))
+					return constructNewRowProperty(true, SelectedRowType.SearchResult);
+				else return constructNewRowProperty(true, SelectedRowType.None);
+			});
+		}
+		else {
+			rowProperties = this.state.logFile.rows.map((row, index) => {
+				if (searchMatches.includes(index))
+					return constructNewRowProperty(true, SelectedRowType.SearchResult);
+				else return constructNewRowProperty(false, SelectedRowType.None);
+			});
+		}
+		this.setState({ rowProperties, filterSearch });
+		return [rowProperties, filterSearch];
 	}
 
 	handleAnnotationDialog(newRules: Rule[], isClose: boolean) {
@@ -201,7 +229,7 @@ export default class App extends React.Component<Props, State> {
 		if (isClose === true)
 			this.setState({
 				rules: newRules,
-				logFile: this.state.logFile.updateRules(newRules),
+				logFile: this.state.logFile.updateLogFile(newRules, []),
 				showStatesDialog: false,
 				showFlagsDialog: false,
 			});
@@ -221,8 +249,8 @@ export default class App extends React.Component<Props, State> {
 
 	handleStructureDialog(isClosing: boolean) {
 		if (isClosing === true) {
-			logHeaderColumnTypes = [];
 			this.handleStructureUpdate(isClosing);
+            console.log(this.state.logFileAsString)
 		} else {
 			const { logFile, rowProperties, rules, showStructureDialog } = this.state;
 
@@ -235,22 +263,7 @@ export default class App extends React.Component<Props, State> {
 			}
 
 			if (!showStructureDialog) {
-				for (let h = 0; h < logFile.headers.length; h++) {
-					let headerType = StructureHeaderColumnType.Selected;
-
-					if (logFile.headers[h].name.toLowerCase() === "timestamp") {
-						headerType = StructureHeaderColumnType.Unselected;
-					}
-
-					rules.forEach((rule) => {
-						if (rule.column === logFile.headers[h].name) {
-							headerType = StructureHeaderColumnType.Custom;
-						}
-					});
-
-					logHeaderColumnTypes.push(headerType);
-				}
-
+				this.extractHeaderColumnTypes(logFile, rules);
 				this.setState({ showStructureDialog: true });
 			}
 
@@ -264,36 +277,38 @@ export default class App extends React.Component<Props, State> {
 		this.setState({ rowProperties: newRowProps });
 	}
 
+	handleRowSelect(rowProperties: RowProperty[], rowIndex: number) {
+		if (rowProperties[rowIndex].rowType !== SelectedRowType.UserSelect)
+			return SelectedRowType.UserSelect;
+		else if (this.state.searchMatches.includes(rowIndex))
+			return SelectedRowType.SearchResult;
+		else
+			return SelectedRowType.None;
+	}
+
 	handleSelectedLogRow(rowIndex: number, event: React.MouseEvent) {
 		if (event.ctrlKey) {
 			const newRowProps = this.state.rowProperties;
-			const { structureMatchesLogRows, lastSelectedRow } = this.state;
+			const { structureMatches, lastSelectedRow } = this.state;
+
+			const structureMatchesLogRows = structureMatches.flat(1);
 
 			if (!structureMatchesLogRows.includes(rowIndex)) {
 				if (event.shiftKey && rowIndex !== this.state.lastSelectedRow) {
 					// Shift click higher in the event log
 					if (lastSelectedRow !== undefined && lastSelectedRow < rowIndex) {
 						for (let i = lastSelectedRow + 1; i < rowIndex + 1; i++) {
-							newRowProps[i].rowType =
-								newRowProps[i].rowType === SelectedRowType.None
-									? SelectedRowType.UserSelect
-									: SelectedRowType.None;
+							newRowProps[i].rowType = this.handleRowSelect(newRowProps, rowIndex);
 						}
 					}
 					// Shift click lower in the event log
 					else if (lastSelectedRow !== undefined && lastSelectedRow > rowIndex) {
 						for (let i = rowIndex; i < lastSelectedRow + 1; i++) {
-							newRowProps[i].rowType =
-								newRowProps[i].rowType === SelectedRowType.None
-									? SelectedRowType.UserSelect
-									: SelectedRowType.None;
+							newRowProps[i].rowType = this.handleRowSelect(newRowProps, rowIndex);
 						}
 					}
 				} else {
-					newRowProps[rowIndex].rowType =
-						newRowProps[rowIndex].rowType === SelectedRowType.None
-							? SelectedRowType.UserSelect
-							: SelectedRowType.None;
+					newRowProps[rowIndex].rowType = this.handleRowSelect(newRowProps, rowIndex);
 				}
 
 				this.setState({ rowProperties: newRowProps, lastSelectedRow: rowIndex });
@@ -301,28 +316,28 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	clearSelectedRowsTypes(): RowProperty[] {
+	clearRowsTypes(): RowProperty[] {
 		const clearedSelectedRows = this.state.rowProperties.map(() =>
-			constructNewRowProperty(true, true, SelectedRowType.None),
+			constructNewRowProperty(true, SelectedRowType.None),
 		);
 		return clearedSelectedRows;
 	}
 
 	handleStructureUpdate(isClosing: boolean) {
-		const clearedSelectedRows = this.clearSelectedRowsTypes();
+		const clearedSelectedRows = this.clearRowsTypes();
 
 		this.setState({
 			showStructureDialog: !isClosing,
 			rowProperties: clearedSelectedRows,
 			structureMatches: [],
-			structureMatchesLogRows: [],
 			currentStructureMatchIndex: null,
 			currentStructureMatch: [],
+			logFile: this.state.logFile.updateLogFile(this.state.rules, [])
 		});
 	}
 
 	handleStructureMatching(expression: string) {
-		const rowProperties = this.clearSelectedRowsTypes();
+		const rowProperties = this.clearRowsTypes();
 		const { logFileAsString, logEntryCharIndexMaps } = this.state;
 		let { currentStructureMatch, currentStructureMatchIndex } = this.state;
 
@@ -331,11 +346,6 @@ export default class App extends React.Component<Props, State> {
 			logFileAsString,
 			logEntryCharIndexMaps!,
 		);
-		let structureMatchesLogRows: number[] = [];
-
-		structureMatches.forEach((matchArray) => {
-			structureMatchesLogRows = structureMatchesLogRows.concat(matchArray);
-		});
 
 		if (structureMatches.length >= 1) {
 			currentStructureMatchIndex = 0;
@@ -348,53 +358,67 @@ export default class App extends React.Component<Props, State> {
 		this.setState({
 			rowProperties,
 			structureMatches,
-			structureMatchesLogRows,
 			currentStructureMatch,
 			currentStructureMatchIndex,
+			logFile: this.state.logFile.updateLogFile(this.state.rules, structureMatches)
 		});
 	}
 
-	handleNavigateStructureMatches(isGoingForward: boolean) {
-		const { currentStructureMatch, currentStructureMatchIndex, structureMatches } = this.state;
-		let newCurrentStructureMatch = [...currentStructureMatch];
-		let newCurrentStructureMatchIndex;
+	handleNavigation(isGoingForward: boolean, isStructureMatching: boolean) {
+		let matches, currentMatchIndex;
+		if (!isStructureMatching) {
+			matches = this.state.searchMatches;
+			currentMatchIndex = this.state.currentSearchMatchIndex;
+		}
+		else {
+			matches = this.state.structureMatches;
+			currentMatchIndex = this.state.currentStructureMatchIndex;
+		}
 
-		if (currentStructureMatchIndex !== null) {
+		if (currentMatchIndex !== null) {
 			if (isGoingForward) {
-				newCurrentStructureMatchIndex =
-					currentStructureMatchIndex < structureMatches.length - 1
-						? currentStructureMatchIndex + 1
+				currentMatchIndex =
+					currentMatchIndex < matches.length - 1
+						? currentMatchIndex + 1
 						: 0;
 			} else {
-				newCurrentStructureMatchIndex =
-					currentStructureMatchIndex > 0
-						? currentStructureMatchIndex - 1
-						: structureMatches.length - 1;
+				currentMatchIndex =
+					currentMatchIndex > 0
+						? currentMatchIndex - 1
+						: matches.length - 1;
 			}
 
-			newCurrentStructureMatch = structureMatches[newCurrentStructureMatchIndex];
-
-			this.setState({
-				currentStructureMatch: newCurrentStructureMatch,
-				currentStructureMatchIndex: newCurrentStructureMatchIndex,
-			});
+			if (!isStructureMatching) {
+				this.setState({
+					currentSearchMatchIndex: currentMatchIndex,
+					currentSearchMatch: matches[currentMatchIndex]
+				});
+			}
+			else {
+				this.setState({
+					currentStructureMatch: matches[currentMatchIndex],
+					currentStructureMatchIndex: currentMatchIndex,
+				});
+			}
 		}
 	}
 
-	handleSegmentation(entryExpression: string, exitExpression: string) {
+	handleSegmentation(expression: string) {
 		const { logFileAsString, logEntryCharIndexMaps } = this.state;
 		const { collapsibleRows } = this.state;
 
-		const entryMatches = getRegularExpressionMatches(
-			entryExpression,
+		const segmentMatches = useStructureRegularExpressionNestedSearch(
+			expression,
 			logFileAsString,
 			logEntryCharIndexMaps!,
 		);
-		const exitMatches = getRegularExpressionMatches(
-			exitExpression,
-			logFileAsString,
-			logEntryCharIndexMaps!,
-		);
+
+		let entryMatches: number[] = [];
+		let exitMatches: number[] = [];
+		segmentMatches.forEach((match) => {
+			entryMatches.push(match[0])
+			exitMatches.push(match[match.length - 1])
+		})
 
 		const stack: number[] = [];
 		const maximumLevel = 5;
@@ -422,21 +446,47 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	clearSegmentation() {
-		this.setState({ collapsibleRows : {} });
+		this.setState({ collapsibleRows: {} });
 	}
 
 	switchBooleanState(name: string) {
-		if (name === "coloredTable")
-			this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
-		else if (name === "reSearch") this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
-		else if (name === "wholeSearch")
-			this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
-		else if (name === "caseSearch")
-			this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
+		switch (name) {
+			case "coloredTable":
+				this.setState(({ coloredTable }) => ({ coloredTable: !coloredTable }));
+				break;
+			case "reSearch":
+				this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
+				break;
+			case "wholeSearch":
+				this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
+				break;
+			case "caseSearch":
+				this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
+				break;
+			case "filterSearch":
+				this.setState(({ filterSearch }) => ({ filterSearch: !filterSearch }));
+				break;
+		}
+	}
+
+	exportData(exportIndices: number[]) {
+		var exportObjects: Object[] = []
+		const originalColumns = this.state.logFile.headers;
+		if (exportIndices.length === 0)
+			exportIndices = Array.from(Array(this.state.logFile.amountOfRows()).keys())
+		for (var index of exportIndices) {
+			var rowObject = {};
+			const row = this.state.logFile.rows[index]
+			for (var columnIndex = 0; columnIndex <= originalColumns.length-1; columnIndex++)
+				rowObject[originalColumns[columnIndex].name] = row[columnIndex];
+			exportObjects.push(rowObject)
+		}
+		this.vscode.postMessage({ type: "exportData", data: exportObjects });
 	}
 
 	render() {
-		const minimapWidth = this.state.logFile.amountOfColorColumns() * MINIMAP_COLUMN_WIDTH;
+		const minimapCounter = this.state.logFile.selectedColumnsMini.filter(Boolean).length;
+		const minimapWidth = minimapCounter * MINIMAP_COLUMN_WIDTH;
 		const minimapHeight = this.state.showMinimapHeader ? "12%" : "5%";
 
 		const allColumns = [
@@ -465,20 +515,24 @@ export default class App extends React.Component<Props, State> {
 				>
 					<div style={{ display: "flex" }}>
 						<VSCodeButton
-							style={{ marginLeft: "5px", height: "25px", width: "150px" }}
+							style={{ marginLeft: "5px", height: "25px", width: "125px" }}
 							onClick={() => this.setState({ showSelectDialog: true })}
 						>
 							Choose Columns
 						</VSCodeButton>
-						{/* <label>
-                        <input type="checkbox" checked={this.state.coloredTable} onChange={()=>this.switchBooleanState('coloredTable')}/>
-                        Color Table
-                    </label> */}
+						<VSCodeButton
+							style={{ marginLeft: "5px", height: "25px", width: "110px" }}
+							onClick={() => this.exportData(this.state.searchMatches)}
+						>
+							Export
+						</VSCodeButton>
 					</div>
 					<div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
 						<VSCodeDropdown
+							key="searchDropdown"
+							value={searchColumn}
 							style={{ marginRight: "5px" }}
-							onChange={(e) => (searchColumn = e.target.value)}
+							onChange={(e) => { searchColumn = e.target.value; this.updateSearchField(); }}
 						>
 							{allColumns.map((col, col_i) => (
 								<VSCodeOption key={col_i} value={col}>
@@ -487,11 +541,12 @@ export default class App extends React.Component<Props, State> {
 							))}
 						</VSCodeDropdown>
 						<VSCodeTextField
+							key="searchTextField"
 							style={{ marginRight: "5px" }}
 							placeholder="Search Text"
 							value={searchText}
-							onInput={(e) => (searchText = e.target.value)}
-							onKeyUp={(e) => this.filterLog(e.key)}
+							onInput={(e) => { searchText = e.target.value; this.updateSearchField(); }}
+							autofocus
 						>
 							<Tooltip title={<h3>Match Case</h3>} placement="bottom" arrow>
 								<span
@@ -537,10 +592,51 @@ export default class App extends React.Component<Props, State> {
 									slot="end"
 									style={{ cursor: "pointer" }}
 									className="codicon codicon-close"
-									onClick={() => this.filterLog("Clear")}
+									onClick={() => this.clearSearchField()}
 								></span>
 							</Tooltip>
 						</VSCodeTextField>
+						{" "}
+						{this.state.searchMatches.length === 0
+							? "No Results"
+							: `${this.state.currentSearchMatchIndex! + 1} of ${this.state.searchMatches.length}`
+						}
+						<VSCodeButton
+							className="structure-result-element"
+							appearance="icon"
+							disabled={this.state.searchMatches.length < 2}
+							onClick={() => this.handleNavigation(false, false)}
+						>
+							<i className="codicon codicon-chevron-up" />
+						</VSCodeButton>
+						<VSCodeButton
+							className="structure-result-element"
+							appearance="icon"
+							disabled={this.state.searchMatches.length < 2}
+							onClick={() => this.handleNavigation(true, false)}
+						>
+							<i className="codicon codicon-chevron-down" />
+						</VSCodeButton>
+						{this.state.filterSearch && (
+							<VSCodeButton
+								className="structure-result-element"
+								appearance="icon"
+								disabled={this.state.searchMatches.length < 1}
+								onClick={() => { this.updateVisibleSearchMatches(this.state.searchMatches, false); }}
+							>
+								<i className="codicon codicon-filter-filled" />
+							</VSCodeButton>
+						)}
+						{!this.state.filterSearch && (
+							<VSCodeButton
+								className="structure-result-element"
+								appearance="icon"
+								disabled={this.state.searchMatches.length < 1}
+								onClick={() => { this.updateVisibleSearchMatches(this.state.searchMatches, true); }}
+							>
+								<i className="codicon codicon-filter" />
+							</VSCodeButton>
+						)}
 						{this.state.showMinimapHeader && (
 							<VSCodeButton
 								appearance="icon"
@@ -583,13 +679,15 @@ export default class App extends React.Component<Props, State> {
 					<div style={{ flex: 1, display: "flex" }}>
 						<LogView
 							logFile={this.state.logFile}
+							previousSessionLogView={this.previousSession?.logViewState}
 							onLogViewStateChanged={(logViewState) => this.setState({ logViewState })}
 							forwardRef={this.child}
+							filterSearch={this.state.filterSearch}
 							coloredTable={this.state.coloredTable}
 							rowProperties={this.state.rowProperties}
 							structureMatches={this.state.structureMatches}
-							structureMatchesLogRows={this.state.structureMatchesLogRows}
 							currentStructureMatch={this.state.currentStructureMatch}
+							currentSearchMatch={this.state.currentSearchMatch}
 							onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
 							onRowPropsChanged={(index, isRendered) => this.handleRowCollapse(index, isRendered)}
 							collapsibleRows={this.state.collapsibleRows}
@@ -697,12 +795,11 @@ export default class App extends React.Component<Props, State> {
 							onClose={() => this.handleStructureDialog(true)}
 							onStructureUpdate={() => this.handleStructureUpdate(false)}
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
-							onDefineSegment={(entryExpression, exitExpression) =>
-								this.handleSegmentation(entryExpression, exitExpression)
-							}
+							onDefineSegment={(expression) => this.handleSegmentation(expression)}
 							onNavigateStructureMatches={(isGoingForward) =>
-								this.handleNavigateStructureMatches(isGoingForward)
+								this.handleNavigation(isGoingForward, true)
 							}
+							onExportStructureMatches={() => this.exportData(this.state.structureMatches.flat(1))}
 						/>
 					)}
 				</div>

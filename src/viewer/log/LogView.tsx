@@ -29,23 +29,26 @@ import Tooltip from "@mui/material/Tooltip";
 
 interface Props {
 	logFile: LogFile;
+	previousSessionLogView: LogViewState | undefined;
 	onLogViewStateChanged: (value: LogViewState) => void;
 	onSelectedRowsChanged: (index: number, event: React.MouseEvent) => void;
 	onRowPropsChanged: (index: number, isRendered: boolean) => void;
 	forwardRef: React.RefObject<HTMLDivElement>;
+	filterSearch: boolean;
 	coloredTable: boolean;
 	rowProperties: RowProperty[];
+	currentSearchMatch: number | null;
 	currentStructureMatch: number[];
 	structureMatches: number[][];
-	structureMatchesLogRows: number[];
 	collapsibleRows: { [key: number]: Segment };
 	clearSegmentation: () => void;
 }
 interface State {
 	state: LogViewState | undefined;
-	columnWidth: { [id: string]: number };
 	logFile: LogFile;
+	columnWidth: { [id: string]: number };
 	collapsed: { [key: number]: boolean };
+    isLoadingSavedState: boolean;
 }
 
 const HEADER_STYLE: React.CSSProperties = {
@@ -70,6 +73,7 @@ export default class LogView extends React.Component<Props, State> {
 			columnWidth: LOG_COLUMN_WIDTH_LOOKUP,
 			logFile: this.props.logFile,
 			collapsed: [],
+            isLoadingSavedState: false
 		};
 	}
 
@@ -80,10 +84,24 @@ export default class LogView extends React.Component<Props, State> {
 
 	componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
 		if (prevProps.logFile !== this.props.logFile) {
-			this.updateState();
+			if ( this.props.previousSessionLogView === undefined)
+				this.updateState();
+			else
+				this.loadState();
 		}
 		if (prevProps.currentStructureMatch[0] !== this.props.currentStructureMatch[0]) {
 			this.updateState(this.props.currentStructureMatch[0]);
+		}
+		if (prevProps.currentSearchMatch !== this.props.currentSearchMatch) {
+			this.updateState(this.props.currentSearchMatch);
+		}
+        if (this.viewport.current && this.props.previousSessionLogView && this.state.isLoadingSavedState) {
+            this.viewport.current.scrollTop = this.props.previousSessionLogView.scrollTop;
+            this.setState({isLoadingSavedState:false});
+        }
+		if (prevProps.filterSearch !== this.props.filterSearch) {
+			const firstRow = this.state.state?.startFloor;
+			this.updateState(firstRow);
 		}
 	}
 
@@ -128,7 +146,6 @@ export default class LogView extends React.Component<Props, State> {
 			rowProperties,
 			structureMatches,
 			currentStructureMatch,
-			structureMatchesLogRows,
 			collapsibleRows,
 		} = this.props;
 		let firstRender = this.state.state.startFloor;
@@ -150,8 +167,10 @@ export default class LogView extends React.Component<Props, State> {
 		let counter = firstRender;
 		const maxLevel = Math.min(4, getSegmentMaxLevel(collapsibleRows));
 		const segmentWidth: number = (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE;
+		const structureMatchesLogRows = structureMatches.flat(1);
+		
 		for (let r = firstRender; counter <= lastRender; r++) {
-			if (rowProperties[r].isSearchResult && rowProperties[r].isRendered) {
+			if (rowProperties[r].isRendered) {
 				let rowStyle;
 
 				if (structureMatchesLogRows.includes(r)) {
@@ -295,16 +314,22 @@ export default class LogView extends React.Component<Props, State> {
 		}
 	}
 
-	updateState(currentStructureMatchFirstRow: StructureMatchId = null) {
+	loadState() {
+		if (!this.props.previousSessionLogView) return;
+		this.setState({ state: this.props.previousSessionLogView, isLoadingSavedState: true });
+		this.props.onLogViewStateChanged( this.props.previousSessionLogView );
+	}
+
+	updateState(currentMatchFirstRow: StructureMatchId = null) {
 		if (!this.viewport.current) return;
 		const height = this.viewport.current.clientHeight;
 		const maxVisibleItems = height / LOG_ROW_HEIGHT;
 		const visibleItems = Math.min(this.props.logFile.amountOfRows(), maxVisibleItems);
 		let scrollTop;
 
-		if (currentStructureMatchFirstRow !== null) {
-			if (currentStructureMatchFirstRow + visibleItems < this.props.logFile.amountOfRows()) {
-				scrollTop = currentStructureMatchFirstRow * LOG_ROW_HEIGHT;
+		if (currentMatchFirstRow !== null) {
+			if (currentMatchFirstRow + visibleItems < this.props.logFile.amountOfRows()) {
+				scrollTop = currentMatchFirstRow * LOG_ROW_HEIGHT;
 			} else {
 				scrollTop =
 					visibleItems < this.props.logFile.amountOfRows()
@@ -317,9 +342,9 @@ export default class LogView extends React.Component<Props, State> {
 
 		const scrollLeft = this.viewport.current.scrollLeft;
 		const start =
-			currentStructureMatchFirstRow !== null &&
-			currentStructureMatchFirstRow + maxVisibleItems < this.props.logFile.amountOfRows()
-				? currentStructureMatchFirstRow
+			currentMatchFirstRow !== null &&
+				currentMatchFirstRow + maxVisibleItems < this.props.logFile.amountOfRows()
+				? currentMatchFirstRow
 				: scrollTop / LOG_ROW_HEIGHT;
 		const startFloor = Math.floor(start);
 		const endCeil = Math.min(
@@ -337,7 +362,7 @@ export default class LogView extends React.Component<Props, State> {
 			rowHeight: LOG_ROW_HEIGHT,
 		};
 
-		if (currentStructureMatchFirstRow !== null) {
+		if (currentMatchFirstRow !== null) {
 			this.viewport.current.scrollTop = scrollTop;
 		}
 
@@ -385,8 +410,8 @@ export default class LogView extends React.Component<Props, State> {
 		return visibleRows.length;
 	}
 
-	deleteSegmentAnnotations(){
-		this.setState({collapsed : []});
+	deleteSegmentAnnotations() {
+		this.setState({ collapsed: [] });
 		this.props.clearSegmentation();
 	}
 
@@ -412,12 +437,12 @@ export default class LogView extends React.Component<Props, State> {
 									<VSCodeButton
 										appearance="icon"
 										key={"delete"}
-										onClick={() => {this.deleteSegmentAnnotations()}}
+										onClick={() => { this.deleteSegmentAnnotations() }}
 									>
 										<i className="codicon codicon-close" />
 									</VSCodeButton>
-							</Tooltip>
-						</div>}
+								</Tooltip>
+							</div>}
 					</div>
 					{this.props.logFile
 						.getSelectedHeader()
@@ -448,7 +473,7 @@ export default class LogView extends React.Component<Props, State> {
 	render() {
 		const selection = getSelection();
 
-		if(selection !== null){
+		if (selection !== null) {
 			// empty unwanted text selection resulting from Shift-click
 			selection.empty();
 		}
@@ -460,7 +485,7 @@ export default class LogView extends React.Component<Props, State> {
 			logFile.headers.reduce(
 				(partialSum: number, h) => partialSum + this.state.columnWidth[h.name],
 				0,
-			) + (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE : 
+			) + (getSegmentMaxLevel(this.props.collapsibleRows) + 1) * 30 + BORDER_SIZE :
 			logFile.amountOfColumns() * BORDER_SIZE +
 			logFile.headers.reduce(
 				(partialSum: number, h) => partialSum + this.state.columnWidth[h.name],

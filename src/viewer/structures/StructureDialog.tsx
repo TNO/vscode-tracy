@@ -1,5 +1,7 @@
 import React from "react";
 import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
+import CloseIcon from "@mui/icons-material/Close";
+import IconButton from '@mui/material/IconButton';
 import StructureTable from "./StructureTable";
 import { ContextMenuItem, Header, StructureEntry, Wildcard } from "../types";
 import { StructureHeaderColumnType } from "../constants";
@@ -30,6 +32,7 @@ import isEqual from "react-fast-compare";
 import cloneDeep from "lodash/cloneDeep";
 import ContextMenu from "../contextMenu/contextMenu";
 import { styled } from "@mui/material/styles";
+import StructureSettingsDropdown from "./StructureSettingsDropdown";
 
 interface Props {
 	logHeaderColumns: Header[];
@@ -41,7 +44,8 @@ interface Props {
 	onStructureUpdate: () => void;
 	onNavigateStructureMatches: (isGoingForward: boolean) => void;
 	onMatchStructure: (expression: string) => void;
-	onDefineSegment: (entryExpression: string, exitExpression: string) => void;
+	onExportStructureMatches: () => void;
+	onDefineSegment: (expression: string) => void;
 }
 
 interface State {
@@ -61,7 +65,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 
 		this.state = {
 			isRemovingStructureEntries: false,
-			isStructureMatching: false,
+			isStructureMatching: this.props.numberOfMatches > 0 ? true : false,
 			structureHeaderColumnsTypes: logHeaderColumnsTypes,
 			structureEntries: structureEntries,
 			wildcards: [],
@@ -72,7 +76,9 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	componentDidMount(): void {
-		this.props.onStructureUpdate(); //trigger manually, as update function isn't called for initial render.
+		// trigger manually, as update function isn't called for initial render.
+		// removing the trigger to keep persistence
+		//this.props.onStructureUpdate(); 
 	}
 
 	shouldComponentUpdate(
@@ -279,20 +285,14 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	defineSegment() {
-		// TODO: Add functionality with wildcard
-		const entryRegExp = useStructureQueryConstructor(
+		const segmentRegExp = useStructureQueryConstructor(
 			this.props.logHeaderColumns,
 			this.state.structureHeaderColumnsTypes,
-			this.state.structureEntries.slice(0, 1),
-			[],
+			this.state.structureEntries,
+			this.state.wildcards,
 		);
-		const exitRegExp = useStructureQueryConstructor(
-			this.props.logHeaderColumns,
-			this.state.structureHeaderColumnsTypes,
-			this.state.structureEntries.slice(-1),
-			[],
-		);
-		this.props.onDefineSegment(entryRegExp, exitRegExp);
+
+		this.props.onDefineSegment(segmentRegExp);
 	}
 
 	createWildcard() {
@@ -471,6 +471,8 @@ export default class StructureDialog extends React.Component<Props, State> {
 		const wildcardsCopy = cloneDeep(wildcards);
 		const contextMenuItems = this.getContextMenuItems();
 
+        console.log(structureEntriesCopy);
+
 		const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
 			<Tooltip {...props} classes={{ popper: className }} />
 		))({
@@ -479,9 +481,9 @@ export default class StructureDialog extends React.Component<Props, State> {
 			},
 		});
 
-        const selection = getSelection();
+		const selection = getSelection();
 
-		if(selection !== null){
+		if (selection !== null) {
 			// empty unwanted text selection resulting from Shift-click
 			selection.empty();
 		}
@@ -551,9 +553,15 @@ export default class StructureDialog extends React.Component<Props, State> {
 							>
 								<i className="codicon codicon-question" />
 							</CustomWidthTooltip>
-							<VSCodeButton appearance="icon" onClick={() => this.props.onClose()}>
-								<i className="codicon codicon-close" />
-							</VSCodeButton>
+                            <StructureSettingsDropdown/>
+                            <IconButton
+                                    id="close-button"
+                                    aria-label="close"
+                                    size="small"
+                                    onClick={() => this.props.onClose()}>
+                                <CloseIcon fontSize="small"/>
+                            </IconButton>
+                            
 						</div>
 					</div>
 					<StructureTable
@@ -608,6 +616,15 @@ export default class StructureDialog extends React.Component<Props, State> {
 							disabled={isRemovingStructureEntries}
 						>
 							Search for Structure
+						</VSCodeButton>
+						<VSCodeButton
+							className="structure-result-element"
+							onClick={() => {
+								this.props.onExportStructureMatches();
+							}}
+							disabled={this.props.numberOfMatches == 0}
+						>
+							Export Structures
 						</VSCodeButton>
 						{isStructureMatching && (
 							<>
