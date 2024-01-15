@@ -545,6 +545,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 								display: "flex",
 								flexDirection: "row",
 								alignItems: "center",
+								justifyContent: "space-between"
 							}}
 						>
 							<CustomWidthTooltip
@@ -593,15 +594,17 @@ export default class StructureDialog extends React.Component<Props, State> {
 							>
 								<i className="codicon codicon-question" />
 							</CustomWidthTooltip>
-                            <StructureSettingsDropdown onStructureDefinitionSave={this.saveStructureDefinition} onStructureDefinitionLoad={this.loadStructureDefinition}/>
+                            <StructureSettingsDropdown
+								 onStructureDefinitionSave={this.saveStructureDefinition} 
+								 onStructureDefinitionLoad={this.loadStructureDefinition}/>
                             <IconButton
                                     id="close-button"
                                     aria-label="close"
                                     size="small"
+									style={{ flex: 1 }}
                                     onClick={() => this.props.onClose()}>
-                                <CloseIcon fontSize="small"/>
+                                <CloseIcon className="structure-dialog-icon" fontSize="small"/>
                             </IconButton>
-                            
 						</div>
 					</div>
 					<StructureTable

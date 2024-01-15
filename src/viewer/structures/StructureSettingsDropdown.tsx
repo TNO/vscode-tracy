@@ -7,6 +7,19 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import SaveIcon from '@mui/icons-material/Save';
 import FileOpenIcon from '@mui/icons-material/FileOpen';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { createTheme } from '@mui/material/styles';
+import { MenuList } from '@mui/material';
+
+// const theme = createTheme({
+//   palette: {
+//     primary: {
+//       main: `${var(--vscode-editorGroupHeader-tabsBackground)}`,
+//     },
+//     secondary: {
+//       main: '#f44336',
+//     },
+//   },
+// });
 
 interface StructureSettingsDropdownProps {
   onStructureDefinitionSave: () => void;
@@ -39,7 +52,7 @@ export const StructureSettingsDropdown: React.FunctionComponent<StructureSetting
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
       >
-        <SettingsIcon fontSize="small"/>
+        <SettingsIcon className='structure-dialog-icon' fontSize="small"/>
       </IconButton>
       <Menu
         id="basic-menu"
@@ -48,21 +61,23 @@ export const StructureSettingsDropdown: React.FunctionComponent<StructureSetting
         onClose={() => handleClose('')}
         MenuListProps={{
           'aria-labelledby': 'basic-button',
+          sx: { py: 0 }
         }}
       >
-        {/* <MenuItem onClick={handleClose}>Profile</MenuItem> */}
-        <MenuItem onClick={() => handleClose('save')}>
-          <ListItemIcon>
-            <SaveIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Save Structure Definition</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => handleClose('load')}>
-          <ListItemIcon>
-            <FileOpenIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText color='white'>Load Structure Definition</ListItemText>
-        </MenuItem>
+        <MenuList className='structure-settings-dropdown'>
+          <MenuItem onClick={() => handleClose('save')}>
+            <ListItemIcon>
+              <SaveIcon className='structure-settings-dropdown-item' fontSize="small" />
+            </ListItemIcon>
+            <ListItemText className='structure-settings-dropdown-item'>Save Structure Definition</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => handleClose('load')}>
+            <ListItemIcon>
+              <FileOpenIcon className='structure-settings-dropdown-item' fontSize="small" />
+            </ListItemIcon>
+            <ListItemText className='structure-settings-dropdown-item'>Load Structure Definition</ListItemText>
+          </MenuItem>
+        </MenuList>
       </Menu>
     </div>
   );
