@@ -3,7 +3,7 @@ import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
 import CloseIcon from "@mui/icons-material/Close";
 import IconButton from '@mui/material/IconButton';
 import StructureTable from "./StructureTable";
-import { ContextMenuItem, Header, StructureEntry, Wildcard } from "../types";
+import { ContextMenuItem, Header, StructureDefinition, StructureEntry, Wildcard } from "../types";
 import { StructureHeaderColumnType } from "../constants";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { useStructureQueryConstructor } from "../hooks/useStructureRegularExpressionManager";
@@ -38,6 +38,7 @@ interface Props {
 	logHeaderColumns: Header[];
 	logHeaderColumnsTypes: StructureHeaderColumnType[];
 	logSelectedRows: string[][];
+	loadedStructureDefinition: StructureDefinition | null;
 	currentStructureMatchIndex: number | null;
 	numberOfMatches: number;
 	onClose: () => void;
@@ -54,7 +55,9 @@ interface State {
 	wildcards: Wildcard[];
 	structureEntries: StructureEntry[];
 	isRemovingStructureEntries: boolean;
+	isLoadingStructureDefintion: boolean;
 	isStructureMatching: boolean;
+	structureHeaderColumns: Header[];
 	structureHeaderColumnsTypes: StructureHeaderColumnType[];
 }
 
@@ -62,13 +65,15 @@ export default class StructureDialog extends React.Component<Props, State> {
 
 	constructor(props: Props) {
 		super(props);
-		const { logHeaderColumnsTypes, logSelectedRows } = this.props;
+		const { logHeaderColumns, logHeaderColumnsTypes, logSelectedRows } = this.props;
 		let structureEntries = constructStructureEntriesArray(logHeaderColumnsTypes, logSelectedRows);
 		structureEntries = removeLastStructureLink(structureEntries);
 
 		this.state = {
 			isRemovingStructureEntries: false,
+			isLoadingStructureDefintion: false,
 			isStructureMatching: this.props.numberOfMatches > 0 ? true : false,
+			structureHeaderColumns: logHeaderColumns,
 			structureHeaderColumnsTypes: logHeaderColumnsTypes,
 			structureEntries: structureEntries,
 			wildcards: [],
@@ -77,6 +82,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		//bind context for all functions used by the context and dropdown menus:
 		this.createWildcard = this.createWildcard.bind(this);
 		this.saveStructureDefinition = this.saveStructureDefinition.bind(this);
+		this.loadStructureDefinition = this.loadStructureDefinition.bind(this);
 	}
 
 	componentDidMount(): void {
@@ -90,6 +96,9 @@ export default class StructureDialog extends React.Component<Props, State> {
 		nextState: Readonly<State>,
 		_nextContext: any,
 	): boolean {
+		const isLoadingStructureDefinition = (
+			nextProps.loadedStructureDefinition !== null
+		);
 		const arelogHeaderColumnsUpdating = !isEqual(
 			this.props.logHeaderColumns,
 			nextProps.logHeaderColumns,
@@ -129,7 +138,10 @@ export default class StructureDialog extends React.Component<Props, State> {
 			nextState.isStructureMatching,
 		);
 
+		console.log("isLoadingStructureDefinition", isLoadingStructureDefinition);
+
 		if (
+			isLoadingStructureDefinition ||
 			arelogHeaderColumnsUpdating ||
 			arelogHeaderColumnTypesUpdating ||
 			arelogSelectedRowsUpdating ||
@@ -148,7 +160,20 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	componentDidUpdate(prevProps: Readonly<Props>, _prevState: Readonly<State>): void {
-		if (this.props.logSelectedRows !== prevProps.logSelectedRows) {
+		const {loadedStructureDefinition, logSelectedRows} = this.props;
+
+		if(this.state.isLoadingStructureDefintion && loadedStructureDefinition !== null) {
+			this.setState({
+				isLoadingStructureDefintion: false,
+				isStructureMatching: false,
+				structureHeaderColumns: loadedStructureDefinition.headerColumns,
+				structureHeaderColumnsTypes: loadedStructureDefinition.headerColumnsTypes,
+				structureEntries: loadedStructureDefinition.entries, 
+				wildcards: loadedStructureDefinition.wildcards});
+			
+			this.props.onStructureUpdate();
+		}
+		else if (logSelectedRows !== prevProps.logSelectedRows) {
 			this.updateStructure();
 		}
 	}
@@ -278,7 +303,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 	matchStructure() {
 		// pass list of wildcards and use those in regular expression construction
 		const structureRegExp = useStructureQueryConstructor(
-			this.props.logHeaderColumns,
+			this.state.structureHeaderColumns,
 			this.state.structureHeaderColumnsTypes,
 			this.state.structureEntries,
 			this.state.wildcards,
@@ -290,7 +315,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 
 	defineSegment() {
 		const segmentRegExp = useStructureQueryConstructor(
-			this.props.logHeaderColumns,
+			this.state.structureHeaderColumns,
 			this.state.structureHeaderColumnsTypes,
 			this.state.structureEntries,
 			this.state.wildcards,
@@ -470,17 +495,19 @@ export default class StructureDialog extends React.Component<Props, State> {
 
 	saveStructureDefinition() {
 		console.log("Saving structure definition");
-		const { structureEntries, wildcards} = this.state;
-		const {logHeaderColumns, onStructureDefinitionSave} = this.props;
+		const {structureHeaderColumns, structureHeaderColumnsTypes, structureEntries, wildcards} = this.state;
+		const {onStructureDefinitionSave} = this.props;
 
-		let structureDefiniton = { headerColumns: logHeaderColumns, entries: structureEntries, wildcards: wildcards};
-		let structureDefinitonJSON = JSON.stringify(structureDefiniton);
+		const structureDefiniton: StructureDefinition = { headerColumns: structureHeaderColumns, headerColumnsTypes: structureHeaderColumnsTypes, entries: structureEntries, wildcards: wildcards};
+		const structureDefinitonJSON = JSON.stringify(structureDefiniton);
 
 		onStructureDefinitionSave(structureDefinitonJSON);
 	}
 
 	loadStructureDefinition() {
 		console.log("Loading structure definition");
+		this.props.onStructureDefinitionLoad();
+		this.setState({isLoadingStructureDefintion:true});
 	}
 
 	render() {
@@ -584,7 +611,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 						</div>
 					</div>
 					<StructureTable
-						headerColumns={this.props.logHeaderColumns}
+						headerColumns={this.state.structureHeaderColumns}
 						structureEntries={structureEntriesCopy}
 						wildcards={wildcardsCopy}
 						isRemovingStructureEntries={isRemovingStructureEntries}

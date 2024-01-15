@@ -3,7 +3,7 @@ import LogFile from "./LogFile";
 import LogView from "./log/LogView";
 import MinimapView from "./minimap/MinimapView";
 import Tooltip from "@mui/material/Tooltip";
-import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps } from "./types";
+import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps, StructureDefinition } from "./types";
 import {
 	COLUMN_0_HEADER_STYLE,
 	COLUMN_2_HEADER_STYLE,
@@ -57,6 +57,7 @@ interface State {
 
 	// Structure related
 	logFileAsString: string;
+	loadedStructureDefinition: StructureDefinition | null;
 	logEntryCharIndexMaps: LogEntryCharMaps | null;
 	selectedLogRows: string[][];
 	rowProperties: RowProperty[];
@@ -141,6 +142,10 @@ export default class App extends React.Component<Props, State> {
 				const showStructureDialog = this.previousSession.showStructureDialog;
 				this.setState({ showFlagsDialog, showStatesDialog, showStructureDialog });
 			}
+		} else if (message.type === "loadedStructureDefinition") {
+			const loadedStructureDefinition = message.structureDefinition;
+			console.log("loadedStructureDefinition - in App", loadedStructureDefinition);
+			this.setState({loadedStructureDefinition});
 		}
 	}
 
@@ -277,6 +282,12 @@ export default class App extends React.Component<Props, State> {
 		this.vscode.postMessage({ type: "saveStructureDefinition", structureDefinition: structureDefinition});
 	}
 
+	handleLoadingStructureDefinition() {
+		console.log("Loading definition - in App");
+		// console.log(structureDefinition);
+		this.vscode.postMessage({ type: "loadStructureDefinition"});
+	}
+
 	handleRowCollapse(rowIndex: number, isRendered: boolean) {
 		const newRowProps = this.state.rowProperties;
 		newRowProps[rowIndex].isRendered = isRendered;
@@ -335,6 +346,7 @@ export default class App extends React.Component<Props, State> {
 		this.setState({
 			showStructureDialog: !isClosing,
 			rowProperties: clearedSelectedRows,
+			loadedStructureDefinition: null,
 			structureMatches: [],
 			currentStructureMatchIndex: null,
 			currentStructureMatch: [],
@@ -796,13 +808,14 @@ export default class App extends React.Component<Props, State> {
 							logHeaderColumns={this.state.logFile.headers}
 							logHeaderColumnsTypes={logHeaderColumnTypes}
 							logSelectedRows={this.state.selectedLogRows}
+							loadedStructureDefinition={this.state.loadedStructureDefinition}
 							currentStructureMatchIndex={this.state.currentStructureMatchIndex}
 							numberOfMatches={this.state.structureMatches.length}
 							onClose={() => this.handleStructureDialog(true)}
 							onStructureUpdate={() => this.handleStructureUpdate(false)}
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
-							onStructureDefinitionSave={(structureDefinition) => this.handleSavingStuctureDefinition(structureDefinition)}
-							onStructureDefinitionLoad={() => {}}
+							onStructureDefinitionSave={(structureDefinitionString) => this.handleSavingStuctureDefinition(structureDefinitionString)}
+							onStructureDefinitionLoad={() => {this.handleLoadingStructureDefinition()}}
 							onDefineSegment={(expression) => this.handleSegmentation(expression)}
 							onNavigateStructureMatches={(isGoingForward) =>
 								this.handleNavigation(isGoingForward, true)

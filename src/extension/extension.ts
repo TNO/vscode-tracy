@@ -36,7 +36,6 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 				type: message_type,
 				text: document.getText(),
 				rules: fs.existsSync(rulesFile) ? JSON.parse(fs.readFileSync(rulesFile, {encoding: 'utf8'})) : [],
-				structureDefinitionFile: fs.existsSync(structureDefinitionFile) ? JSON.parse(fs.readFileSync(structureDefinitionFile, {encoding: 'utf8'})) : []
 			});
 		}
 
@@ -61,7 +60,7 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 
 		// Receive message from the webview.
 		webviewPanel.webview.onDidReceiveMessage(e => {
-			
+
 			if (e.type === 'readFile') {
 				updateWebview('readFile');
 			} else if (e.type === 'saveRules') {
@@ -80,6 +79,28 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 					if (fileUri) {
 						fs.writeFileSync(fileUri.fsPath, e.structureDefinition);
 					}
+				});				
+			}
+			else if (e.type === 'loadStructureDefinition') {
+				const options: vscode.OpenDialogOptions = {
+					title: 'Load Structure Definition',
+					canSelectMany: false,
+					openLabel: 'Load',
+					filters: {
+					   'Stucture files': ['structure']
+				   }
+			   	};
+				vscode.window.showOpenDialog(options).then(fileUri => {
+
+					if (fileUri && fileUri[0]) {
+						const filePath = fileUri[0].fsPath;
+						console.log('Selected file: ' + filePath);
+						webviewPanel.webview.postMessage({
+							type: 'loadedStructureDefinition', 
+							structureDefinition: fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, {encoding: 'utf8'})) : []
+						});
+					}
+
 				});				
 			}
 			else if (e.type === 'exportData') {
