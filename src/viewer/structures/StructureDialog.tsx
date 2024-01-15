@@ -1,7 +1,7 @@
 import React from "react";
 import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
 import CloseIcon from "@mui/icons-material/Close";
-import IconButton from '@mui/material/IconButton';
+import IconButton from "@mui/material/IconButton";
 import StructureTable from "./StructureTable";
 import { ContextMenuItem, Header, StructureDefinition, StructureEntry, Wildcard } from "../types";
 import { StructureHeaderColumnType } from "../constants";
@@ -45,8 +45,8 @@ interface Props {
 	onStructureUpdate: () => void;
 	onNavigateStructureMatches: (isGoingForward: boolean) => void;
 	onMatchStructure: (expression: string) => void;
-	onStructureDefinitionSave:(structureDefinition: string) => void;
-	onStructureDefinitionLoad:() => void;
+	onStructureDefinitionSave: (structureDefinition: string) => void;
+	onStructureDefinitionLoad: () => void;
 	onExportStructureMatches: () => void;
 	onDefineSegment: (expression: string) => void;
 }
@@ -62,7 +62,6 @@ interface State {
 }
 
 export default class StructureDialog extends React.Component<Props, State> {
-
 	constructor(props: Props) {
 		super(props);
 		const { logHeaderColumns, logHeaderColumnsTypes, logSelectedRows } = this.props;
@@ -88,7 +87,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 	componentDidMount(): void {
 		// trigger manually, as update function isn't called for initial render.
 		// removing the trigger to keep persistence
-		//this.props.onStructureUpdate(); 
+		//this.props.onStructureUpdate();
 	}
 
 	shouldComponentUpdate(
@@ -96,9 +95,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		nextState: Readonly<State>,
 		_nextContext: any,
 	): boolean {
-		const isLoadingStructureDefinition = (
-			nextProps.loadedStructureDefinition !== null
-		);
+		const isLoadingStructureDefinition = nextProps.loadedStructureDefinition !== null;
 		const arelogHeaderColumnsUpdating = !isEqual(
 			this.props.logHeaderColumns,
 			nextProps.logHeaderColumns,
@@ -158,20 +155,20 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	componentDidUpdate(prevProps: Readonly<Props>, _prevState: Readonly<State>): void {
-		const {loadedStructureDefinition, logSelectedRows} = this.props;
+		const { loadedStructureDefinition, logSelectedRows } = this.props;
 
-		if(this.state.isLoadingStructureDefintion && loadedStructureDefinition !== null) {
+		if (this.state.isLoadingStructureDefintion && loadedStructureDefinition !== null) {
 			this.setState({
 				isLoadingStructureDefintion: false,
 				isStructureMatching: false,
 				structureHeaderColumns: loadedStructureDefinition.headerColumns,
 				structureHeaderColumnsTypes: loadedStructureDefinition.headerColumnsTypes,
-				structureEntries: loadedStructureDefinition.entries, 
-				wildcards: loadedStructureDefinition.wildcards});
-			
+				structureEntries: loadedStructureDefinition.entries,
+				wildcards: loadedStructureDefinition.wildcards,
+			});
+
 			this.props.onStructureUpdate();
-		}
-		else if (logSelectedRows !== prevProps.logSelectedRows) {
+		} else if (logSelectedRows !== prevProps.logSelectedRows) {
 			this.updateStructure();
 		}
 	}
@@ -492,10 +489,16 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	saveStructureDefinition() {
-		const {structureHeaderColumns, structureHeaderColumnsTypes, structureEntries, wildcards} = this.state;
-		const {onStructureDefinitionSave} = this.props;
+		const { structureHeaderColumns, structureHeaderColumnsTypes, structureEntries, wildcards } =
+			this.state;
+		const { onStructureDefinitionSave } = this.props;
 
-		const structureDefiniton: StructureDefinition = { headerColumns: structureHeaderColumns, headerColumnsTypes: structureHeaderColumnsTypes, entries: structureEntries, wildcards: wildcards};
+		const structureDefiniton: StructureDefinition = {
+			headerColumns: structureHeaderColumns,
+			headerColumnsTypes: structureHeaderColumnsTypes,
+			entries: structureEntries,
+			wildcards: wildcards,
+		};
 		const structureDefinitonJSON = JSON.stringify(structureDefiniton);
 
 		onStructureDefinitionSave(structureDefinitonJSON);
@@ -503,7 +506,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 
 	loadStructureDefinition() {
 		this.props.onStructureDefinitionLoad();
-		this.setState({isLoadingStructureDefintion:true});
+		this.setState({ isLoadingStructureDefintion: true });
 	}
 
 	render() {
@@ -545,7 +548,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 								display: "flex",
 								flexDirection: "row",
 								alignItems: "center",
-								justifyContent: "space-between"
+								justifyContent: "space-between",
 							}}
 						>
 							<CustomWidthTooltip
@@ -594,17 +597,19 @@ export default class StructureDialog extends React.Component<Props, State> {
 							>
 								<i className="codicon codicon-question" />
 							</CustomWidthTooltip>
-                            <StructureSettingsDropdown
-								 onStructureDefinitionSave={this.saveStructureDefinition} 
-								 onStructureDefinitionLoad={this.loadStructureDefinition}/>
-                            <IconButton
-                                    id="close-button"
-                                    aria-label="close"
-                                    size="small"
-									style={{ flex: 1 }}
-                                    onClick={() => this.props.onClose()}>
-                                <CloseIcon className="structure-dialog-icon" fontSize="small"/>
-                            </IconButton>
+							<StructureSettingsDropdown
+								onStructureDefinitionSave={this.saveStructureDefinition}
+								onStructureDefinitionLoad={this.loadStructureDefinition}
+							/>
+							<IconButton
+								id="close-button"
+								aria-label="close"
+								size="small"
+								style={{ flex: 1 }}
+								onClick={() => this.props.onClose()}
+							>
+								<CloseIcon className="structure-dialog-icon" fontSize="small" />
+							</IconButton>
 						</div>
 					</div>
 					<StructureTable
