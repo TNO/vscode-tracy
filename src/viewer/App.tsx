@@ -255,7 +255,7 @@ export default class App extends React.Component<Props, State> {
 	handleStructureDialog(isClosing: boolean) {
 		if (isClosing === true) {
 			this.handleStructureUpdate(isClosing);
-            console.log(this.state.logFileAsString)
+
 		} else {
 			const { logFile, rowProperties, rules, showStructureDialog } = this.state;
 
@@ -277,14 +277,10 @@ export default class App extends React.Component<Props, State> {
 	}
 
 	handleSavingStuctureDefinition(structureDefinition: string) {
-		console.log("Saving definition - in App");
-		// console.log(structureDefinition);
 		this.vscode.postMessage({ type: "saveStructureDefinition", structureDefinition: structureDefinition});
 	}
 
 	handleLoadingStructureDefinition() {
-		console.log("Loading definition - in App");
-		// console.log(structureDefinition);
 		this.vscode.postMessage({ type: "loadStructureDefinition"});
 	}
 

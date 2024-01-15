@@ -138,8 +138,6 @@ export default class StructureDialog extends React.Component<Props, State> {
 			nextState.isStructureMatching,
 		);
 
-		console.log("isLoadingStructureDefinition", isLoadingStructureDefinition);
-
 		if (
 			isLoadingStructureDefinition ||
 			arelogHeaderColumnsUpdating ||
@@ -494,7 +492,6 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	saveStructureDefinition() {
-		console.log("Saving structure definition");
 		const {structureHeaderColumns, structureHeaderColumnsTypes, structureEntries, wildcards} = this.state;
 		const {onStructureDefinitionSave} = this.props;
 
@@ -505,7 +502,6 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	loadStructureDefinition() {
-		console.log("Loading structure definition");
 		this.props.onStructureDefinitionLoad();
 		this.setState({isLoadingStructureDefintion:true});
 	}
@@ -516,8 +512,6 @@ export default class StructureDialog extends React.Component<Props, State> {
 		const structureEntriesCopy = cloneDeep(structureEntries);
 		const wildcardsCopy = cloneDeep(wildcards);
 		const contextMenuItems = this.getContextMenuItems();
-
-        console.log(structureEntriesCopy);
 
 		const CustomWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
 			<Tooltip {...props} classes={{ popper: className }} />

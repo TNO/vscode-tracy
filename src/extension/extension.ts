@@ -94,7 +94,7 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 
 					if (fileUri && fileUri[0]) {
 						const filePath = fileUri[0].fsPath;
-						console.log('Selected file: ' + filePath);
+
 						webviewPanel.webview.postMessage({
 							type: 'loadedStructureDefinition', 
 							structureDefinition: fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, {encoding: 'utf8'})) : []
