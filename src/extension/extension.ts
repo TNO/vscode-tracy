@@ -23,6 +23,7 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 		_token: vscode.CancellationToken
 	): Promise<void> {
 		const rulesFile = `${document.fileName}.rules`;
+		const structureDefinitionFile = `${document.fileName}.structure`;
 
 		// Setup initial content for the webview
 		webviewPanel.webview.options = {
@@ -35,6 +36,7 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 				type: message_type,
 				text: document.getText(),
 				rules: fs.existsSync(rulesFile) ? JSON.parse(fs.readFileSync(rulesFile, {encoding: 'utf8'})) : [],
+				structureDefinitionFile: fs.existsSync(structureDefinitionFile) ? JSON.parse(fs.readFileSync(structureDefinitionFile, {encoding: 'utf8'})) : []
 			});
 		}
 
@@ -59,10 +61,26 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 
 		// Receive message from the webview.
 		webviewPanel.webview.onDidReceiveMessage(e => {
+			
 			if (e.type === 'readFile') {
 				updateWebview('readFile');
 			} else if (e.type === 'saveRules') {
 				fs.writeFileSync(rulesFile, JSON.stringify(e.rules));
+			}
+			else if (e.type === 'saveStructureDefinition') {
+
+				const options: vscode.SaveDialogOptions = {
+					title: 'Save Structure Definition',
+					defaultUri: vscode.Uri.joinPath(document.uri, structureDefinitionFile),
+					filters: {
+						'Stucture files': ['structure']
+				   }
+			   	};
+				vscode.window.showSaveDialog(options).then(fileUri => {
+					if (fileUri) {
+						fs.writeFileSync(fileUri.fsPath, e.structureDefinition);
+					}
+				});				
 			}
 			else if (e.type === 'exportData') {
 				const filename = document.fileName.split(".tracy")[0].split("_Tracy_export_")[0]

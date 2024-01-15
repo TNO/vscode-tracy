@@ -271,6 +271,12 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
+	handleSavingStuctureDefinition(structureDefinition: string) {
+		console.log("Saving definition - in App");
+		// console.log(structureDefinition);
+		this.vscode.postMessage({ type: "saveStructureDefinition", structureDefinition: structureDefinition});
+	}
+
 	handleRowCollapse(rowIndex: number, isRendered: boolean) {
 		const newRowProps = this.state.rowProperties;
 		newRowProps[rowIndex].isRendered = isRendered;
@@ -795,6 +801,8 @@ export default class App extends React.Component<Props, State> {
 							onClose={() => this.handleStructureDialog(true)}
 							onStructureUpdate={() => this.handleStructureUpdate(false)}
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
+							onStructureDefinitionSave={(structureDefinition) => this.handleSavingStuctureDefinition(structureDefinition)}
+							onStructureDefinitionLoad={() => {}}
 							onDefineSegment={(expression) => this.handleSegmentation(expression)}
 							onNavigateStructureMatches={(isGoingForward) =>
 								this.handleNavigation(isGoingForward, true)

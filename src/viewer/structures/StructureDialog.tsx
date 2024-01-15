@@ -32,7 +32,7 @@ import isEqual from "react-fast-compare";
 import cloneDeep from "lodash/cloneDeep";
 import ContextMenu from "../contextMenu/contextMenu";
 import { styled } from "@mui/material/styles";
-import StructureSettingsDropdown from "./StructureSettingsDropdown";
+import { StructureSettingsDropdown } from "./StructureSettingsDropdown";
 
 interface Props {
 	logHeaderColumns: Header[];
@@ -44,6 +44,8 @@ interface Props {
 	onStructureUpdate: () => void;
 	onNavigateStructureMatches: (isGoingForward: boolean) => void;
 	onMatchStructure: (expression: string) => void;
+	onStructureDefinitionSave:(structureDefinition: string) => void;
+	onStructureDefinitionLoad:() => void;
 	onExportStructureMatches: () => void;
 	onDefineSegment: (expression: string) => void;
 }
@@ -57,6 +59,7 @@ interface State {
 }
 
 export default class StructureDialog extends React.Component<Props, State> {
+
 	constructor(props: Props) {
 		super(props);
 		const { logHeaderColumnsTypes, logSelectedRows } = this.props;
@@ -71,8 +74,9 @@ export default class StructureDialog extends React.Component<Props, State> {
 			wildcards: [],
 		};
 
-		//bind context for all functions used by the context menu:
+		//bind context for all functions used by the context and dropdown menus:
 		this.createWildcard = this.createWildcard.bind(this);
+		this.saveStructureDefinition = this.saveStructureDefinition.bind(this);
 	}
 
 	componentDidMount(): void {
@@ -464,6 +468,21 @@ export default class StructureDialog extends React.Component<Props, State> {
 		}
 	}
 
+	saveStructureDefinition() {
+		console.log("Saving structure definition");
+		const { structureEntries, wildcards} = this.state;
+		const {logHeaderColumns, onStructureDefinitionSave} = this.props;
+
+		let structureDefiniton = { headerColumns: logHeaderColumns, entries: structureEntries, wildcards: wildcards};
+		let structureDefinitonJSON = JSON.stringify(structureDefiniton);
+
+		onStructureDefinitionSave(structureDefinitonJSON);
+	}
+
+	loadStructureDefinition() {
+		console.log("Loading structure definition");
+	}
+
 	render() {
 		const { structureEntries, wildcards, isRemovingStructureEntries, isStructureMatching } =
 			this.state;
@@ -553,7 +572,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 							>
 								<i className="codicon codicon-question" />
 							</CustomWidthTooltip>
-                            <StructureSettingsDropdown/>
+                            <StructureSettingsDropdown onStructureDefinitionSave={this.saveStructureDefinition} onStructureDefinitionLoad={this.loadStructureDefinition}/>
                             <IconButton
                                     id="close-button"
                                     aria-label="close"

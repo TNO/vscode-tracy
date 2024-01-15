@@ -8,13 +8,23 @@ import SaveIcon from '@mui/icons-material/Save';
 import FileOpenIcon from '@mui/icons-material/FileOpen';
 import SettingsIcon from '@mui/icons-material/Settings';
 
-export default function BasicMenu() {
+interface StructureSettingsDropdownProps {
+  onStructureDefinitionSave: () => void;
+  onStructureDefinitionLoad: () => void;
+}
+
+export const StructureSettingsDropdown: React.FunctionComponent<StructureSettingsDropdownProps> = ({onStructureDefinitionSave, onStructureDefinitionLoad}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
+  const handleClose = (action: string) => {
+    if (action === 'save')
+      onStructureDefinitionSave();
+    else if (action === 'load')
+      onStructureDefinitionLoad();
+
     setAnchorEl(null);
   };
 
@@ -35,19 +45,19 @@ export default function BasicMenu() {
         id="basic-menu"
         anchorEl={anchorEl}
         open={open}
-        onClose={handleClose}
+        onClose={() => handleClose('')}
         MenuListProps={{
           'aria-labelledby': 'basic-button',
         }}
       >
         {/* <MenuItem onClick={handleClose}>Profile</MenuItem> */}
-        <MenuItem onClick={handleClose}>
+        <MenuItem onClick={() => handleClose('save')}>
           <ListItemIcon>
             <SaveIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Save Structure Definition</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleClose}>
+        <MenuItem onClick={() => handleClose('load')}>
           <ListItemIcon>
             <FileOpenIcon fontSize="small" />
           </ListItemIcon>
