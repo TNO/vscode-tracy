@@ -432,11 +432,12 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	exportData(exportIndices: number[]) {
+	exportData(exportIndices: number[], structureExport: boolean) {
 		var exportObjects: Object[] = []
 		const originalColumns = this.state.logFile.headers;
-		if (exportIndices.length === 0 || this.state.filterSearch === false)
-			exportIndices = Array.from(Array(this.state.logFile.amountOfRows()).keys())
+		if (!structureExport)
+			if (exportIndices.length === 0 || this.state.filterSearch === false)
+				exportIndices = Array.from(Array(this.state.logFile.amountOfRows()).keys())
 		for (var index of exportIndices) {
 			var rowObject = {};
 			const row = this.state.logFile.rows[index]
@@ -485,7 +486,7 @@ export default class App extends React.Component<Props, State> {
 						</VSCodeButton>
 						<VSCodeButton
 							style={{ marginLeft: "5px", height: "25px", width: "110px" }}
-							onClick={() => this.exportData(this.state.searchMatches)}
+							onClick={() => this.exportData(this.state.searchMatches, false)}
 						>
 							Export
 						</VSCodeButton>
@@ -769,7 +770,7 @@ export default class App extends React.Component<Props, State> {
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
 							onDefineSegment={(collapsibleRows) => this.updateSegmentation(collapsibleRows)}
 							onNavigateStructureMatches={(isGoingForward) => this.handleNavigation(isGoingForward, true)}
-							onExportStructureMatches={() => this.exportData(this.state.structureMatches.flat(1))} 
+							onExportStructureMatches={() => this.exportData(this.state.structureMatches.flat(1), true)} 
 						/>
 					)}
 				</div>
