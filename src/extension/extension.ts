@@ -111,11 +111,23 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 				const _date = new Date(Date.now() - tzoffset).toISOString().slice(0, 10).replace(/-/g, "");
 				const _time = new Date(Date.now() - tzoffset).toISOString().slice(11, 19).replace(/:/g, "");
 				const exportFile = `${filename}_Tracy_export_${_date}_${_time}.tracy.json`;
-				fs.writeFileSync(exportFile, JSON.stringify(e.data));
-				webviewPanel.webview.postMessage({
-					type: "readExportPath",
-					text: exportFile,
-				});
+				const options: vscode.SaveDialogOptions = {
+					title: 'Export Data',
+					defaultUri: vscode.Uri.joinPath(document.uri, exportFile),
+					filters: {
+						'Tracy files': ['json']
+				   }
+			   	};
+				vscode.window.showSaveDialog(options).then(fileUri => {
+					if (fileUri) {
+						fs.writeFileSync(fileUri.fsPath, JSON.stringify(e.data));
+					}
+				});	
+				// fs.writeFileSync(exportFile, JSON.stringify(e.data));
+				// webviewPanel.webview.postMessage({
+				// 	type: "readExportPath",
+				// 	text: fileUri.fsPath,
+				// });
 			}
 		});
 	}
