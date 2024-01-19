@@ -162,7 +162,8 @@ export default class App extends React.Component<Props, State> {
 		for (let h = 0; h < logFile.headers.length; h++) {
 			let headerType = StructureHeaderColumnType.Selected;
 
-			if (logFile.headers[h].name.toLowerCase() === "timestamp") {
+			const cleanHeader = logFile.headers[h].name.toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
+			if (cleanHeader === "timestamp") {
 				headerType = StructureHeaderColumnType.Unselected;
 			}
 			if (!logFile.contentHeaders.includes(logFile.headers[h].name)) {
