@@ -35,7 +35,7 @@ Tracy is designed to process log files represented in JSON format. The input log
    - To facilitate this transformation, an open source converter has been developed. This converter can be accessed [here](https://github.com/TNO/vscode-tracy-csv-converter), and it streamlines the process of converting non-JSON log files into the required JSON format.
 
 4. **Column Configuration:**
-   - The first column in the log file should correspond to the timestamp of each event. Furthermore, this first column should be explicitly named "Timestamp."
+   - If the input log file contains a column that indicates the timestamp of each event, then it should be explicitly named "Timestamp". Furthermore, for ease of use we suggest that such a column corresponds to the first column of each event.
    - Users are advised against including two specific column names, namely "Line" and "Structure," as these columns are utilized internally by Tracy.
 
 ### The minimap
