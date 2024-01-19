@@ -102,13 +102,13 @@ export const returnSearchIndices = (
         if (columnIndex === -1) {
             for (let i = 0; i < rows.length; i++) {
                 loglineText = rows[i].join(" ");
-                if (useRegularExpressionSearch(flags, searchText, loglineText) === false)
+                if (useRegularExpressionSearch(flags, searchText, loglineText))
                     indices.push(i);
             }
         } else {
             for (let i = 0; i < rows.length; i++) {
-                loglineText = rows[i][columnIndex]; //Lowercase?
-                if (useRegularExpressionSearch(flags, searchText, loglineText) === false)
+                loglineText = rows[i][columnIndex];
+                if (useRegularExpressionSearch(flags, searchText, loglineText))
                     indices.push(i);
             }
         }
