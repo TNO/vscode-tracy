@@ -37,12 +37,8 @@ const getLineEndString = (amountOfWhiteSpace: number): string => {
 
 function getHeaderValue(text: string) {
     let headerValue = text;
-    const regExpCarriageReturnAtEnd = /\r$/;
 
-    if (regExpCarriageReturnAtEnd.test(headerValue))
-        headerValue = headerValue.replace(regExpCarriageReturnAtEnd, "\\\\r");
-
-    headerValue = `"${headerValue}"`;
+    headerValue = `"${escapeSpecialChars(headerValue)}"`;
 
     return headerValue;
 }
@@ -237,8 +233,6 @@ export const useStructureRegularExpressionSearch = (
     const perfEnd = performance.now();
     console.log(`Execution time (regular expression run): ${perfEnd - perfStart} ms`);
 
-    // console.log(textRanges);
-
     const transStart = performance.now();
 
     const resultingMatches = extractMatches(textRanges, logEntryCharIndexMaps);
@@ -302,6 +296,7 @@ function extractMatches(textRanges: number[][], logEntryCharIndexMaps: LogEntryC
 
         const indexOfFirstObjectInMatch = logEntryCharIndexMaps.firstCharIndexMap.get(matchRanges[0]);
         const indexOfLastObjectInMatch = logEntryCharIndexMaps.lastCharIndexMap.get(matchRanges[1]);
+        
         if ((indexOfFirstObjectInMatch !== undefined) && (indexOfLastObjectInMatch !== undefined)) {
 
             for (let i = indexOfFirstObjectInMatch; i <= indexOfLastObjectInMatch; i++) {
@@ -309,6 +304,7 @@ function extractMatches(textRanges: number[][], logEntryCharIndexMaps: LogEntryC
             }
             resultingMatches.push(indexesOfEntriesInMatch);
         }
+
     });
     return resultingMatches;
 };

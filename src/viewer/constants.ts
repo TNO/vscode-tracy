@@ -24,6 +24,7 @@ export const defaultAppState = {
 	rowProperties: [],
 	logEntryCharIndexMaps: null,
 	showStructureDialog: false,
+	loadedStructureDefinition: null,
 	structureMatches: [],
 	currentStructureMatchIndex: null,
 	currentStructureMatch: [],

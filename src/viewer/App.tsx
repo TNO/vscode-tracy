@@ -4,7 +4,7 @@ import LogFile from "./LogFile";
 import LogView from "./log/LogView";
 import MinimapView from "./minimap/MinimapView";
 import Tooltip from "@mui/material/Tooltip";
-import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps } from "./types";
+import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps, StructureDefinition } from "./types";
 import {
 	COLUMN_0_HEADER_STYLE,
 	COLUMN_2_HEADER_STYLE,
@@ -58,6 +58,7 @@ interface State {
 
 	// Structure related
 	logFileAsString: string;
+	loadedStructureDefinition: StructureDefinition | null;
 	logEntryCharIndexMaps: LogEntryCharMaps | null;
 	selectedLogRows: string[][];
 	rowProperties: RowProperty[];
@@ -145,6 +146,10 @@ export default class App extends React.Component<Props, State> {
 					showStructureDialog: this.previousSession.showStructureDialog,
 				});
 			}
+		} else if (message.type === "loadedStructureDefinition") {
+			const loadedStructureDefinition = message.structureDefinition;
+			console.log("loadedStructureDefinition - in App", loadedStructureDefinition);
+			this.setState({loadedStructureDefinition});
 		}
 		else if (message.type === "readExportPath") {
 			exportPath = message.text;
@@ -253,6 +258,7 @@ export default class App extends React.Component<Props, State> {
 	handleStructureDialog(isClosing: boolean) {
 		if (isClosing === true) {
 			this.handleStructureUpdate(isClosing);
+
 		} else {
 			const { logFile, rowProperties, showStructureDialog } = this.state;
 
@@ -271,6 +277,14 @@ export default class App extends React.Component<Props, State> {
 
 			this.setState({ selectedLogRows: selectedLogRows });
 		}
+	}
+
+	handleSavingStuctureDefinition(structureDefinition: string) {
+		this.vscode.postMessage({ type: "saveStructureDefinition", structureDefinition: structureDefinition});
+	}
+
+	handleLoadingStructureDefinition() {
+		this.vscode.postMessage({ type: "loadStructureDefinition"});
 	}
 
 	handleRowCollapse(rowIndex: number, isRendered: boolean) {
@@ -331,6 +345,7 @@ export default class App extends React.Component<Props, State> {
 		this.setState({
 			showStructureDialog: !isClosing,
 			rowProperties: clearedSelectedRows,
+			loadedStructureDefinition: null,
 			structureMatches: [],
 			currentStructureMatchIndex: null,
 			currentStructureMatch: [],
@@ -763,13 +778,16 @@ export default class App extends React.Component<Props, State> {
 							logFileAsString={this.state.logFileAsString}
 							logEntryCharIndexMaps={this.state.logEntryCharIndexMaps}
 							collapsibleRows={this.state.collapsibleRows}
+							loadedStructureDefinition={this.state.loadedStructureDefinition}
 							currentStructureMatchIndex={this.state.currentStructureMatchIndex}
 							numberOfMatches={this.state.structureMatches.length}
 							onClose={() => this.handleStructureDialog(true)}
 							onStructureUpdate={() => this.handleStructureUpdate(false)}
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
-							onDefineSegment={(collapsibleRows) => this.updateSegmentation(collapsibleRows)}
 							onNavigateStructureMatches={(isGoingForward) => this.handleNavigation(isGoingForward, true)}
+							onStructureDefinitionSave={(structureDefinitionString) => this.handleSavingStuctureDefinition(structureDefinitionString)}
+							onStructureDefinitionLoad={() => {this.handleLoadingStructureDefinition()}}
+							onDefineSegment={(collapsibleRows) => this.updateSegmentation(collapsibleRows)}
 							onExportStructureMatches={() => this.exportData(this.state.structureMatches.flat(1), true)} 
 						/>
 					)}

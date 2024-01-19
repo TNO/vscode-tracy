@@ -1,7 +1,9 @@
 import React from "react";
 import Tooltip, { TooltipProps, tooltipClasses } from "@mui/material/Tooltip";
+import CloseIcon from "@mui/icons-material/Close";
+import IconButton from "@mui/material/IconButton";
 import StructureTable from "./StructureTable";
-import { ContextMenuItem, Header, LogEntryCharMaps, Segment, StructureEntry, Wildcard } from "../types";
+import { ContextMenuItem, Header, LogEntryCharMaps, Segment, StructureDefinition, StructureEntry, Wildcard } from "../types";
 import { StructureHeaderColumnType, StructureLinkDistance } from "../constants";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { useStructureQueryConstructor, useStructureRegularExpressionNestedSearch } from "../hooks/useStructureRegularExpressionManager";
@@ -31,6 +33,7 @@ import cloneDeep from "lodash/cloneDeep";
 import ContextMenu from "../contextMenu/contextMenu";
 import { styled } from "@mui/material/styles";
 import { constructNewSegment, maximumSegmentation } from "../hooks/useRowProperty";
+import { StructureSettingsDropdown } from "./StructureSettingsDropdown";
 
 interface Props {
 	logFileAsString: string;
@@ -38,6 +41,7 @@ interface Props {
 	logHeaderColumns: Header[];
 	logHeaderColumnsTypes: StructureHeaderColumnType[];
 	logSelectedRows: string[][];
+	loadedStructureDefinition: StructureDefinition | null;
 	currentStructureMatchIndex: number | null;
 	numberOfMatches: number;
 	collapsibleRows: { [key: number]: Segment };
@@ -45,6 +49,8 @@ interface Props {
 	onStructureUpdate: () => void;
 	onNavigateStructureMatches: (isGoingForward: boolean) => void;
 	onMatchStructure: (expression: string) => void;
+	onStructureDefinitionSave: (structureDefinition: string) => void;
+	onStructureDefinitionLoad: () => void;
 	onExportStructureMatches: () => void;
 	onDefineSegment: (expression: { [key: number]: Segment }) => void;
 }
@@ -53,33 +59,39 @@ interface State {
 	wildcards: Wildcard[];
 	structureEntries: StructureEntry[];
 	isRemovingStructureEntries: boolean;
+	isLoadingStructureDefintion: boolean;
 	isStructureMatching: boolean;
+	structureHeaderColumns: Header[];
 	structureHeaderColumnsTypes: StructureHeaderColumnType[];
 }
 
 export default class StructureDialog extends React.Component<Props, State> {
 	constructor(props: Props) {
 		super(props);
-		const { logHeaderColumnsTypes, logSelectedRows } = this.props;
+		const { logHeaderColumns, logHeaderColumnsTypes, logSelectedRows } = this.props;
 		let structureEntries = constructStructureEntriesArray(logHeaderColumnsTypes, logSelectedRows);
 		structureEntries = removeLastStructureLink(structureEntries);
 
 		this.state = {
 			isRemovingStructureEntries: false,
+			isLoadingStructureDefintion: false,
 			isStructureMatching: this.props.numberOfMatches > 0 ? true : false,
+			structureHeaderColumns: logHeaderColumns,
 			structureHeaderColumnsTypes: logHeaderColumnsTypes,
 			structureEntries: structureEntries,
 			wildcards: [],
 		};
 
-		//bind context for all functions used by the context menu:
+		//bind context for all functions used by the context and dropdown menus:
 		this.createWildcard = this.createWildcard.bind(this);
+		this.saveStructureDefinition = this.saveStructureDefinition.bind(this);
+		this.loadStructureDefinition = this.loadStructureDefinition.bind(this);
 	}
 
 	componentDidMount(): void {
 		// trigger manually, as update function isn't called for initial render.
 		// removing the trigger to keep persistence
-		// this.props.onStructureUpdate(); 
+		//this.props.onStructureUpdate();
 	}
 
 	shouldComponentUpdate(
@@ -87,6 +99,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		nextState: Readonly<State>,
 		_nextContext: any,
 	): boolean {
+		const isLoadingStructureDefinition = nextProps.loadedStructureDefinition !== null;
 		const arelogHeaderColumnsUpdating = !isEqual(
 			this.props.logHeaderColumns,
 			nextProps.logHeaderColumns,
@@ -127,6 +140,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		);
 
 		if (
+			isLoadingStructureDefinition ||
 			arelogHeaderColumnsUpdating ||
 			arelogHeaderColumnTypesUpdating ||
 			arelogSelectedRowsUpdating ||
@@ -145,7 +159,20 @@ export default class StructureDialog extends React.Component<Props, State> {
 	}
 
 	componentDidUpdate(prevProps: Readonly<Props>, _prevState: Readonly<State>): void {
-		if (this.props.logSelectedRows !== prevProps.logSelectedRows) {
+		const { loadedStructureDefinition, logSelectedRows } = this.props;
+
+		if (this.state.isLoadingStructureDefintion && loadedStructureDefinition !== null) {
+			this.setState({
+				isLoadingStructureDefintion: false,
+				isStructureMatching: false,
+				structureHeaderColumns: loadedStructureDefinition.headerColumns,
+				structureHeaderColumnsTypes: loadedStructureDefinition.headerColumnsTypes,
+				structureEntries: loadedStructureDefinition.entries,
+				wildcards: loadedStructureDefinition.wildcards,
+			});
+
+			this.props.onStructureUpdate();
+		} else if (logSelectedRows !== prevProps.logSelectedRows) {
 			this.updateStructure();
 		}
 	}
@@ -275,7 +302,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 	matchStructure() {
 		// pass list of wildcards and use those in regular expression construction
 		const structureRegExp = useStructureQueryConstructor(
-			this.props.logHeaderColumns,
+			this.state.structureHeaderColumns,
 			this.state.structureHeaderColumnsTypes,
 			this.state.structureEntries,
 			this.state.wildcards,
@@ -289,7 +316,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		let collapsibleRows = this.props.collapsibleRows;
 		
 		const minSegmentRegExp = useStructureQueryConstructor(
-			this.props.logHeaderColumns,
+			this.state.structureHeaderColumns,
 			this.state.structureHeaderColumnsTypes,
 			this.state.structureEntries,
 			this.state.wildcards,
@@ -299,7 +326,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 		maxSegmentEntries[maxSegmentEntries.length-2].structureLink = StructureLinkDistance.Max;
 
 		const maxSegmentRegExp = useStructureQueryConstructor(
-			this.props.logHeaderColumns,
+			this.state.structureHeaderColumns,
 			this.state.structureHeaderColumnsTypes,
 			maxSegmentEntries,
 			this.state.wildcards,
@@ -516,6 +543,27 @@ export default class StructureDialog extends React.Component<Props, State> {
 		}
 	}
 
+	saveStructureDefinition() {
+		const { structureHeaderColumns, structureHeaderColumnsTypes, structureEntries, wildcards } =
+			this.state;
+		const { onStructureDefinitionSave } = this.props;
+
+		const structureDefiniton: StructureDefinition = {
+			headerColumns: structureHeaderColumns,
+			headerColumnsTypes: structureHeaderColumnsTypes,
+			entries: structureEntries,
+			wildcards: wildcards,
+		};
+		const structureDefinitonJSON = JSON.stringify(structureDefiniton);
+
+		onStructureDefinitionSave(structureDefinitonJSON);
+	}
+
+	loadStructureDefinition() {
+		this.props.onStructureDefinitionLoad();
+		this.setState({ isLoadingStructureDefintion: true });
+	}
+
 	render() {
 		const { structureEntries, wildcards, isRemovingStructureEntries, isStructureMatching } =
 			this.state;
@@ -555,6 +603,7 @@ export default class StructureDialog extends React.Component<Props, State> {
 								display: "flex",
 								flexDirection: "row",
 								alignItems: "center",
+								justifyContent: "space-between",
 							}}
 						>
 							<CustomWidthTooltip
@@ -603,13 +652,23 @@ export default class StructureDialog extends React.Component<Props, State> {
 							>
 								<i className="codicon codicon-question" />
 							</CustomWidthTooltip>
-							<VSCodeButton appearance="icon" onClick={() => this.props.onClose()}>
-								<i className="codicon codicon-close" />
-							</VSCodeButton>
+							<StructureSettingsDropdown
+								onStructureDefinitionSave={this.saveStructureDefinition}
+								onStructureDefinitionLoad={this.loadStructureDefinition}
+							/>
+							<IconButton
+								id="close-button"
+								aria-label="close"
+								size="small"
+								style={{ flex: 1 }}
+								onClick={() => this.props.onClose()}
+							>
+								<CloseIcon className="structure-dialog-icon" fontSize="small" />
+							</IconButton>
 						</div>
 					</div>
 					<StructureTable
-						headerColumns={this.props.logHeaderColumns}
+						headerColumns={this.state.structureHeaderColumns}
 						structureEntries={structureEntriesCopy}
 						wildcards={wildcardsCopy}
 						isRemovingStructureEntries={isRemovingStructureEntries}
