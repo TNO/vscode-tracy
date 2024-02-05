@@ -6,15 +6,25 @@ on:
   workflow_dispatch:
     inputs:
       type:
-        description: 'Release type (patch/minor/major)'
+        description: 'Release type (major/minor/patch)'
         default: 'patch'
         required: true
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
 
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Exit if workflow_dispatch on other branch than main
+      if: (github.event_name == 'workflow_dispatch') && (github.ref_name != 'refs/heads/main')
+      run: |
+          echo "Release workflow should be runned from main branch, exiting."
+          exit 1
     - uses: actions/setup-node@v3
       with:
         node-version: 18
