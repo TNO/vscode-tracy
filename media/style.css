@@ -14,6 +14,19 @@
     box-shadow: 0 2px 8px var(--vscode-widget-shadow);
 }
 
+.structure-settings-dropdown {
+    background-color:  var(--vscode-menu-background);
+}
+
+.structure-settings-dropdown-item {
+    color: var(--vscode-menu-foreground);
+    background-color: var(--vscode-menu-background);
+}
+
+.structure-dialog-icon {
+    color: var(--vscode-menu-foreground);
+}
+
 ::selection {
     color: var(--vscode-menu-background);
     background-color: var(--vscode-menu-foreground);

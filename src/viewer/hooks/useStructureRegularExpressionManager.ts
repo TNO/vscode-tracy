@@ -37,12 +37,8 @@ const getLineEndString = (amountOfWhiteSpace: number): string => {
 
 function getHeaderValue(text: string) {
     let headerValue = text;
-    const regExpCarriageReturnAtEnd = /\r$/;
 
-    if (regExpCarriageReturnAtEnd.test(headerValue))
-        headerValue = headerValue.replace(regExpCarriageReturnAtEnd, "\\\\r");
-
-    headerValue = `"${headerValue}"`;
+    headerValue = `"${escapeSpecialChars(headerValue)}"`;
 
     return headerValue;
 }
@@ -106,7 +102,7 @@ const getRegExpForLogEntry = (
     let rowString = "";
     let hasProcessedLastUsableColumn = false;
 
-    for (let c = row.length - 1; c >= 0; c--) {
+    for (let c = logHeaders.length - 1; c >= 0; c--) {
 
         const headerString = getHeaderValue(logHeaders[c].name);
 
@@ -237,8 +233,6 @@ export const useStructureRegularExpressionSearch = (
     const perfEnd = performance.now();
     console.log(`Execution time (regular expression run): ${perfEnd - perfStart} ms`);
 
-    // console.log(textRanges);
-
     const transStart = performance.now();
 
     const resultingMatches = extractMatches(textRanges, logEntryCharIndexMaps);
@@ -250,28 +244,43 @@ export const useStructureRegularExpressionSearch = (
 };
 
 export const useStructureRegularExpressionNestedSearch = (
-    expression: string,
+    minExpression: string,
+    maxExpression: string,
     logFileAsString: string,
     logEntryCharIndexMaps: LogEntryCharMaps,
 ): number[][] => {
     const textRanges: number[][] = [];
-    const structureQuery = new RegExp(expression, "s");
+    const minQuery = new RegExp(minExpression, "s");
+    const maxQuery = new RegExp(maxExpression, "s");
 
-    let finished = false;
-    let previousStartIndex = 0;
+    let previousIndex = 0;
     let remainingText = logFileAsString;
 
-    while (!finished) {
-        let match = remainingText.match(structureQuery);
-        if ((match == undefined) || (match.index == undefined)) {
-            finished = true;
-        }
+    while (true) {
+        let match = remainingText.match(minQuery);
+        if ((match == undefined) || (match.index == undefined))
+            break;
         else {
-            let startIndex = previousStartIndex + match.index;
+            let startIndex = previousIndex + match.index;
             let lastIndex = startIndex + match[0].length;
             textRanges.push([startIndex, lastIndex]);
-            previousStartIndex = startIndex + 1;
+            previousIndex = startIndex + 1;
             remainingText = remainingText.substring(match.index + 1);
+        }
+    }
+
+    previousIndex = logFileAsString.length;
+    remainingText = logFileAsString;
+
+    while (true) {
+        let match = remainingText.match(maxQuery);
+        if ((match == undefined) || (match.index == undefined))
+            break;
+        else {
+            let startIndex = match.index;
+            let lastIndex = startIndex + match[0].length;
+            textRanges.push([startIndex, lastIndex]);
+            remainingText = remainingText.substring(0, lastIndex - 1);
         }
     }
 
@@ -287,6 +296,7 @@ function extractMatches(textRanges: number[][], logEntryCharIndexMaps: LogEntryC
 
         const indexOfFirstObjectInMatch = logEntryCharIndexMaps.firstCharIndexMap.get(matchRanges[0]);
         const indexOfLastObjectInMatch = logEntryCharIndexMaps.lastCharIndexMap.get(matchRanges[1]);
+        
         if ((indexOfFirstObjectInMatch !== undefined) && (indexOfLastObjectInMatch !== undefined)) {
 
             for (let i = indexOfFirstObjectInMatch; i <= indexOfLastObjectInMatch; i++) {
@@ -294,6 +304,7 @@ function extractMatches(textRanges: number[][], logEntryCharIndexMaps: LogEntryC
             }
             resultingMatches.push(indexesOfEntriesInMatch);
         }
+
     });
     return resultingMatches;
 };

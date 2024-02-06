@@ -97,7 +97,7 @@ export default class StructureTable extends React.Component<Props, State> {
 		return (
 			<div id="structureHeader" style={style}>
 				<div className="header-background">
-					{this.props.headerColumns.map((h, i) =>
+					{this.props.headerColumns.filter(h => !h.name.startsWith("Structure")).map((h, i) =>
 						this.renderHeaderColumn(h.name, i, this.getInitialColumnWidth(h.name)),
 					)}
 				</div>
@@ -162,8 +162,9 @@ export default class StructureTable extends React.Component<Props, State> {
 	renderRows(containerWidth: number, containerHeight: number) {
 		const newContainerWidth = containerWidth + STRUCTURE_WIDTH;
 		const result: ReactNode[] = [];
-		const { structureEntries, isRemovingStructureEntries, headerColumns, onStructureEntryRemoved } =
+		const { structureEntries, isRemovingStructureEntries, onStructureEntryRemoved } =
 			this.props;
+		const headerColumns = this.props.headerColumns.filter(h => !h.name.startsWith("Structure"));
 		const structureEntryIconStyle = getStructureTableEntryIconStyle(isRemovingStructureEntries);
 		let structureLinkIndex = 0;
 
@@ -247,8 +248,8 @@ export default class StructureTable extends React.Component<Props, State> {
 	}
 
 	render() {
-		const { headerColumns, structureEntries } = this.props;
-		const numberOfRows = structureEntries.length;
+		const numberOfRows = this.props.structureEntries.length;
+		const headerColumns = this.props.headerColumns.filter(h => !h.name.startsWith("Structure"));
 		const containerHeight =
 			numberOfRows * LOG_ROW_HEIGHT + (numberOfRows - 1) * STRUCTURE_LINK_HEIGHT;
 		const containerWidth =

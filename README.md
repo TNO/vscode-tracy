@@ -18,11 +18,25 @@ To install Tracy in Visual Studio Code:
 
 ## User Guide
 
-### Log format
+### Input File Format Guidelines
 
-Tracy assumes that a log is represented in JSON format. The log must be a list of JSON objects, with each object representing an event. Every event is assumed to have the same fields, with the first field being the timestamp of the event. Thus, the log can be viewed as a table where each row is an event and each column an event field, with the first column containing the timestamps.
+Tracy is designed to process log files represented in JSON format. The input log file must adhere to specific criteria outlined below to ensure optimal utilization of Tracy's capabilities.
 
-Files with extension `*.tracy.json` will be automatically opened in Tracy.
+1. **File Format:**
+   - The input log file must be formatted in JSON. Specifically, it should be structured as a list of JSON objects, where each object represents a distinct event.
+   - All events within the log file must possess identical fields, rendering the log as a tabular structure with rows representing events and columns representing event fields.
+   - It is recommended that the input file contains only UTF-8 encoded characters. Non-UTF characters may lead to unexpected behavior or errors during processing by Tracy.
+
+2. **Automated File Recognition:**
+   - Files with the extension `*.tracy.json` will be automatically recognized and opened by Tracy without any additional configuration.
+
+3. **Transformation for Non-JSON Files:**
+   - If the input log file is not in JSON format, users are required to transform it before using Tracy.
+   - To facilitate this transformation, an open source converter has been developed. This converter can be accessed [here](https://github.com/TNO/vscode-tracy-csv-converter), and it streamlines the process of converting non-JSON log files into the required JSON format.
+
+4. **Column Configuration:**
+   - If the input log file contains a column that indicates the timestamp of each event, then it should be explicitly named "Timestamp". Furthermore, for ease of use we suggest that such a column corresponds to the first column of each event.
+   - Users are advised against including two specific column names, namely "Line" and "Structure," as these columns are utilized internally by Tracy.
 
 ### The minimap
 

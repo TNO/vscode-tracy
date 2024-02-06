@@ -285,7 +285,7 @@ export default class FlagRule extends Rule {
 								<VSCodeDropdown
 									style={{ width: "100%", marginBottom: "2px" }}
 									value={sub.Column}
-									key="Dropdown"
+									key="editSubconditionColumn"
 									onChange={(e) => editSubcondition(columnIndex, s_i, "Column", e.target.value)}
 								>
 									{allColumns.map((col, col_i) => (
@@ -299,7 +299,7 @@ export default class FlagRule extends Rule {
 								<VSCodeDropdown
 									style={{ width: "100%" }}
 									value={sub.Operation}
-									key="Dropdown"
+									key="editSubconditionOperation"
 									onChange={(e) => editSubcondition(columnIndex, s_i, "Operation", e.target.value)}
 								>
 									<VSCodeOption key="0" value="contains">
@@ -325,25 +325,32 @@ export default class FlagRule extends Rule {
 									</VSCodeOption>
 								</VSCodeDropdown>
 							);
+							
+							let isDropdown = false;
 							let dropdownOptions: string[] = [];
 							if (user_columns.includes(sub.Column)) {
 								const dropdownRule = rules.filter(r => r.column === sub.Column)[0];
-								if (dropdownRule.ruleType === 'Flag rule') {
+								if (dropdownRule.ruleType === "Flag rule") {
 									let dropdownFlagRule = dropdownRule as FlagRule;
 									dropdownOptions = dropdownFlagRule.flags.map(f => f.name);
+									dropdownOptions.push(dropdownFlagRule.defaultValue);
+									if (dropdownFlagRule.flagType === "User Defined" && dropdownOptions.length > 0)
+										isDropdown = true;
 								}
-								else if (dropdownRule.ruleType === 'State based rule') {
+								else if (dropdownRule.ruleType === "State based rule") {
 									let dropdownStateRule = dropdownRule as StateBasedRule;
-									dropdownOptions = dropdownStateRule.ruleStates.map(s => s.name)
+									dropdownOptions = dropdownStateRule.ruleStates.map(s => s.name);
+									if (dropdownOptions.length > 0)
+										isDropdown = true;
 								}
 							}
-							console.log(dropdownOptions)
-							if (dropdownOptions.length === 0 || dropdownOptions[0] === '') {
+							dropdownOptions = dropdownOptions.filter(opt => opt != "")
+							if (!isDropdown) {
 								setMap.push(
 									<VSCodeTextField
 										style={{ width: "100%" }}
 										value={sub.Text}
-										key="Text"
+										key="editSubconditionText"
 										onInput={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
 									/>,
 								);
@@ -353,7 +360,7 @@ export default class FlagRule extends Rule {
 									<VSCodeDropdown
 										style={{ width: "100%" }}
 										value={sub.Text}
-										key="Text"
+										key="editSubconditionTextDropdown"
 										onChange={(e) => editSubcondition(columnIndex, s_i, "Text", e.target.value)}
 									>
 										{dropdownOptions.map((option, optionIndex) => (

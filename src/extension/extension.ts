@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
-    context.subscriptions.push(EditorProvider.register(context));
+	context.subscriptions.push(EditorProvider.register(context));
 }
 
 export class EditorProvider implements vscode.CustomTextEditorProvider {
@@ -18,11 +18,12 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 	) { }
 
 	public async resolveCustomTextEditor(
-		document: vscode.TextDocument, 
+		document: vscode.TextDocument,
 		webviewPanel: vscode.WebviewPanel,
 		_token: vscode.CancellationToken
 	): Promise<void> {
 		const rulesFile = `${document.fileName}.rules`;
+		const structureDefinitionFile = `${document.fileName}.structure`;
 
 		// Setup initial content for the webview
 		webviewPanel.webview.options = {
@@ -34,7 +35,7 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 			webviewPanel.webview.postMessage({
 				type: message_type,
 				text: document.getText(),
-				rules: fs.existsSync(rulesFile) ? JSON.parse(fs.readFileSync(rulesFile, {encoding: 'utf8'})) : [],
+				rules: fs.existsSync(rulesFile) ? JSON.parse(fs.readFileSync(rulesFile, { encoding: 'utf8' })) : [],
 			});
 		}
 
@@ -59,17 +60,74 @@ export class EditorProvider implements vscode.CustomTextEditorProvider {
 
 		// Receive message from the webview.
 		webviewPanel.webview.onDidReceiveMessage(e => {
+
 			if (e.type === 'readFile') {
 				updateWebview('readFile');
 			} else if (e.type === 'saveRules') {
 				fs.writeFileSync(rulesFile, JSON.stringify(e.rules));
 			}
+			else if (e.type === 'saveStructureDefinition') {
+
+				const options: vscode.SaveDialogOptions = {
+					title: 'Save Structure Definition',
+					defaultUri: vscode.Uri.joinPath(document.uri, structureDefinitionFile),
+					filters: {
+						'Stucture files': ['structure']
+				   }
+			   	};
+				vscode.window.showSaveDialog(options).then(fileUri => {
+					if (fileUri) {
+						fs.writeFileSync(fileUri.fsPath, e.structureDefinition);
+					}
+				});				
+			}
+			else if (e.type === 'loadStructureDefinition') {
+				const options: vscode.OpenDialogOptions = {
+					title: 'Load Structure Definition',
+					canSelectMany: false,
+					openLabel: 'Load',
+					filters: {
+					   'Stucture files': ['structure']
+				   }
+			   	};
+				vscode.window.showOpenDialog(options).then(fileUri => {
+
+					if (fileUri && fileUri[0]) {
+						const filePath = fileUri[0].fsPath;
+
+						webviewPanel.webview.postMessage({
+							type: 'loadedStructureDefinition', 
+							structureDefinition: fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, {encoding: 'utf8'})) : []
+						});
+					}
+
+				});				
+			}
 			else if (e.type === 'exportData') {
-				const filename = document.fileName.split(".tracy")[0].split("_Tracy_export_")[0]
-				const _date = new Date().toISOString().slice(0,10).replace(/-/g, "");
-				const _time = new Date().toISOString().slice(11,19).replace(/:/g, "");
+				let filename = document.fileName;
+				const splitItems = [".tracy", ".json", ".txt", ".csv", "_Tracy_export_"];
+				splitItems.forEach(item => { filename = filename.split(item)[0]; });
+				const tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
+				const _date = new Date(Date.now() - tzoffset).toISOString().slice(0, 10).replace(/-/g, "");
+				const _time = new Date(Date.now() - tzoffset).toISOString().slice(11, 19).replace(/:/g, "");
 				const exportFile = `${filename}_Tracy_export_${_date}_${_time}.tracy.json`;
-				fs.writeFileSync(exportFile, JSON.stringify(e.data));
+				const options: vscode.SaveDialogOptions = {
+					title: 'Export Data',
+					defaultUri: vscode.Uri.joinPath(document.uri, exportFile),
+					filters: {
+						'Tracy files': ['json']
+				   }
+			   	};
+				vscode.window.showSaveDialog(options).then(fileUri => {
+					if (fileUri) {
+						fs.writeFileSync(fileUri.fsPath, JSON.stringify(e.data));
+					}
+				});	
+				// fs.writeFileSync(exportFile, JSON.stringify(e.data));
+				// webviewPanel.webview.postMessage({
+				// 	type: "readExportPath",
+				// 	text: fileUri.fsPath,
+				// });
 			}
 		});
 	}

@@ -62,7 +62,7 @@ export const appendNewStructureEntries = (
 	});
 
 	modifiedStructureEntries.sort((a, b) =>
-		a.row[0][0].textValue.localeCompare(b.row[0][0].textValue),
+		a.row[0][0].textValue.localeCompare(b.row[0][0].textValue, undefined, {'numeric': true}),
 	);
 
 	modifiedStructureEntries = removeLastStructureLink(modifiedStructureEntries);

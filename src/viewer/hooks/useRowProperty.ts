@@ -1,6 +1,8 @@
 import { RowProperty, Segment } from "../types";
 import { SelectedRowType } from "../constants";
 
+export const maximumSegmentation = 4;
+
 export const constructNewRowProperty = (
 	isRendered: boolean,
 	rowType: SelectedRowType,
@@ -17,7 +19,7 @@ export const constructNewSegment = (start: number, end: number, level: number) =
 export const getSegmentMaxLevel = (segments: { [key: number]: Segment }) => {
 	const levels = Object.values(segments).map((segment) => segment.level);
 	if (levels !== undefined && levels.length > 0) {
-		return Math.min(4, Math.max(...levels));
+		return Math.min(maximumSegmentation, Math.max(...levels));
 	} else {
 		return -1;
 	}

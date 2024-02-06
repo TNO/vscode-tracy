@@ -30,13 +30,11 @@ export default class LogFile {
 	}
 
 	static create(content: { [s: string]: string }[], rules: Rule[]) {
-		let contentHeaders = this.getContentHeaders(content);
-		if (!contentHeaders.includes("Line")) {
-			contentHeaders = ["Line"].concat(contentHeaders);
-			for (let i = 0; i < content.length; i++) 
-				content[i]["Line"] = (i+1).toString();
-		}
+		const contentHeaders = this.getContentHeaders(content);
 		const headers = this.getHeaders(contentHeaders, rules);
+		if (!contentHeaders.includes("Line"))
+			for (let i = 0; i < content.length; i++)
+				content[i]["Line"] = (i + 1).toString();
 		const rows = content.map((l) => headers.map((h) => l[h.name]));
 		const logFile = new LogFile(contentHeaders, headers, rows);
 		logFile.computeDefaultColumnColors();
@@ -49,18 +47,32 @@ export default class LogFile {
 		const headers = LogFile.getHeaders(this.contentHeaders, rules);
 
 		let rows = this.rows;
-		if (this.rows[0].length === headers.length + 1)
-			rows = this.rows.map(r => r.slice(0,-1))
 
 		if (structureMatches.length > 0) {
-			updatedSelected.push(false);
-			updatedSelectedMini.push(true);
-			const name = "Structure"
-			const type = DEFAULT_HEADER_TYPE;
-			headers.push({name, type});
+			let num = 1;
+			while (true) {
+				const name = "Structure" + num
+				const type = DEFAULT_HEADER_TYPE;
+				if (!headers.map(h => h.name).includes(name)) {
+					headers.push({ name, type });
+					break;
+				}
+				num++;
+			}
+			// Previous structure match already exists in logfile
+			if (headers.length === rows[0].length) {
+				for (let i = 0; i < rows.length; i++)
+					rows[i].pop();
+			}
+			else {
+				updatedSelected.push(true);
+				updatedSelectedMini.push(true);
+			}
+			for (let i = 0; i < rows.length; i++)
+				rows[i].push("0");
+
 			let currentStructureIndex = 0;
 			for (let i = 0; i < rows.length; i++) {
-				rows[i].push("");
 				if (currentStructureIndex < structureMatches.length) {
 					if (i > structureMatches[currentStructureIndex].at(-1)!) {
 						currentStructureIndex++;
@@ -72,7 +84,7 @@ export default class LogFile {
 						rows[i].pop();
 						rows[i].push((currentStructureIndex + 1).toString());
 					}
-				}					
+				}
 			}
 		}
 
@@ -80,12 +92,6 @@ export default class LogFile {
 		logFile.copyDefaultColumnColors(this.columnsColors);
 		logFile.computeRulesValuesAndColors(rules);
 		return logFile.setSelectedColumns(updatedSelected, updatedSelectedMini);
-
-		// Old solution
-		// this.updateSelectedColumns(rules);
-		// this.updateHeaders(rules);
-		// this.computeRulesValuesAndColors(rules);
-		// return this;
 	}
 
 	updateSelectedColumns(rules: Rule[]) {
@@ -140,36 +146,34 @@ export default class LogFile {
 
 	private static getHeaders(contentHeaders: string[], rules: Rule[]) {
 		const allHeaders = [...contentHeaders, ...rules.map((r) => r.column)];
-		return allHeaders.map((name) => {
+		let headers = allHeaders.map((name) => {
 			const type = HEADER_TYPE_LOOKUP[name] ?? DEFAULT_HEADER_TYPE;
 			return { name, type };
 		});
+		if (!contentHeaders.includes("Line")) {
+			const lineHeader = [{ name: "Line", type: DEFAULT_HEADER_TYPE }];
+			headers = lineHeader.concat(headers);
+		}
+		return headers;
 	}
 
-	private updateHeaders(rules: Rule[]) {
-		const allHeaders = [...this.contentHeaders, ...rules.map((r) => r.column)];
-		this.headers = allHeaders.map((name) => {
-			const type = HEADER_TYPE_LOOKUP[name] ?? DEFAULT_HEADER_TYPE;
-			return { name, type };
-		});
-	}
 
 	private computeDefaultColumnColors() {
-		for (let i = 0; i < this.contentHeaders.length; i++) {
+		for (let i = 0; i < this.getStaticHeadersSize(); i++) {
 			const values = this.rows.map((r) => r[i]);
 			this.columnsColors[i] = LogFile.computeColors(this.headers[i], values);
 		}
 	}
 
 	private copyDefaultColumnColors(colours: string[][]) {
-		for (let i = 0; i < this.contentHeaders.length; i++) {
+		for (let i = 0; i < this.getStaticHeadersSize(); i++) {
 			this.columnsColors[i] = colours[i];
 		}
 	}
 
 	private computeRulesValuesAndColors(rules: Rule[]) {
 		// Compute rules values
-		const firstRuleIndex = this.contentHeaders.length;
+		const firstRuleIndex = this.getStaticHeadersSize();
 		const rulesValues = rules.map((r) => r.computeValues(this));
 		for (let row = 0; row < this.rows.length; row++) {
 			for (let column = 0; column < rulesValues.length; column++) {
@@ -186,17 +190,31 @@ export default class LogFile {
 
 	private static computeColors(header: Header, values: string[]) {
 		let colorizer: (s: string) => string;
-
-		if (header.name === "Line" || header.name === "Structure") {
-			colorizer = (v) => interpolateTurbo(values.indexOf(v) / values.length);
+		if (this.containsOnlyNumbers(values)) {
+			let uniqueValues = [...new Set(values)];
+			const sortedNumbers = uniqueValues.map(Number).sort(function (a, b) { return a - b; });
+			colorizer = scaleSequential().domain(extent(sortedNumbers)).interpolator(interpolateTurbo);
 		} else if (header.type === "string") {
 			const uniqueValues = [...new Set(values)].sort();
 			colorizer = (v) => interpolateTurbo(uniqueValues.indexOf(v) / uniqueValues.length);
-		} else if (header.type === "number") {
-			colorizer = scaleSequential().domain(extent(values)).interpolator(interpolateTurbo);
-		} 
+		}
 
 		return values.map((l) => colorizer(l));
+	}
+
+	private static containsOnlyNumbers(items: string[]) {
+		for (const i of items) {
+			if (!Number(+i) && (+i !== 0))
+				return false;
+		}
+		return true;
+	}
+
+	private getStaticHeadersSize() {
+		let size = this.contentHeaders.length;
+		if (!this.contentHeaders.includes("Line"))
+			size++;
+		return size;
 	}
 
 	amountOfRows = () => this.rows.length;

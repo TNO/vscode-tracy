@@ -173,7 +173,7 @@ export default class LogView extends React.Component<Props, State> {
 			if (rowProperties[r].isRendered) {
 				let rowStyle;
 
-				if (structureMatchesLogRows.includes(r)) {
+				if (structureMatchesLogRows.includes(r) && !this.props.filterSearch) {
 					rowStyle = getLogViewStructureMatchStyle(
 						currentStructureMatch,
 						structureMatches,

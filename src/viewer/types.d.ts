@@ -1,4 +1,4 @@
-import { SelectedRowType, StructureLinkDistance } from "./constants";
+import { SelectedRowType, StructureHeaderColumnType, StructureLinkDistance } from "./constants";
 
 export interface LogViewState {
 	height: number;
@@ -14,6 +14,13 @@ export interface LogViewState {
 export interface Header {
 	name: string;
 	type: "string" | "number";
+}
+
+export interface StructureDefinition {
+	headerColumns: Header[],
+	headerColumnsTypes: StructureHeaderColumnType[],
+	entries: StructureEntry[],
+	wildcards: Wildcard[]
 }
 
 export interface StructureEntry {

@@ -1,9 +1,10 @@
 import React from "react";
+import Rule from "./rules/Rule";
 import LogFile from "./LogFile";
 import LogView from "./log/LogView";
 import MinimapView from "./minimap/MinimapView";
 import Tooltip from "@mui/material/Tooltip";
-import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps } from "./types";
+import { LogViewState, StructureMatchId, RowProperty, Segment, LogEntryCharMaps, StructureDefinition } from "./types";
 import {
 	COLUMN_0_HEADER_STYLE,
 	COLUMN_2_HEADER_STYLE,
@@ -21,14 +22,13 @@ import {
 import {
 	useGetCharIndicesForLogEntries,
 	useStructureRegularExpressionSearch,
-	useStructureRegularExpressionNestedSearch
 } from "./hooks/useStructureRegularExpressionManager";
-import { getRegularExpressionMatches, returnSearchIndices } from "./hooks/useLogSearchManager";
-import { constructNewRowProperty, constructNewSegment } from "./hooks/useRowProperty";
+import { returnSearchIndices } from "./hooks/useLogSearchManager";
+import { constructNewRowProperty } from "./hooks/useRowProperty";
 import StructureDialog from "./structures/StructureDialog";
 import StatesDialog from "./rules/Dialogs/StatesDialog";
 import FlagsDialog from "./rules/Dialogs/FlagsDialog";
-import Rule from "./rules/Rule";
+import ExportDialog from "./rules/Dialogs/ExportDialog";
 import MinimapHeader from "./minimap/MinimapHeader";
 import SelectColDialog from "./log/SelectColDialog";
 
@@ -37,6 +37,7 @@ interface State {
 	logFile: LogFile;
 	logViewState: LogViewState | undefined;
 	rules: Rule[];
+	showExportDialog: boolean;
 	showStatesDialog: boolean;
 	showStructureDialog: boolean;
 	showFlagsDialog: boolean;
@@ -57,6 +58,7 @@ interface State {
 
 	// Structure related
 	logFileAsString: string;
+	loadedStructureDefinition: StructureDefinition | null;
 	logEntryCharIndexMaps: LogEntryCharMaps | null;
 	selectedLogRows: string[][];
 	rowProperties: RowProperty[];
@@ -73,6 +75,7 @@ interface State {
 let searchTimeoutId;
 let searchText: string = "";
 let searchColumn: string = "All";
+let exportPath: string = "";
 let logHeaderColumnTypes: StructureHeaderColumnType[] = [];
 
 export default class App extends React.Component<Props, State> {
@@ -119,9 +122,10 @@ export default class App extends React.Component<Props, State> {
 			const lines = JSON.parse(message.text);
 			const logFileText = JSON.stringify(lines, null, 2);
 			const logEntryCharIndexMaps = useGetCharIndicesForLogEntries(logFileText);
-			const logFile = LogFile.create(lines, rules);
-			logFile.setSelectedColumns(this.state.selectedColumns, this.state.selectedColumnsMini);
-			this.extractHeaderColumnTypes(logFile, rules);
+			let logFile = LogFile.create(lines, rules);
+			// if (this.previousSession)
+			// 	logFile.setSelectedColumns(this.previousSession.selectedColumns, this.previousSession.selectedColumnsMini);
+			this.extractHeaderColumnTypes(logFile);
 			this.setState({
 				rules,
 				logFile,
@@ -136,30 +140,35 @@ export default class App extends React.Component<Props, State> {
 				this.setState({ rowProperties: newRowsProps });
 			}
 			else {
-				const showFlagsDialog = this.previousSession.showFlagsDialog;
-				const showStatesDialog = this.previousSession.showStatesDialog;
-				const showStructureDialog = this.previousSession.showStructureDialog;
-				this.setState({ showFlagsDialog, showStatesDialog, showStructureDialog });
+				this.setState({
+					showFlagsDialog: this.previousSession.showFlagsDialog,
+					showStatesDialog: this.previousSession.showStatesDialog,
+					showStructureDialog: this.previousSession.showStructureDialog,
+				});
 			}
+		} else if (message.type === "loadedStructureDefinition") {
+			const loadedStructureDefinition = message.structureDefinition;
+			console.log("loadedStructureDefinition - in App", loadedStructureDefinition);
+			this.setState({loadedStructureDefinition});
+		}
+		else if (message.type === "readExportPath") {
+			exportPath = message.text;
+			this.setState({ showExportDialog: true });
 		}
 	}
 
-	extractHeaderColumnTypes(logFile: LogFile, rules: Rule[]) {
+	extractHeaderColumnTypes(logFile: LogFile) {
 		logHeaderColumnTypes = [];
 		for (let h = 0; h < logFile.headers.length; h++) {
 			let headerType = StructureHeaderColumnType.Selected;
 
-			if (logFile.headers[h].name.toLowerCase() === "timestamp") {
+			const cleanHeader = logFile.headers[h].name.toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
+			if (cleanHeader === "timestamp") {
 				headerType = StructureHeaderColumnType.Unselected;
-			} else if (logFile.headers[h].name === "Line") {
+			}
+			if (!logFile.contentHeaders.includes(logFile.headers[h].name)) {
 				headerType = StructureHeaderColumnType.Custom;
 			}
-
-			rules.forEach((rule) => {
-				if (rule.column === logFile.headers[h].name) {
-					headerType = StructureHeaderColumnType.Custom;
-				}
-			});
 
 			logHeaderColumnTypes.push(headerType);
 		}
@@ -236,12 +245,12 @@ export default class App extends React.Component<Props, State> {
 		else this.setState({ rules: newRules });
 	}
 
-	handleSelectDialog(selectedCols: boolean[], selectedColsMini: boolean[], isClose: boolean) {
+	handleSelectDialog(selectedColumns: boolean[], selectedColumnsMini: boolean[], isClose: boolean) {
 		if (isClose === true) {
 			this.setState({
-				selectedColumns: selectedCols,
-				selectedColumnsMini: selectedColsMini,
-				logFile: this.state.logFile.setSelectedColumns(selectedCols, selectedColsMini),
+				selectedColumns: selectedColumns,
+				selectedColumnsMini: selectedColumnsMini,
+				logFile: this.state.logFile.setSelectedColumns(selectedColumns, selectedColumnsMini),
 				showSelectDialog: false,
 			});
 		}
@@ -250,8 +259,9 @@ export default class App extends React.Component<Props, State> {
 	handleStructureDialog(isClosing: boolean) {
 		if (isClosing === true) {
 			this.handleStructureUpdate(isClosing);
+
 		} else {
-			const { logFile, rowProperties, rules, showStructureDialog } = this.state;
+			const { logFile, rowProperties, showStructureDialog } = this.state;
 
 			const selectedLogRows = logFile.rows.filter(
 				(v, i) => rowProperties[i].rowType === SelectedRowType.UserSelect,
@@ -262,12 +272,20 @@ export default class App extends React.Component<Props, State> {
 			}
 
 			if (!showStructureDialog) {
-				this.extractHeaderColumnTypes(logFile, rules);
+				this.extractHeaderColumnTypes(logFile);
 				this.setState({ showStructureDialog: true });
 			}
 
 			this.setState({ selectedLogRows: selectedLogRows });
 		}
+	}
+
+	handleSavingStuctureDefinition(structureDefinition: string) {
+		this.vscode.postMessage({ type: "saveStructureDefinition", structureDefinition: structureDefinition});
+	}
+
+	handleLoadingStructureDefinition() {
+		this.vscode.postMessage({ type: "loadStructureDefinition"});
 	}
 
 	handleRowCollapse(rowIndex: number, isRendered: boolean) {
@@ -328,6 +346,7 @@ export default class App extends React.Component<Props, State> {
 		this.setState({
 			showStructureDialog: !isClosing,
 			rowProperties: clearedSelectedRows,
+			loadedStructureDefinition: null,
 			structureMatches: [],
 			currentStructureMatchIndex: null,
 			currentStructureMatch: [],
@@ -402,50 +421,8 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	handleSegmentation(expression: string) {
-		const { logFileAsString, logEntryCharIndexMaps } = this.state;
-		const { collapsibleRows } = this.state;
-
-		const segmentMatches = useStructureRegularExpressionNestedSearch(
-			expression,
-			logFileAsString,
-			logEntryCharIndexMaps!,
-		);
-
-		let entryMatches: number[] = [];
-		let exitMatches: number[] = [];
-		segmentMatches.forEach((match) => {
-			entryMatches.push(match[0])
-			exitMatches.push(match[match.length - 1])
-		})
-
-		const stack: number[] = [];
-		const maximumLevel = 5;
-		let nextEntry = entryMatches.shift()!;
-		let nextExit = exitMatches.shift()!;
-
-		while (nextEntry !== undefined && nextExit !== undefined) {
-			if (nextEntry < nextExit) {
-				stack.push(nextEntry);
-				nextEntry = entryMatches.shift()!;
-			} else {
-				const entry = stack.pop()!;
-				if (stack.length <= maximumLevel - 1)
-					collapsibleRows[entry] = constructNewSegment(entry, nextExit, stack.length);
-				else console.log(`Maximum segment level reached: Discarding (${entry}, ${nextExit})`);
-				nextExit = exitMatches.shift()!;
-			}
-		}
-		if (nextExit !== undefined) {
-			const entry = stack.pop()!;
-			collapsibleRows[entry] = constructNewSegment(entry, nextExit, 0);
-		}
-
+	updateSegmentation(collapsibleRows: { [key: number]: Segment }) {
 		this.setState({ collapsibleRows });
-	}
-
-	clearSegmentation() {
-		this.setState({ collapsibleRows: {} });
 	}
 
 	switchBooleanState(name: string) {
@@ -455,12 +432,15 @@ export default class App extends React.Component<Props, State> {
 				break;
 			case "reSearch":
 				this.setState(({ reSearch }) => ({ reSearch: !reSearch }));
+				this.updateSearchField();
 				break;
 			case "wholeSearch":
 				this.setState(({ wholeSearch }) => ({ wholeSearch: !wholeSearch }));
+				this.updateSearchField();
 				break;
 			case "caseSearch":
 				this.setState(({ caseSearch }) => ({ caseSearch: !caseSearch }));
+				this.updateSearchField();
 				break;
 			case "filterSearch":
 				this.setState(({ filterSearch }) => ({ filterSearch: !filterSearch }));
@@ -468,15 +448,16 @@ export default class App extends React.Component<Props, State> {
 		}
 	}
 
-	exportData(exportIndices: number[]) {
+	exportData(exportIndices: number[], structureExport: boolean) {
 		var exportObjects: Object[] = []
 		const originalColumns = this.state.logFile.headers;
-		if (exportIndices.length === 0)
-			exportIndices = Array.from(Array(this.state.logFile.amountOfRows()).keys())
+		if (!structureExport)
+			if (exportIndices.length === 0 || this.state.filterSearch === false)
+				exportIndices = Array.from(Array(this.state.logFile.amountOfRows()).keys())
 		for (var index of exportIndices) {
 			var rowObject = {};
 			const row = this.state.logFile.rows[index]
-			for (var columnIndex = 0; columnIndex <= originalColumns.length-1; columnIndex++)
+			for (var columnIndex = 0; columnIndex <= originalColumns.length - 1; columnIndex++)
 				rowObject[originalColumns[columnIndex].name] = row[columnIndex];
 			exportObjects.push(rowObject)
 		}
@@ -485,7 +466,7 @@ export default class App extends React.Component<Props, State> {
 
 	render() {
 		const minimapCounter = this.state.logFile.selectedColumnsMini.filter(Boolean).length;
-		const minimapWidth = minimapCounter * MINIMAP_COLUMN_WIDTH;
+		const minimapWidth = Math.max(6, minimapCounter) * MINIMAP_COLUMN_WIDTH;
 		const minimapHeight = this.state.showMinimapHeader ? "12%" : "5%";
 
 		const allColumns = [
@@ -521,7 +502,7 @@ export default class App extends React.Component<Props, State> {
 						</VSCodeButton>
 						<VSCodeButton
 							style={{ marginLeft: "5px", height: "25px", width: "110px" }}
-							onClick={() => this.exportData(this.state.searchMatches)}
+							onClick={() => this.exportData(this.state.searchMatches, false)}
 						>
 							Export
 						</VSCodeButton>
@@ -690,7 +671,7 @@ export default class App extends React.Component<Props, State> {
 							onSelectedRowsChanged={(index, e) => this.handleSelectedLogRow(index, e)}
 							onRowPropsChanged={(index, isRendered) => this.handleRowCollapse(index, isRendered)}
 							collapsibleRows={this.state.collapsibleRows}
-							clearSegmentation={() => this.clearSegmentation()}
+							clearSegmentation={() => this.updateSegmentation({})}
 						/>
 					</div>
 					<div
@@ -755,6 +736,12 @@ export default class App extends React.Component<Props, State> {
 							/>
 						)}
 					</div>
+					{this.state.showExportDialog && (
+						<ExportDialog
+							filepath={exportPath}
+							onClose={() => this.setState({ showExportDialog: false })}
+						/>
+					)}
 					{this.state.showStatesDialog && (
 						<StatesDialog
 							logFile={this.state.logFile}
@@ -789,16 +776,20 @@ export default class App extends React.Component<Props, State> {
 							logHeaderColumns={this.state.logFile.headers}
 							logHeaderColumnsTypes={logHeaderColumnTypes}
 							logSelectedRows={this.state.selectedLogRows}
+							logFileAsString={this.state.logFileAsString}
+							logEntryCharIndexMaps={this.state.logEntryCharIndexMaps}
+							collapsibleRows={this.state.collapsibleRows}
+							loadedStructureDefinition={this.state.loadedStructureDefinition}
 							currentStructureMatchIndex={this.state.currentStructureMatchIndex}
 							numberOfMatches={this.state.structureMatches.length}
 							onClose={() => this.handleStructureDialog(true)}
 							onStructureUpdate={() => this.handleStructureUpdate(false)}
 							onMatchStructure={(expression) => this.handleStructureMatching(expression)}
-							onDefineSegment={(expression) => this.handleSegmentation(expression)}
-							onNavigateStructureMatches={(isGoingForward) =>
-								this.handleNavigation(isGoingForward, true)
-							}
-							onExportStructureMatches={() => this.exportData(this.state.structureMatches.flat(1))}
+							onNavigateStructureMatches={(isGoingForward) => this.handleNavigation(isGoingForward, true)}
+							onStructureDefinitionSave={(structureDefinitionString) => this.handleSavingStuctureDefinition(structureDefinitionString)}
+							onStructureDefinitionLoad={() => {this.handleLoadingStructureDefinition()}}
+							onDefineSegment={(collapsibleRows) => this.updateSegmentation(collapsibleRows)}
+							onExportStructureMatches={() => this.exportData(this.state.structureMatches.flat(1), true)} 
 						/>
 					)}
 				</div>
