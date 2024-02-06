@@ -21,7 +21,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Exit if workflow_dispatch on other branch than main
-      if: (github.event_name == 'workflow_dispatch') && (github.ref_name != 'refs/heads/main')
+      if: (github.event_name == 'workflow_dispatch') && (github.ref_name != 'main')
       run: |
           echo "Release workflow should be runned from main branch, exiting."
           exit 1
